@@ -1,0 +1,8 @@
+﻿{
+  "email_tones": ["professional", "urgent", "friendly"],
+  "cta_examples": [
+    "Confirm specs and shipping address to receive PI today.",
+    "Share target order quantity to unlock better tier pricing.",
+    "Book a 15-minute call for technical alignment."
+  ]
+}
