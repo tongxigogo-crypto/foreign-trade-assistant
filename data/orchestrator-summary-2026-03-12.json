@@ -1,0 +1,136 @@
+{
+  "task": "daily_foreign_trade_email_pipeline",
+  "plan": [
+    {
+      "step": 1,
+      "agent": "email",
+      "objective": "Normalize and classify inbound messages",
+      "depends_on": []
+    },
+    {
+      "step": 2,
+      "agent": "research",
+      "objective": "Generate advisory findings",
+      "depends_on": [
+        1
+      ]
+    },
+    {
+      "step": 3,
+      "agent": "quotation",
+      "objective": "Draft quotation package",
+      "depends_on": [
+        1
+      ]
+    },
+    {
+      "step": 4,
+      "agent": "crm",
+      "objective": "Persist lead updates",
+      "depends_on": [
+        1,
+        3
+      ]
+    },
+    {
+      "step": 5,
+      "agent": "followup",
+      "objective": "Plan follow-up actions",
+      "depends_on": [
+        2,
+        3,
+        4
+      ]
+    }
+  ],
+  "status": "success",
+  "notes": [],
+  "pipelines": [
+    {
+      "message_id": "m-1",
+      "email": {
+        "status": "success",
+        "message_class": "inquiry",
+        "is_valid_inquiry": true,
+        "confidence_score": 0.9,
+        "extracted": {
+          "message_id": "m-1",
+          "thread_id": "t-1",
+          "date": "2026-03-12T01:00:00Z",
+          "sender_name": "Buyer",
+          "sender_email": "buyer@example.com",
+          "company_name": "",
+          "subject": "RFQ for MIC-100",
+          "cleaned_body": "Please quote MIC-100 100 pcs to Rotterdam.",
+          "country": "Rotterdam",
+          "product": "MIC-100",
+          "product_specs": "",
+          "quantity": "100",
+          "unit": "pcs",
+          "incoterm_if_any": "",
+          "destination_port_if_any": "Rotterdam",
+          "contact_details": "",
+          "detected_intent": "request_quotation"
+        },
+        "handoff_recommendations": {
+          "send_to_crm": true,
+          "send_to_quotation": true,
+          "send_to_followup": false,
+          "send_to_research": true
+        },
+        "notes": []
+      },
+      "quotation": {
+        "status": "success",
+        "quotation_readiness": "ready",
+        "missing_fields": [],
+        "pricing_assumptions": [
+          "Product unit pricing from configured pricing source.",
+          "Freight estimate from configured freight source."
+        ],
+        "drafts": {
+          "reply_email_subject": "Quotation Draft - MIC-100 - 100 units",
+          "reply_email_body": "Dear Customer,\n\nThank you for your inquiry for MIC-100.\nQuantity: 100 pcs\nEstimated unit price: USD 50.00\nEstimated freight per unit: USD 4.00\nEstimated total: USD 5400.00\n\nPlease confirm destination and requested terms for final quote.\n",
+          "quotation_summary": "MIC-100 x 100: unit 50.00, freight 4.00, total 5400.00 USD."
+        },
+        "commercial_flags": [],
+        "notes": []
+      },
+      "crm": {
+        "status": "success",
+        "operation": "upsert",
+        "crm_record_id": "85dcea66-af74-460e-b4c5-ac844183e721",
+        "lead_status": "quote_ready",
+        "deduplication_result": "write_applied",
+        "notes": []
+      },
+      "followup": {
+        "status": "success",
+        "priority_level": "medium",
+        "recommended_actions": [
+          {
+            "action": "Send quote package for thread m-1",
+            "owner": "sales_rep",
+            "due_at": "2026-03-13"
+          }
+        ],
+        "sla_flags": [],
+        "notes": []
+      },
+      "research": {
+        "status": "success",
+        "risk_level": "low",
+        "advisory_only": true,
+        "findings": [
+          {
+            "topic": "baseline",
+            "detail": "No elevated compliance risk found in configured rules.",
+            "severity": "low"
+          }
+        ],
+        "notes": []
+      }
+    }
+  ],
+  "human_summary": "2026-03-12 status=success: processed 1 messages, detected 1 valid inquiries, prepared 1 quote-ready packages."
+}

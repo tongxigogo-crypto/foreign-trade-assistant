@@ -1,0 +1,32 @@
+model = "gpt-5-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[project]
+name = "ai-trade-multi-agent-system"
+language = "python"
+entrypoint = "app/main.py"
+docs = ["AGENTS.md", "agents/orchestrator.md", "agents/email_agent.md", "agents/quotation_agent.md", "agents/crm_agent.md", "agents/followup_agent.md", "agents/research_agent.md"]
+
+[runtime]
+python_version = "3.10+"
+env_file = ".env"
+log_dir = "logs"
+data_dir = "data"
+
+[conventions]
+use_env_for_secrets = true
+prefer_structured_outputs = true
+require_logging = true
+require_error_handling = true
+require_agent_docs_sync = true
+
+[handoff]
+format = "structured_json_preferred"
+include_human_summary = true
+require_status_field = true
+allowed_status = ["success", "partial", "needs_input", "failed"]
+
+[workflow.default]
+entry_agent = "orchestrator"
+specialists = ["email", "quotation", "crm", "followup", "research"]

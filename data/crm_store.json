@@ -1,0 +1,100 @@
+{
+  "customers": {
+    "buyer1@example.com": {
+      "status": "quote_ready",
+      "updated_at": "2026-03-11T16:16:23.306250+00:00",
+      "note": "Lead quote_ready via orchestrator",
+      "metadata": {
+        "lead_id": "m-1001",
+        "date_created": "2026-03-10T09:00:00Z",
+        "last_updated": "2026-03-10T09:00:00Z",
+        "customer_name": "North Sea AV",
+        "customer_email": "buyer1@example.com",
+        "company_name": "",
+        "country": "Rotterdam",
+        "product": "MIC-100",
+        "product_specs": "",
+        "quantity": "150",
+        "inquiry_source": "gmail",
+        "lead_status": "quote_ready",
+        "owner_if_any": "",
+        "notes": ""
+      }
+    },
+    "buyer2@example.com": {
+      "status": "awaiting_details",
+      "updated_at": "2026-03-11T16:16:23.326938+00:00",
+      "note": "Lead awaiting_details via orchestrator",
+      "metadata": {
+        "lead_id": "m-1002",
+        "date_created": "2026-03-10T09:30:00Z",
+        "last_updated": "2026-03-10T09:30:00Z",
+        "customer_name": "City Audio GmbH",
+        "customer_email": "buyer2@example.com",
+        "company_name": "",
+        "country": "Shanghai",
+        "product": "MIC-200",
+        "product_specs": "",
+        "quantity": "",
+        "inquiry_source": "gmail",
+        "lead_status": "awaiting_details",
+        "owner_if_any": "",
+        "notes": ""
+      }
+    }
+  },
+  "processed_events": [
+    "m-1001:quote_ready",
+    "m-1002:awaiting_details"
+  ],
+  "audit": [
+    {
+      "audit_record_id": "979ecda8-2b20-42a4-9cca-9fd182730339",
+      "event_id": "m-1001:quote_ready",
+      "customer_email": "buyer1@example.com",
+      "customer_status": "quote_ready",
+      "note": "Lead quote_ready via orchestrator",
+      "metadata": {
+        "lead_id": "m-1001",
+        "date_created": "2026-03-10T09:00:00Z",
+        "last_updated": "2026-03-10T09:00:00Z",
+        "customer_name": "North Sea AV",
+        "customer_email": "buyer1@example.com",
+        "company_name": "",
+        "country": "Rotterdam",
+        "product": "MIC-100",
+        "product_specs": "",
+        "quantity": "150",
+        "inquiry_source": "gmail",
+        "lead_status": "quote_ready",
+        "owner_if_any": "",
+        "notes": ""
+      },
+      "created_at": "2026-03-11T16:16:23.306250+00:00"
+    },
+    {
+      "audit_record_id": "1ae9f4df-0e0b-49c3-94ca-9b0a005cb0bc",
+      "event_id": "m-1002:awaiting_details",
+      "customer_email": "buyer2@example.com",
+      "customer_status": "awaiting_details",
+      "note": "Lead awaiting_details via orchestrator",
+      "metadata": {
+        "lead_id": "m-1002",
+        "date_created": "2026-03-10T09:30:00Z",
+        "last_updated": "2026-03-10T09:30:00Z",
+        "customer_name": "City Audio GmbH",
+        "customer_email": "buyer2@example.com",
+        "company_name": "",
+        "country": "Shanghai",
+        "product": "MIC-200",
+        "product_specs": "",
+        "quantity": "",
+        "inquiry_source": "gmail",
+        "lead_status": "awaiting_details",
+        "owner_if_any": "",
+        "notes": ""
+      },
+      "created_at": "2026-03-11T16:16:23.326938+00:00"
+    }
+  ]
+}

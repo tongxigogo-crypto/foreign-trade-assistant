@@ -1,0 +1,8 @@
+{
+  "default_freight_per_unit": 4.0,
+  "ports": {
+    "rotterdam": 5.0,
+    "shanghai": 2.5,
+    "los angeles": 6.5
+  }
+}

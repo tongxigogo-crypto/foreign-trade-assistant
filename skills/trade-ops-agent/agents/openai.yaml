@@ -1,0 +1,3 @@
+﻿display_name: Trade Ops Agent
+short_description: End-to-end export sales automation for inquiry, MIC, and site updates.
+default_prompt: Run trade operations automation for today: process inquiries with quote drafts and follow-up plans, generate MIC 40-product plan, and create independent-site content/image update tasks.

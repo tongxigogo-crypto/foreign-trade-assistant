@@ -1,0 +1,14 @@
+{
+  "products": {
+    "MIC-100": {
+      "description": "USB conference microphone",
+      "currency": "USD",
+      "unit_price": 45.0
+    },
+    "MIC-200": {
+      "description": "Beamforming ceiling microphone",
+      "currency": "USD",
+      "unit_price": 120.0
+    }
+  }
+}

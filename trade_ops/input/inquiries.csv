@@ -1,0 +1,4 @@
+﻿inquiry_id,company_name,contact_name,product_name,request_qty,base_unit_price,inquiry_message
+INQ-001,Northline Trading,Anna,Hydraulic Fitting,1200,4.8,"We are distributor and need long-term supply for 1200 pcs monthly."
+INQ-002,Beta Industrial,Sam,Steel Valve,320,8.5,"Need OEM customization and sample first."
+INQ-003,QuickParts,Leo,Pipe Clamp,80,2.2,"Please send your best price and delivery time."

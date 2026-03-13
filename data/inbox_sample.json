@@ -1,0 +1,20 @@
+[
+  {
+    "message_id": "m-1001",
+    "thread_id": "t-1001",
+    "sender": "buyer1@example.com",
+    "sender_name": "North Sea AV",
+    "subject": "Inquiry: quotation MIC-100",
+    "body": "Need quote for MIC-100 150 pcs to Rotterdam.",
+    "received_at": "2026-03-10T09:00:00Z"
+  },
+  {
+    "message_id": "m-1002",
+    "thread_id": "t-1002",
+    "sender": "buyer2@example.com",
+    "sender_name": "City Audio GmbH",
+    "subject": "Price request",
+    "body": "Please send quotation for MIC-200 to Shanghai.",
+    "received_at": "2026-03-10T09:30:00Z"
+  }
+]

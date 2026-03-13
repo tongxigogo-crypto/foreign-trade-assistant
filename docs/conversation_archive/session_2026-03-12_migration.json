@@ -1,0 +1,37 @@
+{
+  "thread_type": "migration_log",
+  "date": "2026-03-12",
+  "workspace": "E:\\CodexWorkspace\\Playground\\foreign_trade_assistant",
+  "summary": {
+    "major_topics": [
+      "E盘工作区建立",
+      "多Agent外贸系统初始化",
+      "gws/recipe 技能备份",
+      "Gmail OAuth认证排障与收件验证",
+      "草稿邮件创建（未发送）",
+      "openclaw 卸载与目录清名",
+      "工作树迁移与重组",
+      "外贸与短视频工作树彻底分离",
+      "外贸助手完整可运行结构补齐"
+    ],
+    "final_layout": {
+      "foreign_trade_assistant": "E:\\CodexWorkspace\\Playground\\foreign_trade_assistant",
+      "video_workflow": "E:\\CodexWorkspace\\Playground\\video_workflow"
+    }
+  },
+  "artifacts": [
+    "AGENTS.md",
+    ".codex/config.toml",
+    "agents/*.md",
+    "app/**/*.py",
+    ".env.example",
+    "requirements.txt",
+    "tests/*.py",
+    "skills/gws-*",
+    "skills/recipe-*"
+  ],
+  "validation": {
+    "python_run": "python -m app.main success",
+    "pytest": "2 passed"
+  }
+}
