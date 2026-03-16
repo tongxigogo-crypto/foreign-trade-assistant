@@ -1,0 +1,8 @@
+{
+  "gmail_mode": "read_only",
+  "drive_mode": "read_only",
+  "allow_send_email": false,
+  "allow_drive_write": false,
+  "business_write_requires_confirmation": true,
+  "output_write_requires_confirmation": true
+}

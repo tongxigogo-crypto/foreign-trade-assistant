@@ -1,6 +1,8 @@
-﻿param(
+param(
     [string]$WorkspaceRoot = "D:/Backup/Documents/Playground/trade_ops",
-    [string]$RunDate = ""
+    [string]$RunDate = "",
+    [switch]$ConfirmWrite,
+    [switch]$SkipSelfImprove
 )
 
 Set-StrictMode -Version Latest
@@ -17,8 +19,6 @@ $inputDir = Join-Path $WorkspaceRoot "input"
 $configDir = Join-Path $WorkspaceRoot "config"
 $outputDir = Join-Path $WorkspaceRoot "output"
 $statePath = Join-Path $WorkspaceRoot "state.json"
-
-New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 
 function Read-JsonOrDefault {
     param(
@@ -61,39 +61,43 @@ function Get-DiscountRate {
     return 0.00
 }
 
-$pricingRulesPath = Join-Path $configDir "pricing-rules.json"
-$pricingRules = Read-JsonOrDefault -Path $pricingRulesPath -Default @{
-    fallbackUnitPrice = 5.5
-    defaultCurrency = "USD"
-    shippingPerOrder = 90
-}
+$runStatus = "failed"
+$learningSummary = ""
 
-$inquiriesPath = Join-Path $inputDir "inquiries.csv"
-$catalogPath = Join-Path $inputDir "mic-products.csv"
-$pagesPath = Join-Path $inputDir "site-pages.csv"
+try {
+    $pricingRulesPath = Join-Path $configDir "pricing-rules.json"
+    $pricingRules = Read-JsonOrDefault -Path $pricingRulesPath -Default @{
+        fallbackUnitPrice = 5.5
+        defaultCurrency = "USD"
+        shippingPerOrder = 90
+    }
 
-if (-not (Test-Path $inquiriesPath)) { throw "Missing input file: $inquiriesPath" }
-if (-not (Test-Path $catalogPath)) { throw "Missing input file: $catalogPath" }
-if (-not (Test-Path $pagesPath)) { throw "Missing input file: $pagesPath" }
+    $inquiriesPath = Join-Path $inputDir "inquiries.csv"
+    $catalogPath = Join-Path $inputDir "mic-products.csv"
+    $pagesPath = Join-Path $inputDir "site-pages.csv"
 
-$inquiries = Import-Csv -Path $inquiriesPath
-$catalog = Import-Csv -Path $catalogPath
-$pages = Import-Csv -Path $pagesPath
+    if (-not (Test-Path $inquiriesPath)) { throw "Missing input file: $inquiriesPath" }
+    if (-not (Test-Path $catalogPath)) { throw "Missing input file: $catalogPath" }
+    if (-not (Test-Path $pagesPath)) { throw "Missing input file: $pagesPath" }
 
-$processedInquiries = @()
-foreach ($row in $inquiries) {
-    $qty = 0
-    if ($row.request_qty) { $qty = [int]$row.request_qty }
-    $unitPrice = if ($row.base_unit_price) { [double]$row.base_unit_price } else { [double]$pricingRules.fallbackUnitPrice }
-    $discount = Get-DiscountRate -Qty $qty
-    $finalUnitPrice = [math]::Round($unitPrice * (1 - $discount), 2)
-    $productAmount = [math]::Round($finalUnitPrice * $qty, 2)
-    $shipping = [double]$pricingRules.shippingPerOrder
-    $totalAmount = [math]::Round($productAmount + $shipping, 2)
-    $customerType = Get-CustomerType -Message $row.inquiry_message -Qty $qty
-    $followUp = Get-FollowUpPlan -CustomerType $customerType
+    $inquiries = Import-Csv -Path $inquiriesPath
+    $catalog = Import-Csv -Path $catalogPath
+    $pages = Import-Csv -Path $pagesPath
 
-    $emailBody = @"
+    $processedInquiries = @()
+    foreach ($row in $inquiries) {
+        $qty = 0
+        if ($row.request_qty) { $qty = [int]$row.request_qty }
+        $unitPrice = if ($row.base_unit_price) { [double]$row.base_unit_price } else { [double]$pricingRules.fallbackUnitPrice }
+        $discount = Get-DiscountRate -Qty $qty
+        $finalUnitPrice = [math]::Round($unitPrice * (1 - $discount), 2)
+        $productAmount = [math]::Round($finalUnitPrice * $qty, 2)
+        $shipping = [double]$pricingRules.shippingPerOrder
+        $totalAmount = [math]::Round($productAmount + $shipping, 2)
+        $customerType = Get-CustomerType -Message $row.inquiry_message -Qty $qty
+        $followUp = Get-FollowUpPlan -CustomerType $customerType
+
+        $emailBody = @"
 Subject: Quotation for $($row.product_name)
 
 Hi $($row.contact_name),
@@ -113,27 +117,32 @@ Best regards,
 Sales Team
 "@
 
-    $processedInquiries += [pscustomobject]@{
-        inquiry_id = $row.inquiry_id
-        company_name = $row.company_name
-        contact_name = $row.contact_name
-        product_name = $row.product_name
-        request_qty = $qty
-        customer_type = $customerType
-        follow_up_plan = $followUp
-        unit_price = $finalUnitPrice
-        total_price = $totalAmount
-        quote_currency = $pricingRules.defaultCurrency
-        email_draft = $emailBody.Trim()
+        $processedInquiries += [pscustomobject]@{
+            inquiry_id = $row.inquiry_id
+            company_name = $row.company_name
+            contact_name = $row.contact_name
+            product_name = $row.product_name
+            request_qty = $qty
+            customer_type = $customerType
+            follow_up_plan = $followUp
+            unit_price = $finalUnitPrice
+            total_price = $totalAmount
+            quote_currency = $pricingRules.defaultCurrency
+            email_draft = $emailBody.Trim()
+        }
     }
-}
 
-$analysisPath = Join-Path $outputDir ("customer-analysis-" + $runDateText + ".md")
-$keyCount = @($processedInquiries | Where-Object { $_.customer_type -eq "A-KeyAccount" }).Count
-$growthCount = @($processedInquiries | Where-Object { $_.customer_type -eq "B-Growth" }).Count
-$longTailCount = @($processedInquiries | Where-Object { $_.customer_type -eq "C-LongTail" }).Count
+    $analysisPath = Join-Path $outputDir ("customer-analysis-" + $runDateText + ".md")
+    $quotePath = Join-Path $outputDir ("inquiry-quote-pack-" + $runDateText + ".csv")
+    $micOutputPath = Join-Path $outputDir ("mic-daily-40-" + $runDateText + ".csv")
+    $siteTaskPath = Join-Path $outputDir ("site-update-tasks-" + $runDateText + ".csv")
+    $summaryPath = Join-Path $outputDir ("run-summary-" + $runDateText + ".md")
 
-$analysisMd = @"
+    $keyCount = @($processedInquiries | Where-Object { $_.customer_type -eq "A-KeyAccount" }).Count
+    $growthCount = @($processedInquiries | Where-Object { $_.customer_type -eq "B-Growth" }).Count
+    $longTailCount = @($processedInquiries | Where-Object { $_.customer_type -eq "C-LongTail" }).Count
+
+    $analysisMd = @"
 # Customer Analysis - $runDateText
 
 - Total inquiries: $($processedInquiries.Count)
@@ -146,52 +155,39 @@ $analysisMd = @"
 - Convert B-Growth with sample offer and lead-time commitment.
 - Use batch follow-up for C-LongTail to control time cost.
 "@
-Set-Content -Path $analysisPath -Value $analysisMd -Encoding UTF8
 
-$quotePath = Join-Path $outputDir ("inquiry-quote-pack-" + $runDateText + ".csv")
-$processedInquiries | Select-Object inquiry_id,company_name,contact_name,product_name,request_qty,customer_type,follow_up_plan,unit_price,total_price,quote_currency,email_draft | Export-Csv -Path $quotePath -NoTypeInformation -Encoding UTF8
+    $state = Read-JsonOrDefault -Path $statePath -Default @{ mic_last_index = 0 }
+    $startIndex = [int]$state.mic_last_index
+    $dailyCount = 40
+    if ($catalog.Count -eq 0) { throw "mic-products.csv is empty." }
 
-$state = Read-JsonOrDefault -Path $statePath -Default @{ mic_last_index = 0 }
-$startIndex = [int]$state.mic_last_index
-$dailyCount = 40
-
-if ($catalog.Count -eq 0) { throw "mic-products.csv is empty." }
-
-$micToday = @()
-for ($i = 0; $i -lt $dailyCount; $i++) {
-    $idx = ($startIndex + $i) % $catalog.Count
-    $micToday += $catalog[$idx]
-}
-
-$newIndex = ($startIndex + $dailyCount) % $catalog.Count
-$newState = @{ mic_last_index = $newIndex }
-$newState | ConvertTo-Json | Set-Content -Path $statePath -Encoding UTF8
-
-$micOutputPath = Join-Path $outputDir ("mic-daily-40-" + $runDateText + ".csv")
-$micToday | Select-Object product_id,product_name,mic_url,target_market,owner | Export-Csv -Path $micOutputPath -NoTypeInformation -Encoding UTF8
-
-$siteTasks = @()
-foreach ($page in $pages) {
-    $needsText = ($page.needs_content -eq "1")
-    $needsImage = ($page.needs_image -eq "1")
-    if (-not ($needsText -or $needsImage)) { continue }
-
-    $task = [pscustomobject]@{
-        page_slug = $page.page_slug
-        page_url = $page.page_url
-        content_task = if ($needsText) { "Rewrite with stronger value proposition, 3 benefit bullets, CTA at top and bottom." } else { "" }
-        image_task = if ($needsImage) { "Add 1 hero image + 2 detail images; keep style industrial, clean background, product focus." } else { "" }
-        seo_keyword = $page.seo_keyword
-        publish_priority = if ($page.priority) { $page.priority } else { "medium" }
+    $micToday = @()
+    for ($i = 0; $i -lt $dailyCount; $i++) {
+        $idx = ($startIndex + $i) % $catalog.Count
+        $micToday += $catalog[$idx]
     }
-    $siteTasks += $task
-}
 
-$siteTaskPath = Join-Path $outputDir ("site-update-tasks-" + $runDateText + ".csv")
-$siteTasks | Export-Csv -Path $siteTaskPath -NoTypeInformation -Encoding UTF8
+    $newIndex = ($startIndex + $dailyCount) % $catalog.Count
+    $newState = @{ mic_last_index = $newIndex }
 
-$summaryPath = Join-Path $outputDir ("run-summary-" + $runDateText + ".md")
-$summary = @"
+    $siteTasks = @()
+    foreach ($page in $pages) {
+        $needsText = ($page.needs_content -eq "1")
+        $needsImage = ($page.needs_image -eq "1")
+        if (-not ($needsText -or $needsImage)) { continue }
+
+        $task = [pscustomobject]@{
+            page_slug = $page.page_slug
+            page_url = $page.page_url
+            content_task = if ($needsText) { "Rewrite with stronger value proposition, 3 benefit bullets, CTA at top and bottom." } else { "" }
+            image_task = if ($needsImage) { "Add 1 hero image + 2 detail images; keep style industrial, clean background, product focus." } else { "" }
+            seo_keyword = $page.seo_keyword
+            publish_priority = if ($page.priority) { $page.priority } else { "medium" }
+        }
+        $siteTasks += $task
+    }
+
+    $summary = @"
 # Trade Ops Agent Run Summary ($runDateText)
 
 - Inquiry pack: $quotePath
@@ -200,9 +196,64 @@ $summary = @"
 - Site update tasks: $siteTaskPath
 - Next MIC start index: $newIndex
 "@
-Set-Content -Path $summaryPath -Value $summary -Encoding UTF8
 
-Write-Output "Completed run for $runDateText"
-Write-Output "Summary file: $summaryPath"
+    $proposed = [ordered]@{
+        status = "needs_confirmation"
+        run_date = $runDateText
+        message = "Write operations are blocked by policy. Re-run with -ConfirmWrite to persist outputs."
+        proposed_outputs = @($analysisPath, $quotePath, $micOutputPath, $siteTaskPath, $summaryPath, $statePath)
+        preview_counts = @{
+            inquiries = $processedInquiries.Count
+            key_accounts = $keyCount
+            growth_accounts = $growthCount
+            long_tail_accounts = $longTailCount
+            site_tasks = $siteTasks.Count
+        }
+    }
 
+    if (-not $ConfirmWrite) {
+        $runStatus = "needs_confirmation"
+        $learningSummary = "Preview mode blocked write operations for $runDateText."
+        $proposed | ConvertTo-Json -Depth 6 | Write-Output
+        Write-Warning "WRITE_BLOCKED: confirmation required. Re-run with -ConfirmWrite."
+        return
+    }
 
+    New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+    Set-Content -Path $analysisPath -Value $analysisMd -Encoding UTF8
+    $processedInquiries |
+        Select-Object inquiry_id,company_name,contact_name,product_name,request_qty,customer_type,follow_up_plan,unit_price,total_price,quote_currency,email_draft |
+        Export-Csv -Path $quotePath -NoTypeInformation -Encoding UTF8
+    $newState | ConvertTo-Json | Set-Content -Path $statePath -Encoding UTF8
+    $micToday |
+        Select-Object product_id,product_name,mic_url,target_market,owner |
+        Export-Csv -Path $micOutputPath -NoTypeInformation -Encoding UTF8
+    $siteTasks | Export-Csv -Path $siteTaskPath -NoTypeInformation -Encoding UTF8
+    Set-Content -Path $summaryPath -Value $summary -Encoding UTF8
+
+    $runStatus = "success"
+    $learningSummary = "Confirmed write completed for $runDateText."
+    Write-Output "Completed run for $runDateText"
+    Write-Output "Summary file: $summaryPath"
+} catch {
+    $runStatus = "failed"
+    $learningSummary = "Run failed for ${runDateText}: $($_.Exception.Message)"
+    throw
+} finally {
+    if (-not $SkipSelfImprove) {
+        try {
+            $workspaceForSelfImprove = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+            $selfImproveScript = Join-Path $workspaceForSelfImprove "scripts\record-self-improving.ps1"
+            if (Test-Path $selfImproveScript) {
+                & $selfImproveScript `
+                    -WorkspaceRoot $workspaceForSelfImprove `
+                    -Category "trade-ops-run" `
+                    -Status $runStatus `
+                    -Summary $learningSummary `
+                    -AutoCommit
+            }
+        } catch {
+            Write-Warning "SELF_IMPROVING_SKIPPED: $($_.Exception.Message)"
+        }
+    }
+}

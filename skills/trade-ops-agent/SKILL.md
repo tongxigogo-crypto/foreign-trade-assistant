@@ -28,7 +28,7 @@ Update these files before each run:
 
 Input format details: see [references/input-files.md](references/input-files.md).
 
-## 3) Run full automation
+## 3) Run workflow (confirmation-gated)
 
 Run:
 
@@ -36,10 +36,18 @@ Run:
 ./skills/trade-ops-agent/scripts/run-trade-ops-agent.ps1
 ```
 
+Default behavior is preview-only and will not write outputs.
+
 Optional run date:
 
 ```powershell
 ./skills/trade-ops-agent/scripts/run-trade-ops-agent.ps1 -RunDate 2026-03-09
+```
+
+Write outputs only after explicit confirmation:
+
+```powershell
+./skills/trade-ops-agent/scripts/run-trade-ops-agent.ps1 -RunDate 2026-03-09 -ConfirmWrite
 ```
 
 ## 4) Collect outputs
@@ -58,3 +66,10 @@ Read generated files under `trade_ops/output`:
 - Keep MIC daily publishing fixed at 40 entries; rotation is controlled by `state.json`.
 - Update site tasks only when `needs_content=1` or `needs_image=1`.
 - Adjust price logic only through `pricing-rules.json` or script function thresholds.
+- Self-improving memory is recorded on each run and repository changes are auto-committed.
+- For Google access, use read-only wrapper:
+
+```powershell
+./scripts/gws-readonly.ps1 gmail messages list --max-results 10
+./scripts/gws-readonly.ps1 drive files list --page-size 20
+```
