@@ -1,0 +1,7 @@
+﻿[
+  {
+    "sender": "buyer@example.com",
+    "subject": "Need quotation",
+    "body": "Please quote for wall panel model A."
+  }
+]

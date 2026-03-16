@@ -1,0 +1,5 @@
+﻿[workspace]
+name = "foreign_trade_assistant"
+
+[runtime]
+timezone = "Asia/Shanghai"

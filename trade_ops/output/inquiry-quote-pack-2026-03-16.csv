@@ -1,0 +1,52 @@
+﻿"inquiry_id","company_name","contact_name","product_name","request_qty","customer_type","follow_up_plan","unit_price","total_price","quote_currency","email_draft"
+"INQ-001","Northline Trading","Anna","Hydraulic Fitting","1200","A-KeyAccount","D0 quote, D1 call, D3 technical sheet, D7 negotiation","4.22","5154","USD","Subject: Quotation for Hydraulic Fitting
+
+Hi Anna,
+
+Thanks for your inquiry. Based on your requested quantity (1200 pcs), please find our quote:
+- Product: Hydraulic Fitting
+- Unit Price: 4.22 USD
+- Product Amount: 5064 USD
+- Shipping: 90 USD
+- Total: 5154 USD
+- Lead Time: 10-15 days
+- Payment: T/T
+
+If you confirm target specs and shipping address, we can issue a PI today.
+
+Best regards,
+Sales Team"
+"INQ-002","Beta Industrial","Sam","Steel Valve","320","B-Growth","D0 quote, D2 reminder, D5 offer sample order","8.07","2672.4","USD","Subject: Quotation for Steel Valve
+
+Hi Sam,
+
+Thanks for your inquiry. Based on your requested quantity (320 pcs), please find our quote:
+- Product: Steel Valve
+- Unit Price: 8.07 USD
+- Product Amount: 2582.4 USD
+- Shipping: 90 USD
+- Total: 2672.4 USD
+- Lead Time: 10-15 days
+- Payment: T/T
+
+If you confirm target specs and shipping address, we can issue a PI today.
+
+Best regards,
+Sales Team"
+"INQ-003","QuickParts","Leo","Pipe Clamp","80","C-LongTail","D0 quote, D3 reminder, D7 archive if no response","2.2","266","USD","Subject: Quotation for Pipe Clamp
+
+Hi Leo,
+
+Thanks for your inquiry. Based on your requested quantity (80 pcs), please find our quote:
+- Product: Pipe Clamp
+- Unit Price: 2.2 USD
+- Product Amount: 176 USD
+- Shipping: 90 USD
+- Total: 266 USD
+- Lead Time: 10-15 days
+- Payment: T/T
+
+If you confirm target specs and shipping address, we can issue a PI today.
+
+Best regards,
+Sales Team"

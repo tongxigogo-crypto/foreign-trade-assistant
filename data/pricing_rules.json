@@ -1,0 +1,5 @@
+﻿{
+  "fallbackUnitPrice": 100,
+  "defaultCurrency": "USD",
+  "shippingPerOrder": 150
+}

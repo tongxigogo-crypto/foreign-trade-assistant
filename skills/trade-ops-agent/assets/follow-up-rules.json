@@ -1,0 +1,5 @@
+﻿{
+  "A-KeyAccount": "D0 quote, D1 call, D3 technical sheet, D7 negotiation",
+  "B-Growth": "D0 quote, D2 reminder, D5 offer sample order",
+  "C-LongTail": "D0 quote, D3 reminder, D7 archive if no response"
+}
