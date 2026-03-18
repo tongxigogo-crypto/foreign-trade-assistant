@@ -1,3 +1,24 @@
-﻿{
-    "mic_last_index":  0
+{
+  "mic_last_index": 0,
+  "version": "1.0",
+  "workflow": {
+    "status": "done",
+    "last_run_id": "run-020a4563dc",
+    "last_run_date": "2026-03-18"
+  },
+  "runs": [
+    {
+      "run_id": "run-020a4563dc",
+      "run_date": "2026-03-18",
+      "status": "done",
+      "mode": "confirm_write",
+      "outputs": {
+        "inquiry_quote_pack": "D:\\Backup\\Documents\\Playground\\trade_ops\\output\\inquiry-quote-pack-2026-03-18.csv",
+        "customer_analysis": "D:\\Backup\\Documents\\Playground\\trade_ops\\output\\customer-analysis-2026-03-18.md",
+        "mic_daily_40": "D:\\Backup\\Documents\\Playground\\trade_ops\\output\\mic-daily-40-2026-03-18.csv",
+        "site_update_tasks": "D:\\Backup\\Documents\\Playground\\trade_ops\\output\\site-update-tasks-2026-03-18.csv",
+        "run_summary": "D:\\Backup\\Documents\\Playground\\trade_ops\\output\\run-summary-2026-03-18.md"
+      }
+    }
+  ]
 }

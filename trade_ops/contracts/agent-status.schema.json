@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/trade_ops/contracts/agent-status.schema.json",
+  "title": "AgentStatusEnvelope",
+  "type": "object",
+  "required": [
+    "agent",
+    "status",
+    "payload",
+    "missing_data"
+  ],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "enum": [
+        "email_agent",
+        "quotation_agent",
+        "crm_agent",
+        "followup_agent",
+        "research_agent"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "blocked",
+        "needs_confirmation",
+        "done",
+        "failed"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "missing_data": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

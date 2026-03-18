@@ -1,0 +1,4 @@
+inquiry_id,company_name,product_name,request_qty,unit_price,shipping_per_order,currency,total_price
+INQ-001,Northline Trading,Hydraulic Fitting,1200,4.8,90.0,USD,5850.0
+INQ-002,Beta Industrial,Steel Valve,320,8.5,90.0,USD,2810.0
+INQ-003,QuickParts,Pipe Clamp,80,2.2,90.0,USD,266.0

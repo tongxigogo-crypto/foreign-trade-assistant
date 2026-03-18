@@ -1,0 +1,11 @@
+product_id,product_name,mic_url,target_market,owner
+P-001,Hydraulic Fitting,https://example.com/mic/p-001,US,Amy
+P-002,Steel Valve,https://example.com/mic/p-002,EU,Amy
+P-003,Pipe Clamp,https://example.com/mic/p-003,SEA,Tom
+P-004,Brass Adapter,https://example.com/mic/p-004,US,Tom
+P-005,Oil Seal,https://example.com/mic/p-005,EU,Lisa
+P-006,Check Valve,https://example.com/mic/p-006,SEA,Lisa
+P-007,Thread Coupling,https://example.com/mic/p-007,US,Amy
+P-008,Tube Connector,https://example.com/mic/p-008,EU,Tom
+P-009,Pressure Gauge,https://example.com/mic/p-009,SEA,Lisa
+P-010,Ball Valve,https://example.com/mic/p-010,US,Amy

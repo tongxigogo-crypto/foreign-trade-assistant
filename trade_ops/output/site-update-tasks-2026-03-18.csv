@@ -1,0 +1,5 @@
+page_slug,page_url,seo_keyword,priority,content_task,image_task
+home,https://example.com,industrial fittings supplier,high,write,create
+hydraulic-fittings,https://example.com/hydraulic-fittings,hydraulic fitting manufacturer,high,write,create
+steel-valves,https://example.com/steel-valves,steel valve wholesale,medium,write,skip
+contact,https://example.com/contact,contact industrial supplier,low,skip,create
