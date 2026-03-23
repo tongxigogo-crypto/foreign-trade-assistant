@@ -1,0 +1,5 @@
+version: 1
+interface:
+  display_name: Self Improving Agent
+  short_description: Capture durable learnings, corrections, and failure fixes per workspace.
+  default_prompt: Use this skill to preserve reusable learnings after failures, corrections, and stable success patterns while keeping memory separated by workspace.

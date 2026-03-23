@@ -1,0 +1,258 @@
+{
+  "meta": {
+    "name": "Trade Assistant Dashboard Layout v2",
+    "version": "1.0.0",
+    "locale_default": "zh-CN",
+    "supported_locales": [
+      "zh-CN",
+      "en-US"
+    ]
+  },
+  "theme": {
+    "radius": {
+      "sm": 8,
+      "md": 12,
+      "lg": 16
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24
+    },
+    "typography": {
+      "font_family": "\"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+      "sizes": {
+        "caption": 12,
+        "body": 13,
+        "title": 20,
+        "section": 16
+      },
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "bold": 700
+      }
+    },
+    "colors": {
+      "bg": "#f5f7fb",
+      "surface": "#ffffff",
+      "text_primary": "#0f172a",
+      "text_secondary": "#64748b",
+      "border": "#dbe7ff",
+      "accent": "#2563eb",
+      "success": "#16a34a",
+      "warning": "#d97706",
+      "danger": "#dc2626"
+    },
+    "shadow": {
+      "card": "0 8px 24px rgba(15,23,42,0.08)",
+      "panel": "0 14px 32px rgba(15,23,42,0.12)"
+    }
+  },
+  "layout": {
+    "container": {
+      "max_width": 1320,
+      "padding_x": 16,
+      "padding_y": 20
+    },
+    "header": {
+      "type": "row",
+      "justify": "space-between",
+      "align": "center",
+      "height": 64,
+      "left": [
+        "title",
+        "subtitle"
+      ],
+      "right": [
+        "lang_switch",
+        "refresh_button"
+      ]
+    },
+    "sections": [
+      {
+        "id": "kpis",
+        "title_key": "kpi_overview",
+        "component": "kpi_grid",
+        "grid": {
+          "min_card_width": 180,
+          "gap": 10
+        }
+      },
+      {
+        "id": "banner",
+        "title_key": "critical_notice",
+        "component": "alert_banner",
+        "dismissible": true
+      },
+      {
+        "id": "critical_alerts",
+        "title_key": "critical_alerts",
+        "component": "alert_cards",
+        "controls": [
+          "alerts_only_open_toggle"
+        ],
+        "grid": {
+          "min_card_width": 320,
+          "gap": 12
+        }
+      },
+      {
+        "id": "today_focus",
+        "title_key": "today_focus",
+        "component": "focus_cards",
+        "grid": {
+          "min_card_width": 320,
+          "gap": 12
+        }
+      },
+      {
+        "id": "customer_lines",
+        "title_key": "customer_lines",
+        "component": "customer_cards",
+        "grid": {
+          "min_card_width": 300,
+          "gap": 12
+        }
+      },
+      {
+        "id": "kanban",
+        "title_key": "task_kanban",
+        "component": "kanban_board",
+        "columns": [
+          "waiting_reply",
+          "in_progress",
+          "overdue",
+          "completed"
+        ],
+        "column_min_width": 260,
+        "gap": 12
+      },
+      {
+        "id": "events",
+        "title_key": "recent_events",
+        "component": "event_cards",
+        "grid": {
+          "min_card_width": 320,
+          "gap": 12
+        }
+      }
+    ]
+  },
+  "components": {
+    "kpi_card": {
+      "style": "surface_card",
+      "fields": [
+        "label",
+        "value"
+      ]
+    },
+    "alert_card": {
+      "style": "danger_soft",
+      "fields": [
+        "alert_type",
+        "customer_name",
+        "alert_message",
+        "task_title",
+        "due_at"
+      ],
+      "actions": [
+        "start",
+        "run_suggestion",
+        "snooze_24h",
+        "snooze_72h"
+      ]
+    },
+    "focus_card": {
+      "style": "surface_card",
+      "fields": [
+        "title",
+        "customer_name",
+        "computed_status",
+        "priority_score",
+        "due_at",
+        "focus_reason"
+      ],
+      "actions": [
+        "start",
+        "done",
+        "reopen",
+        "run_suggestion"
+      ]
+    },
+    "customer_card": {
+      "style": "surface_card",
+      "fields": [
+        "customer_name",
+        "open_tasks",
+        "in_progress_tasks",
+        "overdue_tasks",
+        "max_priority_score",
+        "latest_event_action",
+        "latest_event_at",
+        "latest_due_at"
+      ],
+      "actions": [
+        "open_detail",
+        "preview_latest_artifact"
+      ]
+    },
+    "kanban_task_card": {
+      "style": "surface_card_compact",
+      "fields": [
+        "title",
+        "customer_name",
+        "due_at",
+        "priority_score",
+        "task_id"
+      ],
+      "actions": [
+        "start",
+        "done",
+        "reopen",
+        "run_suggestion"
+      ]
+    },
+    "event_card": {
+      "style": "surface_card",
+      "fields": [
+        "action_name",
+        "created_at",
+        "event_id",
+        "results"
+      ],
+      "actions": [
+        "preview_artifact"
+      ]
+    }
+  },
+  "copy": {
+    "zh-CN": {
+      "title": "外贸助理状态看板",
+      "subtitle": "任务状态看板 + 事件时间线（每 5 秒自动刷新）",
+      "refresh": "刷新",
+      "kpi_overview": "关键指标",
+      "critical_notice": "关键提醒",
+      "critical_alerts": "关键风险提醒",
+      "today_focus": "今日重点",
+      "customer_lines": "客户线",
+      "task_kanban": "任务看板",
+      "recent_events": "最近事件"
+    },
+    "en-US": {
+      "title": "Trade Assistant State Board",
+      "subtitle": "Task-state kanban + event timeline (auto refresh every 5s)",
+      "refresh": "Refresh",
+      "kpi_overview": "KPI Overview",
+      "critical_notice": "Critical Notice",
+      "critical_alerts": "Critical Alerts",
+      "today_focus": "Today Focus",
+      "customer_lines": "Customer Lines",
+      "task_kanban": "Task Kanban",
+      "recent_events": "Recent Events"
+    }
+  }
+}
+

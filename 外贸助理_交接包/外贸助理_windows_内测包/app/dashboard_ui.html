@@ -1,0 +1,1111 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>澶栬锤鍔╃悊鐘舵€佺湅鏉</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --ok: #16a34a;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: #f8fafc;
+      padding: 20px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .logo { font-weight: 800; font-size: 18px; padding: 6px 10px; }
+    .nav { margin-top: 14px; display: grid; gap: 8px; }
+    .nav a {
+      text-decoration: none;
+      color: #334155;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      display: block;
+    }
+    .nav a.active { background: #eff6ff; color: var(--primary); border-color: #bfdbfe; }
+    .main { min-width: 0; }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(8px);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .title { font-size: 24px; font-weight: 800; margin: 0; }
+    .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #334155;
+      border-radius: 999px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    button.primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .container { max-width: 1500px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .meta { font-size: 12px; color: var(--muted); }
+    .section-title { margin: 2px 0 4px; font-size: 20px; font-weight: 700; }
+    .grid-6 { display: grid; gap: 10px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .grid-3 { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .kpi-label { font-size: 12px; color: var(--muted); }
+    .kpi-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+    .kpi-card {
+      cursor: pointer;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .kpi-card:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, .12);
+      transform: translateY(-1px);
+    }
+    .newbie-guide {
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+    .newbie-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      border-radius: 999px;
+      border: 1px solid #93c5fd;
+      background: #fff;
+      color: #1e3a8a;
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+    .newbie-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .newbie-actions button {
+      border-radius: 10px;
+      border-color: #93c5fd;
+      background: #fff;
+      color: #1e3a8a;
+    }
+    .left-danger { border-left: 4px solid #fca5a5; }
+    .status-pill {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 1px 8px;
+      font-size: 12px;
+      margin-right: 6px;
+      color: #334155;
+      background: #f8fafc;
+    }
+    .list-card { border: 1px solid #e5e7eb; border-radius: 10px; background: #f8fafc; padding: 9px; margin-top: 8px; }
+    .list-card:first-child { margin-top: 0; }
+    .list-title { font-size: 14px; font-weight: 700; margin: 0; }
+    .list-sub { font-size: 12px; color: var(--muted); margin-top: 5px; }
+    .actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .actions button { border-radius: 8px; padding: 4px 8px; font-size: 12px; }
+    .stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .diag-flag {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #f8fafc;
+      color: #475569;
+    }
+    .diag-ok { border-color: #bbf7d0; color: #166534; background: #f0fdf4; }
+    .diag-warn { border-color: #fde68a; color: #92400e; background: #fffbeb; }
+    .filters-grid { display: grid; grid-template-columns: 200px 1fr 1fr auto; gap: 8px; align-items: center; }
+    .filters-grid input,
+    .filters-grid select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #334155;
+      background: #fff;
+    }
+    .filters-grid .filter-label { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .link-btn { border: none; background: transparent; color: var(--primary); cursor: pointer; padding: 0; font-size: 14px; text-align: left; }
+    .hide { display: none !important; }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal {
+      width: min(1000px, 95vw);
+      max-height: 88vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 1280px) {
+      .grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .header { position: static; }
+      .grid-6, .grid-4, .grid-3 { grid-template-columns: 1fr; }
+      .filters-grid { grid-template-columns: 1fr; }
+      .split { grid-template-columns: 1fr; }
+      .title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">Trade Assistant</div>
+      <nav class="nav">
+        <a href="#" class="active" id="navDashboard">Dashboard</a>
+        <a href="#kanbanSection" id="navKanban">Kanban</a>
+        <a href="#customersSection" id="navCustomers">Customers</a>
+        <a href="#eventsSection" id="navEvents">Events</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <div>
+          <h1 class="title" id="titleMain">澶栬锤鍔╃悊鐘舵€佺湅鏉</h1>
+          <p class="subtitle" id="titleSub">浠诲姟鐘舵€?+ 浜嬩欢娴侊紙姣?5 绉掕嚜鍔ㄥ埛鏂帮級</p>
+        </div>
+        <div class="toolbar">
+          <button id="modeSimple">绠€娲</button>
+          <button id="modeFull">瀹屾暣</button>
+          <button id="langZh">涓枃</button>
+          <button id="langEn">EN</button>
+          <button id="refresh" class="primary">鍒锋柊</button>
+        </div>
+      </header>
+
+      <div class="container">
+        <section class="card">
+          <div class="stats-row">
+            <div class="meta" id="stats"></div>
+            <span class="diag-flag" id="diagFlag">-</span>
+          </div>
+          <div class="meta" id="legend" style="margin-top:6px;"></div>
+        </section>
+
+        <section class="newbie-guide" id="newbieGuide">
+          <button class="newbie-close" id="newbieClose">关闭</button>
+          <div class="meta" id="newbieTitle">新手三步：先处理逾期，再看提醒，最后生成跟进。</div>
+          <div class="newbie-actions">
+            <button id="newbieStepOverdue">1) 处理逾期</button>
+            <button id="newbieStepAlerts">2) 查看提醒</button>
+            <button id="newbieStepFollowup">3) 生成跟进</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <p class="meta" id="permissionText"><strong>鏉冮檺澹版槑锛</strong>棣栨瀵煎叆浠呭仛鍙鎵弿锛屼笉浼氫慨鏀瑰師濮嬫枃浠躲€</p>
+          <div style="margin-top:8px;font-size:13px;" id="outputLabelWrap">杈撳嚭鏂囦欢澶癸細<code id="outputDirText">鍔犺浇涓?..</code></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <input id="outputDirInput" type="text" placeholder="渚嬪 C:\\Users\\浣燶\Documents\\TradeAssistantOutput" style="flex:1;min-width:320px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;" />
+            <button id="saveOutputDir">淇濆瓨杈撳嚭鐩綍</button>
+          </div>
+        </section>
+
+        <section id="kpis" class="grid-6 advanced"></section>
+
+        <section>
+          <h2 class="section-title" id="alertsTitle">鍏抽敭椋庨櫓鎻愰啋</h2>
+          <div id="alerts" class="grid-3"></div>
+        </section>
+
+        <section>
+          <h2 class="section-title" id="taskFilterTitle">浠诲姟绛涢€</h2>
+          <div class="card">
+            <div class="filters-grid">
+              <div>
+                <div class="filter-label" id="taskStatusFilterLabel">鐘舵€</div>
+                <select id="taskStatusFilter">
+                  <option value="all">鍏ㄩ儴</option>
+                  <option value="open">开放任务</option>
+                  <option value="waiting_reply">寰呭洖澶</option>
+                  <option value="in_progress">杩涜涓</option>
+                  <option value="overdue">宸查€炬湡</option>
+                  <option value="completed">宸插畬鎴</option>
+                </select>
+              </div>
+              <div>
+                <div class="filter-label" id="taskSearchLabel">浠诲姟鍏抽敭璇</div>
+                <input id="taskSearchInput" type="text" placeholder="鎼滅储浠诲姟鏍囬鎴栧鎴峰悕" />
+              </div>
+              <div>
+                <div class="filter-label" id="customerSearchLabel">瀹㈡埛鍏抽敭璇</div>
+                <input id="customerSearchInput" type="text" placeholder="鎼滅储瀹㈡埛鍚嶇О鎴?ID" />
+              </div>
+              <div style="display:flex;justify-content:flex-end;align-items:flex-end;">
+                <button id="clearTaskFilters">娓呯┖绛涢€</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="section-title" id="focusTitle">浠婃棩閲嶇偣</h2>
+          <div id="focus" class="grid-3"></div>
+        </section>
+
+        <section id="customersSection">
+          <h2 class="section-title" id="customersTitle">瀹㈡埛绾</h2>
+          <div id="customers" class="grid-3"></div>
+        </section>
+
+        <section id="kanbanSection" class="advanced">
+          <h2 class="section-title" id="kanbanTitle">浠诲姟鐪嬫澘</h2>
+          <div id="kanban" class="grid-4"></div>
+        </section>
+
+        <section id="eventsSection" class="advanced">
+          <h2 class="section-title" id="eventsTitle">鏈€杩戜簨浠</h2>
+          <div id="list" class="grid-3"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const I18N = {
+      zh: {
+        title: "外贸助理状态看板",
+        subtitle: "任务状态 + 事件流（每 5 秒自动刷新）",
+        navDashboard: "Dashboard",
+        navKanban: "Kanban",
+        navCustomers: "Customers",
+        navEvents: "Events",
+        modeSimple: "简洁",
+        modeFull: "完整",
+        refresh: "刷新",
+        langZh: "中文",
+        langEn: "EN",
+        permission: "权限声明：首次导入仅读取扫描，不会修改原始文件。",
+        outputLabel: "输出文件夹：",
+        saveOutput: "保存输出目录",
+        loading: "加载中...",
+        noData: "暂无数据",
+        close: "关闭",
+        preview: "预览",
+        copyContent: "复制内容",
+        copied: "已复制",
+        readFailed: "读取失败",
+        loadFailed: "加载失败",
+        updateFailed: "更新失败",
+        saveFailed: "保存失败",
+        saved: "已保存",
+        inputOutputDir: "请先输入输出目录",
+        diagFlagPrefix: "诊断: ",
+        diagStatusOk: "正常",
+        diagStatusWarn: "告警",
+        diagStatusUnknown: "-",
+        diagTooltipOk: "运行状态正常",
+        diagTooltipWarn: "最近问题",
+        diagTooltipUnknown: "诊断状态未知",
+        newbieTitle: "新手三步：先处理逾期，再看提醒，最后生成跟进。",
+        newbieClose: "关闭",
+        newbieStepOverdue: "1) 处理逾期",
+        newbieStepAlerts: "2) 查看提醒",
+        newbieStepFollowup: "3) 生成跟进",
+        alertViewDetail: "查看详情",
+        alertGoHandle: "去处理",
+        tasks: "任务",
+        events: "事件",
+        files: "文件",
+        due: "到期",
+        score: "评分",
+        open: "开放",
+        inProgress: "进行中",
+        overdue: "逾期",
+        latest: "最近",
+        kpiOpen: "开放任务",
+        kpiOverdue: "已逾期",
+        kpiInProgress: "进行中",
+        kpiHigh: "高优先级",
+        kpiAlerts: "提醒总数",
+        kpiDueSoon: "临近到期",
+        taskFilterTitle: "任务筛选",
+        filterStatus: "状态",
+        filterAll: "全部",
+        filterOpen: "开放任务",
+        taskSearchLabel: "任务关键词",
+        customerSearchLabel: "客户关键词",
+        taskSearchPlaceholder: "搜索任务标题或客户名",
+        customerSearchPlaceholder: "搜索客户名称或 ID",
+        clearTaskFilters: "清空筛选",
+        alertsTitle: "关键风险提醒",
+        focusTitle: "今日重点",
+        customersTitle: "客户线",
+        kanbanTitle: "任务看板",
+        eventsTitle: "最近事件",
+        overdueTag: "已逾期",
+        dueSoonTag: "即将到期",
+        status: { waiting_reply: "待回复", in_progress: "进行中", overdue: "已逾期", completed: "已完成" },
+        action: {
+          generate_quote_draft: "生成报价草稿",
+          generate_followup_draft: "生成跟进草稿",
+          ingest_email_thread: "导入邮件线程",
+          conversation_sync: "同步对话记忆"
+        },
+        done: "完成",
+        setInProgress: "进行中",
+        setWaiting: "待回复",
+        legend: "开放 = 待回复 + 进行中 + 逾期；评分越高优先级越高；待回复=等对方反馈，逾期=超过跟进时点。",
+        statsFmt: (e, t, c, a) => `最近事件 ${e} | 状态看板 ${t} | 客户线 ${c} | 风险提醒 ${a}`
+      },
+      en: {
+        title: "Trade Assistant State Board",
+        subtitle: "Task states + event stream (auto refresh every 5 seconds)",
+        navDashboard: "Dashboard",
+        navKanban: "Kanban",
+        navCustomers: "Customers",
+        navEvents: "Events",
+        modeSimple: "Simple",
+        modeFull: "Full",
+        refresh: "Refresh",
+        langZh: "ZH",
+        langEn: "EN",
+        permission: "Permission notice: first import is read-only scan and will not modify original files.",
+        outputLabel: "Output folder:",
+        saveOutput: "Save output folder",
+        loading: "Loading...",
+        noData: "No data",
+        close: "Close",
+        preview: "Preview",
+        copyContent: "Copy content",
+        copied: "Copied",
+        readFailed: "Read failed",
+        loadFailed: "Load failed",
+        updateFailed: "Update failed",
+        saveFailed: "Save failed",
+        saved: "Saved",
+        inputOutputDir: "Please input output folder first",
+        diagFlagPrefix: "Diag: ",
+        diagStatusOk: "Healthy",
+        diagStatusWarn: "Warning",
+        diagStatusUnknown: "-",
+        diagTooltipOk: "Runtime checks healthy",
+        diagTooltipWarn: "Recent issue",
+        diagTooltipUnknown: "Diagnostics status unknown",
+        newbieTitle: "3 quick steps: handle overdue, check alerts, then draft follow-ups.",
+        newbieClose: "Close",
+        newbieStepOverdue: "1) Handle Overdue",
+        newbieStepAlerts: "2) Check Alerts",
+        newbieStepFollowup: "3) Draft Follow-up",
+        alertViewDetail: "View Detail",
+        alertGoHandle: "Handle Now",
+        tasks: "Tasks",
+        events: "Events",
+        files: "Files",
+        due: "Due",
+        score: "Score",
+        open: "Open",
+        inProgress: "In Progress",
+        overdue: "Overdue",
+        latest: "Latest",
+        kpiOpen: "Open Tasks",
+        kpiOverdue: "Overdue",
+        kpiInProgress: "In Progress",
+        kpiHigh: "High Priority",
+        kpiAlerts: "Alert Total",
+        kpiDueSoon: "Due Soon",
+        taskFilterTitle: "Task Filters",
+        filterStatus: "Status",
+        filterAll: "All",
+        filterOpen: "Open Tasks",
+        taskSearchLabel: "Task Keyword",
+        customerSearchLabel: "Customer Keyword",
+        taskSearchPlaceholder: "Search task title or customer",
+        customerSearchPlaceholder: "Search customer name or ID",
+        clearTaskFilters: "Clear filters",
+        alertsTitle: "Critical Alerts",
+        focusTitle: "Today Focus",
+        customersTitle: "Customer Lines",
+        kanbanTitle: "Task Kanban",
+        eventsTitle: "Recent Events",
+        overdueTag: "Overdue",
+        dueSoonTag: "Due soon",
+        status: { waiting_reply: "Waiting Reply", in_progress: "In Progress", overdue: "Overdue", completed: "Completed" },
+        action: {
+          generate_quote_draft: "Generate quote draft",
+          generate_followup_draft: "Generate follow-up draft",
+          ingest_email_thread: "Ingest email thread",
+          conversation_sync: "Sync conversation memory"
+        },
+        done: "Done",
+        setInProgress: "In Progress",
+        setWaiting: "Waiting",
+        legend: "Open = waiting + in progress + overdue; higher score means higher priority; overdue means follow-up is missed.",
+        statsFmt: (e, t, c, a) => `Events ${e} | Tasks ${t} | Customers ${c} | Alerts ${a}`
+      }
+    };
+
+    const q = new URLSearchParams(location.search);
+    const deepLink = {
+      taskStatus: (q.get("task_status") || "").trim().toLowerCase(),
+      customerId: (q.get("customer_id") || "").trim(),
+      customerName: (q.get("customer_name") || "").trim(),
+      taskId: (q.get("task_id") || "").trim(),
+    };
+    let deepLinkApplied = false;
+    let mode = (q.get("mode") || localStorage.getItem("ta_view_mode") || "simple").toLowerCase();
+    if (!["simple", "full"].includes(mode)) mode = "simple";
+    let lang = (localStorage.getItem("ta_lang") || "zh").toLowerCase();
+    if (!["zh", "en"].includes(lang)) lang = "zh";
+    const NEWBIE_DISMISS_KEY = "ta_newbie_guide_dismissed";
+
+    const $ = (id) => document.getElementById(id);
+    const adv = () => [...document.querySelectorAll(".advanced")];
+    const t = () => I18N[lang];
+    let boardSnapshot = null;
+
+    async function api(url, opt) {
+      const resp = await fetch(url, opt);
+      return [resp, await resp.json()];
+    }
+
+    function esc(s) {
+      return String(s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    function badge(s) {
+      return t().status[s] || s;
+    }
+
+    function actionLabel(name) {
+      return t().action[name] || name;
+    }
+
+    function fmt(iso) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString(lang === "zh" ? "zh-CN" : "en-US");
+    }
+
+    function card(html, cls = "") {
+      return `<div class="card ${cls}">${html}</div>`;
+    }
+
+    function readTaskFilters() {
+      return {
+        status: ($("taskStatusFilter")?.value || "all").trim(),
+        taskQuery: ($("taskSearchInput")?.value || "").trim().toLowerCase(),
+        customerQuery: ($("customerSearchInput")?.value || "").trim().toLowerCase(),
+      };
+    }
+
+    function applyTaskFilters(tasks, filters) {
+      return (tasks || []).filter((it) => {
+        const status = String(it.computed_status || it.status || "");
+        if (filters.status === "open") {
+          if (!["waiting_reply", "in_progress", "overdue"].includes(status)) return false;
+        } else if (filters.status !== "all" && status !== filters.status) {
+          return false;
+        }
+        const title = String(it.title || "").toLowerCase();
+        const customerName = String(it.customer_name || "").toLowerCase();
+        const customerId = String(it.customer_id || "").toLowerCase();
+        if (filters.taskQuery && !title.includes(filters.taskQuery) && !customerName.includes(filters.taskQuery)) return false;
+        if (filters.customerQuery && !customerName.includes(filters.customerQuery) && !customerId.includes(filters.customerQuery)) return false;
+        return true;
+      });
+    }
+
+    function applyCustomerFilters(rows, filters) {
+      return (rows || []).filter((row) => {
+        const customerName = String(row.customer_name || "").toLowerCase();
+        const customerId = String(row.customer_id || "").toLowerCase();
+        if (filters.customerQuery && !customerName.includes(filters.customerQuery) && !customerId.includes(filters.customerQuery)) return false;
+        if (filters.taskQuery && !customerName.includes(filters.taskQuery) && !customerId.includes(filters.taskQuery)) return false;
+        if (filters.status === "all") return true;
+        if (filters.status === "open") return Number(row.open_tasks || 0) > 0;
+        if (filters.status === "waiting_reply") return Number(row.open_tasks || 0) > Number(row.in_progress_tasks || 0) + Number(row.overdue_tasks || 0);
+        if (filters.status === "in_progress") return Number(row.in_progress_tasks || 0) > 0;
+        if (filters.status === "overdue") return Number(row.overdue_tasks || 0) > 0;
+        if (filters.status === "completed") return Number(row.open_tasks || 0) === 0;
+        return true;
+      });
+    }
+
+    function jumpToKpiTarget(action) {
+      const statusFilter = $("taskStatusFilter");
+      const resetKeywordFilters = () => {
+        $("taskSearchInput").value = "";
+        $("customerSearchInput").value = "";
+      };
+      const scrollTo = (targetId) => {
+        const target = $(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      };
+      const setStatus = (value) => {
+        if (!statusFilter) return;
+        const hasValue = [...statusFilter.options].some((opt) => opt.value === value);
+        statusFilter.value = hasValue ? value : "all";
+      };
+
+      if (action === "open") {
+        setStatus("open");
+        resetKeywordFilters();
+        scrollTo("kanbanSection");
+      } else if (action === "overdue") {
+        setStatus("overdue");
+        resetKeywordFilters();
+        scrollTo("kanbanSection");
+      } else if (action === "in_progress") {
+        setStatus("in_progress");
+        resetKeywordFilters();
+        scrollTo("kanbanSection");
+      } else if (action === "high_priority") {
+        setStatus("open");
+        resetKeywordFilters();
+        scrollTo("focusTitle");
+      } else if (action === "alerts" || action === "due_soon") {
+        scrollTo("alertsTitle");
+      } else {
+        return;
+      }
+      renderBoard();
+    }
+
+    function applyEntryGuide() {
+      const fromDesktop = q.get("from") === "desktop";
+      const tour = q.get("tour") === "1";
+      const dismissed = localStorage.getItem(NEWBIE_DISMISS_KEY) === "1";
+      const guide = $("newbieGuide");
+      if (guide) {
+        guide.style.display = (fromDesktop || tour) && !dismissed ? "grid" : "none";
+      }
+      if (tour && !dismissed) {
+        setTimeout(() => jumpToKpiTarget("overdue"), 120);
+      }
+    }
+
+    function dismissEntryGuide() {
+      localStorage.setItem(NEWBIE_DISMISS_KEY, "1");
+      const guide = $("newbieGuide");
+      if (guide) {
+        guide.style.display = "none";
+      }
+    }
+
+    function applyDeepLink() {
+      if (deepLinkApplied) return;
+      const hasLink = Boolean(deepLink.taskStatus || deepLink.customerId || deepLink.customerName || deepLink.taskId);
+      if (!hasLink) {
+        deepLinkApplied = true;
+        return;
+      }
+
+      const statusFilter = $("taskStatusFilter");
+      if (statusFilter && deepLink.taskStatus) {
+        const wanted = deepLink.taskStatus;
+        const allowed = ["all", "open", "waiting_reply", "in_progress", "overdue", "completed"];
+        statusFilter.value = allowed.includes(wanted) ? wanted : "open";
+      }
+      if (deepLink.taskId) {
+        $("taskSearchInput").value = deepLink.taskId;
+      }
+      if (deepLink.customerId || deepLink.customerName) {
+        $("customerSearchInput").value = deepLink.customerName || deepLink.customerId;
+      }
+
+      renderBoard();
+
+      const scrollTo = (id) => {
+        const target = $(id);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+      if (deepLink.taskStatus === "high_priority") {
+        scrollTo("focusTitle");
+      } else if (deepLink.taskStatus === "alerts" || deepLink.taskStatus === "due_soon") {
+        scrollTo("alertsTitle");
+      } else {
+        scrollTo("kanbanSection");
+      }
+
+      if (deepLink.customerId) {
+        setTimeout(() => showCustomerDetail(deepLink.customerId, deepLink.customerName || deepLink.customerId), 120);
+      }
+      deepLinkApplied = true;
+    }
+
+    function applyMode() {
+      adv().forEach((el) => el.classList.toggle("hide", mode === "simple"));
+      $("modeSimple").disabled = mode === "simple";
+      $("modeFull").disabled = mode === "full";
+    }
+
+    function applyLang() {
+      document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+      document.title = t().title;
+      $("titleMain").textContent = t().title;
+      $("titleSub").textContent = t().subtitle;
+      $("navDashboard").textContent = t().navDashboard;
+      $("navKanban").textContent = t().navKanban;
+      $("navCustomers").textContent = t().navCustomers;
+      $("navEvents").textContent = t().navEvents;
+      $("modeSimple").textContent = t().modeSimple;
+      $("modeFull").textContent = t().modeFull;
+      $("refresh").textContent = t().refresh;
+      $("langZh").textContent = t().langZh;
+      $("langEn").textContent = t().langEn;
+      const permissionPrefix = lang === "zh" ? "权限声明：" : "Permission:";
+      const permissionBody =
+        lang === "zh"
+          ? t().permission.replace(/^权限声明[:：]\s*/, "")
+          : t().permission.replace(/^Permission notice:\s*/, "");
+      $("permissionText").innerHTML = `<strong>${permissionPrefix}</strong>${permissionBody}`;
+      $("outputLabelWrap").innerHTML = `${t().outputLabel}<code id="outputDirText">${t().loading}</code>`;
+      $("saveOutputDir").textContent = t().saveOutput;
+      $("diagFlag").textContent = `${t().diagFlagPrefix}${t().diagStatusUnknown}`;
+      $("diagFlag").className = "diag-flag";
+      $("diagFlag").title = t().diagTooltipUnknown;
+      $("newbieTitle").textContent = t().newbieTitle;
+      $("newbieClose").textContent = t().newbieClose;
+      $("newbieStepOverdue").textContent = t().newbieStepOverdue;
+      $("newbieStepAlerts").textContent = t().newbieStepAlerts;
+      $("newbieStepFollowup").textContent = t().newbieStepFollowup;
+      $("taskFilterTitle").textContent = t().taskFilterTitle;
+      $("taskStatusFilterLabel").textContent = t().filterStatus;
+      $("taskSearchLabel").textContent = t().taskSearchLabel;
+      $("customerSearchLabel").textContent = t().customerSearchLabel;
+      $("taskSearchInput").placeholder = t().taskSearchPlaceholder;
+      $("customerSearchInput").placeholder = t().customerSearchPlaceholder;
+      $("clearTaskFilters").textContent = t().clearTaskFilters;
+      $("taskStatusFilter").innerHTML = `
+        <option value="all">${t().filterAll}</option>
+        <option value="open">${t().filterOpen}</option>
+        <option value="waiting_reply">${t().status.waiting_reply}</option>
+        <option value="in_progress">${t().status.in_progress}</option>
+        <option value="overdue">${t().status.overdue}</option>
+        <option value="completed">${t().status.completed}</option>
+      `;
+      $("alertsTitle").textContent = t().alertsTitle;
+      $("focusTitle").textContent = t().focusTitle;
+      $("customersTitle").textContent = t().customersTitle;
+      $("kanbanTitle").textContent = t().kanbanTitle;
+      $("eventsTitle").textContent = t().eventsTitle;
+    }
+
+    async function updateTask(taskId, status, note = "") {
+      const [resp, data] = await api("/api/task/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task_id: taskId, status, note }),
+      });
+      if (!resp.ok || data.status !== "ok") {
+        alert(data.message || t().updateFailed);
+        return;
+      }
+      await load();
+    }
+
+    async function showCustomerDetail(customerId, title = "") {
+      const [resp, data] = await api(`/api/state/customer?customer_id=${encodeURIComponent(customerId)}`);
+      if (!resp.ok) {
+        alert(data.message || t().loadFailed);
+        return;
+      }
+      const detail = data.detail || {};
+      const taskHtml = (detail.tasks || [])
+        .slice()
+        .reverse()
+        .slice(0, 30)
+        .map(
+          (it) =>
+            `<div class="list-card"><div class="list-title">${esc(it.title || "")}</div><div class="list-sub">${badge(it.computed_status || it.status || "")}</div><div class="list-sub">${t().due}: ${fmt(it.due_at_utc)}</div></div>`
+        )
+        .join("") || `<div class="meta">${t().noData}</div>`;
+      const eventHtml = (detail.events || [])
+        .slice()
+        .reverse()
+        .slice(0, 20)
+        .map(
+          (e) =>
+            `<div class="list-card"><div class="list-title">${esc(actionLabel(e.action_name || ""))}</div><div class="list-sub">${fmt(e.created_at_utc)}</div></div>`
+        )
+        .join("") || `<div class="meta">${t().noData}</div>`;
+      const arts = (detail.artifacts || []).slice(0, 10);
+      const artHtml = arts
+        .map((p, idx) => `<div class="meta"><button class="link-btn" data-art="${idx}">${t().preview}: ${esc(p)}</button></div>`)
+        .join("") || `<div class="meta">${t().noData}</div>`;
+
+      const mask = document.createElement("div");
+      mask.className = "modal-mask";
+      mask.innerHTML = `
+        <div class="modal">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <div style="font-size:16px;font-weight:700;">${esc(title || detail.customer_name || customerId)}</div>
+            <button id="mClose">${t().close}</button>
+          </div>
+          <div class="split" style="margin-top:10px;">
+            <div><div class="meta" style="margin-bottom:8px;">${t().tasks}</div>${taskHtml}</div>
+            <div><div class="meta" style="margin-bottom:8px;">${t().events}</div>${eventHtml}</div>
+          </div>
+          <div style="margin-top:10px;">
+            <div class="meta" style="margin-bottom:8px;">${t().files}</div>
+            ${artHtml}
+            <div style="margin-top:8px;"><button id="copyContent">${t().copyContent}</button></div>
+            <pre id="artifactContent" class="hide" style="margin-top:8px;"></pre>
+          </div>
+        </div>
+      `;
+      let lastArtifactContent = "";
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) mask.remove();
+      });
+      mask.querySelector("#mClose").addEventListener("click", () => mask.remove());
+      mask.querySelector("#copyContent").addEventListener("click", async () => {
+        if (!lastArtifactContent) return;
+        try {
+          await navigator.clipboard.writeText(lastArtifactContent);
+          alert(t().copied);
+        } catch (_e) {}
+      });
+      mask.querySelectorAll("[data-art]").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          const p = arts[Number(btn.getAttribute("data-art"))];
+          const [r, d] = await api(`/api/artifact/read?path=${encodeURIComponent(p)}`);
+          if (!r.ok) {
+            alert(d.message || t().readFailed);
+            return;
+          }
+          lastArtifactContent = d.content || "";
+          const pre = mask.querySelector("#artifactContent");
+          pre.classList.remove("hide");
+          pre.textContent = lastArtifactContent;
+        })
+      );
+      document.body.appendChild(mask);
+    }
+
+    function renderBoard() {
+      if (!boardSnapshot) return;
+      const filters = readTaskFilters();
+      const columns = boardSnapshot.columns || {};
+      const taskCount = Object.values(columns).reduce((a, b) => a + (b || []).length, 0);
+      $("stats").textContent = t().statsFmt(
+        boardSnapshot.eventsCount || 0,
+        taskCount,
+        boardSnapshot.customersCount || 0,
+        boardSnapshot.alertsCount || 0
+      );
+      $("legend").textContent = t().legend;
+      const diag = boardSnapshot.diagnostics || {};
+      const diagStatus = String(diag.status || "degraded").toLowerCase();
+      const issueRows = Array.isArray(diag.issue_logs) ? diag.issue_logs : [];
+      const diagFlag = $("diagFlag");
+      if (diagStatus === "ok") {
+        diagFlag.textContent = `${t().diagFlagPrefix}${t().diagStatusOk}`;
+        diagFlag.className = "diag-flag diag-ok";
+        diagFlag.title = t().diagTooltipOk;
+      } else if (diagStatus === "degraded" || diagStatus === "warn" || diagStatus === "warning" || diagStatus === "error") {
+        const latestIssue = issueRows.length > 0 ? issueRows[issueRows.length - 1] : null;
+        const issueText = latestIssue
+          ? `[${String(latestIssue.level || "").toUpperCase()}] ${String(latestIssue.message || "")} (${fmt(latestIssue.at_utc || "")})`
+          : t().diagTooltipWarn;
+        diagFlag.textContent = `${t().diagFlagPrefix}${t().diagStatusWarn}`;
+        diagFlag.className = "diag-flag diag-warn";
+        diagFlag.title = issueText;
+      } else {
+        diagFlag.textContent = `${t().diagFlagPrefix}${t().diagStatusUnknown}`;
+        diagFlag.className = "diag-flag";
+        diagFlag.title = t().diagTooltipUnknown;
+      }
+
+      const s = boardSnapshot.summary || {};
+      const st = s.status_counts || {};
+      const alertCounts = s.alert_counts || {};
+      const kpiItems = [
+        ["open", t().kpiOpen, Number(st.waiting_reply || 0) + Number(st.in_progress || 0) + Number(st.overdue || 0)],
+        ["overdue", t().kpiOverdue, Number(st.overdue || 0)],
+        ["in_progress", t().kpiInProgress, Number(st.in_progress || 0)],
+        ["high_priority", t().kpiHigh, Number(s.high_priority_open || 0)],
+        ["alerts", t().kpiAlerts, Number(s.alerts_total || 0)],
+        ["due_soon", t().kpiDueSoon, Number(alertCounts.due_soon || 0)],
+      ];
+      $("kpis").innerHTML = kpiItems
+        .map(
+          ([action, k, v]) => `
+            <div class="card kpi-card" data-kpi-action="${action}" role="button" tabindex="0">
+              <div class="kpi-label">${k}</div>
+              <div class="kpi-value">${v}</div>
+            </div>
+          `
+        )
+        .join("");
+      document.querySelectorAll(".kpi-card[data-kpi-action]").forEach((el) => {
+        el.addEventListener("click", () => jumpToKpiTarget(el.getAttribute("data-kpi-action") || ""));
+        el.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            jumpToKpiTarget(el.getAttribute("data-kpi-action") || "");
+          }
+        });
+      });
+
+      $("alerts").innerHTML =
+        (boardSnapshot.alertsRows || [])
+          .map(
+            (r) =>
+              card(
+                `<div class="list-title" style="color:${r.alert_type === "overdue" ? "var(--danger)" : "var(--warn)"}">${r.alert_type === "overdue" ? t().overdueTag : t().dueSoonTag}</div><div class="list-sub"><button class="link-btn detail-alert-customer" data-cid="${esc(r.customer_id || "")}" data-cname="${esc(r.customer_name || r.customer_id || "")}">${esc(r.customer_name || r.customer_id || "")}</button></div><div class="list-sub" title="${esc(r.alert_message || "")}">${esc(r.alert_message || "")}</div><div class="list-sub"><button class="link-btn detail-alert-customer" data-cid="${esc(r.customer_id || "")}" data-cname="${esc(r.customer_name || r.customer_id || "")}">${esc(r.title || "")}</button></div><div class="actions"><button class="alert-view-detail" data-cid="${esc(r.customer_id || "")}" data-cname="${esc(r.customer_name || r.customer_id || "")}">${t().alertViewDetail}</button><button class="alert-go-handle" data-alert-type="${esc(r.alert_type || "")}">${t().alertGoHandle}</button></div>`,
+                "left-danger"
+              )
+          )
+          .join("") || card(`<div class="meta">${t().noData}</div>`);
+
+      const focusRows = applyTaskFilters(boardSnapshot.focusRows || [], filters);
+      $("focus").innerHTML =
+        focusRows
+          .map(
+            (r) =>
+              card(
+                `<div class="list-title"><button class="link-btn detail-task" data-cid="${esc(r.customer_id || "")}" data-cname="${esc(r.customer_name || "")}">${esc(r.title || "")}</button></div><div class="list-sub">${esc(r.customer_name || "")}</div><div class="list-sub"><span class="status-pill">${badge(r.computed_status)}</span>${t().score}: ${r.priority_score || 0}</div><div class="list-sub">${t().due}: ${fmt(r.due_at_utc)}</div><div class="actions"><button class="task-op" data-task="${esc(r.task_id || "")}" data-status="completed">${t().done}</button><button class="task-op" data-task="${esc(r.task_id || "")}" data-status="in_progress">${t().setInProgress}</button><button class="task-op" data-task="${esc(r.task_id || "")}" data-status="waiting_reply">${t().setWaiting}</button></div>`
+              )
+          )
+          .join("") || card(`<div class="meta">${t().noData}</div>`);
+
+      const customerRows = applyCustomerFilters(boardSnapshot.customerRows || [], filters);
+      $("customers").innerHTML =
+        customerRows
+          .map(
+            (r) =>
+              card(
+                `<div class="list-title"><button class="link-btn detail-customer" data-cid="${esc(r.customer_id || "")}" data-cname="${esc(r.customer_name || r.customer_id || "")}">${esc(r.customer_name || r.customer_id)}</button></div><div class="list-sub">${t().open} ${r.open_tasks} | ${t().inProgress} ${r.in_progress_tasks} | ${t().overdue} ${r.overdue_tasks}</div><div class="list-sub">${t().score}: ${r.max_priority_score || 0}</div><div class="list-sub">${t().latest}: ${fmt(r.latest_event_at_utc || "")}</div>`
+              )
+          )
+          .join("") || card(`<div class="meta">${t().noData}</div>`);
+
+      const order = ["waiting_reply", "in_progress", "overdue", "completed"];
+      $("kanban").innerHTML = order
+        .map((k) => {
+          const tasks = applyTaskFilters(columns[k] || [], filters);
+          const body =
+            tasks
+              .map(
+                (it) =>
+                  `<div class="list-card"><div class="list-title"><button class="link-btn detail-kanban" data-cid="${esc(it.customer_id || "")}" data-cname="${esc(it.customer_name || "")}">${esc(it.title || "")}</button></div><div class="list-sub">${esc(it.customer_name || "")}</div><div class="list-sub">${t().due}: ${fmt(it.due_at_utc)} | ${t().score}: ${it.priority_score || 0}</div></div>`
+              )
+              .join("") || `<div class="meta">${t().noData}</div>`;
+          return `<div class="card"><div class="list-title" style="margin-bottom:8px;">${badge(k)} (${tasks.length})</div>${body}</div>`;
+        })
+        .join("");
+
+      $("list").innerHTML =
+        (boardSnapshot.events || [])
+          .slice()
+          .reverse()
+          .slice(0, 12)
+          .map(
+            (e) =>
+              card(
+                `<div class="list-title">${esc(actionLabel(e.action_name || ""))}</div><div class="list-sub">${fmt(e.created_at_utc || "")}</div><div class="list-sub">${(e.results || []).map((r) => `${esc(r.status)}: ${esc(r.message)}`).join("<br/>") || t().noData}</div>`
+              )
+          )
+          .join("") || card(`<div class="meta">${t().noData}</div>`);
+
+      document.querySelectorAll(".task-op").forEach((btn) =>
+        btn.addEventListener("click", () => updateTask(btn.dataset.task, btn.dataset.status))
+      );
+      document.querySelectorAll(".detail-task").forEach((btn) =>
+        btn.addEventListener("click", () => showCustomerDetail(btn.dataset.cid, btn.dataset.cname))
+      );
+      document.querySelectorAll(".detail-customer").forEach((btn) =>
+        btn.addEventListener("click", () => showCustomerDetail(btn.dataset.cid, btn.dataset.cname))
+      );
+      document.querySelectorAll(".detail-kanban").forEach((btn) =>
+        btn.addEventListener("click", () => showCustomerDetail(btn.dataset.cid, btn.dataset.cname))
+      );
+      document.querySelectorAll(".detail-alert-customer").forEach((btn) =>
+        btn.addEventListener("click", () => showCustomerDetail(btn.dataset.cid, btn.dataset.cname))
+      );
+      document.querySelectorAll(".alert-view-detail").forEach((btn) =>
+        btn.addEventListener("click", () => showCustomerDetail(btn.dataset.cid, btn.dataset.cname))
+      );
+      document.querySelectorAll(".alert-go-handle").forEach((btn) =>
+        btn.addEventListener("click", () =>
+          jumpToKpiTarget((btn.dataset.alertType || "").toLowerCase() === "due_soon" ? "due_soon" : "overdue")
+        )
+      );
+    }
+
+    async function load() {
+      const [[, summaryData], [, eventsData], [, kanbanData], [, customersData], [, focusData], [, alertsData], [, diagnosticsData]] = await Promise.all([
+        api("/api/state/summary"),
+        api("/api/state/latest"),
+        api("/api/state/kanban"),
+        api("/api/state/customers"),
+        api("/api/state/focus?limit=8"),
+        api("/api/state/alerts?limit=6"),
+        api("/api/diagnostics/status").catch(() => [{ ok: false }, { status: "degraded", checks: [], issue_logs: [] }]),
+      ]);
+      boardSnapshot = {
+        summary: summaryData.summary || {},
+        events: eventsData.events || [],
+        eventsCount: eventsData.count || 0,
+        columns: kanbanData.columns || {},
+        customerRows: customersData.rows || [],
+        customersCount: customersData.count || 0,
+        focusRows: focusData.rows || [],
+        alertsRows: alertsData.rows || [],
+        alertsCount: alertsData.count || 0,
+        diagnostics: diagnosticsData || {},
+      };
+      renderBoard();
+      applyDeepLink();
+    }
+
+    async function loadOutputSettings() {
+      const [, data] = await api("/api/settings");
+      const dir = data?.effective_output_dir || data?.settings?.output_dir || "";
+      $("outputDirText").textContent = dir || t().loading;
+      $("outputDirInput").value = dir || "";
+    }
+
+    $("refresh").addEventListener("click", load);
+    $("modeSimple").addEventListener("click", () => {
+      mode = "simple";
+      localStorage.setItem("ta_view_mode", mode);
+      applyMode();
+    });
+    $("modeFull").addEventListener("click", () => {
+      mode = "full";
+      localStorage.setItem("ta_view_mode", mode);
+      applyMode();
+    });
+    $("langZh").addEventListener("click", async () => {
+      lang = "zh";
+      localStorage.setItem("ta_lang", lang);
+      applyLang();
+      await load();
+      await loadOutputSettings();
+    });
+    $("langEn").addEventListener("click", async () => {
+      lang = "en";
+      localStorage.setItem("ta_lang", lang);
+      applyLang();
+      await load();
+      await loadOutputSettings();
+    });
+    $("saveOutputDir").addEventListener("click", async () => {
+      const v = ($("outputDirInput")?.value || "").trim();
+      if (!v) {
+        alert(t().inputOutputDir);
+        return;
+      }
+      const [resp, data] = await api("/api/settings/output-dir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ output_dir: v }),
+      });
+      if (!resp.ok || data.status !== "ok") {
+        alert(data.message || t().saveFailed);
+        return;
+      }
+      await loadOutputSettings();
+      alert(t().saved);
+    });
+    $("taskStatusFilter").addEventListener("change", () => renderBoard());
+    $("taskSearchInput").addEventListener("input", () => renderBoard());
+    $("customerSearchInput").addEventListener("input", () => renderBoard());
+    $("clearTaskFilters").addEventListener("click", () => {
+      $("taskStatusFilter").value = "all";
+      $("taskSearchInput").value = "";
+      $("customerSearchInput").value = "";
+      renderBoard();
+    });
+    $("newbieStepOverdue").addEventListener("click", () => jumpToKpiTarget("overdue"));
+    $("newbieStepAlerts").addEventListener("click", () => jumpToKpiTarget("alerts"));
+    $("newbieStepFollowup").addEventListener("click", () => jumpToKpiTarget("open"));
+    $("newbieClose").addEventListener("click", dismissEntryGuide);
+
+    applyLang();
+    applyMode();
+    applyEntryGuide();
+    load();
+    loadOutputSettings();
+    setInterval(load, 5000);
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,17 @@
+外贸助理 Windows 内测安装步骤（小白版）
+
+1) 解压内测包到任意目录（例如：桌面\外贸助理_windows_内测包）。
+2) 双击“安装依赖_windows.bat”，等待窗口提示“完成”。
+3) 双击“启动外贸助理桌面版_windows.bat”。
+4) 首次进入后，按界面 3 步走：
+   - 1) One-click Start
+   - 2) One-click Import（导入历史资料）
+   - 3) Start Handling Tasks（进入网页看板）
+5) 网页看板中优先处理：
+   - 已逾期
+   - 关键风险提醒
+   - 开放任务
+
+常见问题：
+- 提示找不到 Python：安装 Python 3.11+，安装时勾选“Add Python to PATH”。
+- 提示服务异常：回到桌面端点击“One-click Start”重启服务。
