@@ -1,0 +1,66 @@
+name: Build InVault Releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: v1.0.0)"
+        required: true
+        default: "v0.1.0"
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            pkg_dir: 外贸助理_交接包/外贸助理_windows_内测包
+          - os: macos-latest
+            pkg_dir: 外贸助理_交接包/外贸助理_mac_内测包
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve Version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-Location "${{ matrix.pkg_dir }}"
+          ./scripts/build_windows_release.ps1 -Version "${{ steps.version.outputs.value }}"
+
+      - name: Build on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          cd "${{ matrix.pkg_dir }}"
+          chmod +x scripts/build_mac_release.sh
+          ./scripts/build_mac_release.sh "${{ steps.version.outputs.value }}"
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: invault-${{ runner.os }}-${{ steps.version.outputs.value }}
+          path: |
+            ${{ matrix.pkg_dir }}/release/*.zip
+            ${{ matrix.pkg_dir }}/release/*.dmg
