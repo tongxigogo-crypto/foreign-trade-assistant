@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 set -euo pipefail
 
 VERSION="${1:-$(date +%Y%m%d)}"
@@ -17,6 +17,9 @@ STAGE_DIR="$RELEASE_ROOT/TA_Beta_${VERSION}_mac"
 ZIP_PATH="$RELEASE_ROOT/TA_Beta_${VERSION}_mac.zip"
 BUILD_VENV="$ROOT_DIR/.venv-build"
 
+# Beta default: do not package unsigned InVault binary to avoid Gatekeeper hard block.
+USE_PYINSTALLER="${USE_PYINSTALLER:-0}"
+
 echo "==> Create build virtualenv"
 rm -rf "$BUILD_VENV"
 python3 -m venv "$BUILD_VENV"
@@ -24,47 +27,53 @@ source "$BUILD_VENV/bin/activate"
 
 echo "==> Install build dependencies"
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pyinstaller pystray pillow
+python -m pip install -r requirements.txt pystray pillow
+if [[ "$USE_PYINSTALLER" == "1" ]]; then
+  python -m pip install pyinstaller
+fi
 
 if [[ "$SKIP_TESTS" != "1" ]]; then
   echo "==> Run tests"
   python -m pytest -q
 fi
 
-echo "==> Build InVault executable (PyInstaller spec)"
-python -m PyInstaller \
-  --noconfirm \
-  --clean \
-  build/InVault.spec
-
 echo "==> Assemble beta package"
 mkdir -p "$RELEASE_ROOT"
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR"
-cp "dist/InVault" "$STAGE_DIR/InVault"
-chmod +x "$STAGE_DIR/InVault"
+
+cp -R "app" "$STAGE_DIR/app"
 cp -R "extension" "$STAGE_DIR/extension"
+[[ -d "config" ]] && cp -R "config" "$STAGE_DIR/config"
+[[ -d "docs" ]] && cp -R "docs" "$STAGE_DIR/docs"
 cp "README.md" "$STAGE_DIR/README.md"
-cp "GUIDE_MAC_FIRST_USE.txt" "$STAGE_DIR/GUIDE_MAC_FIRST_USE.txt"
-cat > "$STAGE_DIR/Launch_InVault_Mac.command" <<'EOF'
-#!/bin/bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
-if [ ! -x "./InVault" ]; then
-  osascript -e 'display dialog "未找到 InVault 可执行文件，请重新解压内测包。" buttons {"确定"} default button "确定"'
-  exit 1
+cp "requirements.txt" "$STAGE_DIR/requirements.txt"
+
+if [[ -f "Launch_InVault_Mac.command" ]]; then
+  cp "Launch_InVault_Mac.command" "$STAGE_DIR/Launch_InVault_Mac.command"
 fi
-exec ./InVault
-EOF
-cat > "$STAGE_DIR/启动外贸助理桌面版_mac.command" <<'EOF'
-#!/bin/bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
-exec ./Launch_InVault_Mac.command
-EOF
-chmod +x "$STAGE_DIR/Launch_InVault_Mac.command" "$STAGE_DIR/启动外贸助理桌面版_mac.command"
+if [[ -f "安装依赖_mac.command" ]]; then
+  cp "安装依赖_mac.command" "$STAGE_DIR/安装依赖_mac.command"
+fi
+if [[ -f "启动外贸助理桌面版_mac.command" ]]; then
+  cp "启动外贸助理桌面版_mac.command" "$STAGE_DIR/启动外贸助理桌面版_mac.command"
+fi
+if [[ -f "新手必读_首次安装与使用.txt" ]]; then
+  cp "新手必读_首次安装与使用.txt" "$STAGE_DIR/新手必读_首次安装与使用.txt"
+elif [[ -f "GUIDE_MAC_FIRST_USE.txt" ]]; then
+  cp "GUIDE_MAC_FIRST_USE.txt" "$STAGE_DIR/GUIDE_MAC_FIRST_USE.txt"
+fi
+
+chmod +x "$STAGE_DIR"/*.command 2>/dev/null || true
+
+if [[ "$USE_PYINSTALLER" == "1" ]]; then
+  echo "==> Build InVault executable (optional)"
+  python -m PyInstaller --noconfirm --clean build/InVault.spec
+  if [[ -f "dist/InVault" ]]; then
+    cp "dist/InVault" "$STAGE_DIR/InVault"
+    chmod +x "$STAGE_DIR/InVault"
+  fi
+fi
 
 echo "==> Create zip"
 rm -f "$ZIP_PATH"
@@ -90,9 +99,8 @@ with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
 PY
 fi
 
-echo "==> Skip dmg in beta zip mode"
-
 echo
 echo "Build completed."
 echo "Stage dir: $STAGE_DIR"
 echo "Zip file : $ZIP_PATH"
+echo "USE_PYINSTALLER=$USE_PYINSTALLER"
