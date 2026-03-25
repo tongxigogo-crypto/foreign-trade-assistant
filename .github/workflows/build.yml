@@ -92,16 +92,16 @@ jobs:
 
           chmod +x "$SCRIPT_DIR"/*.command 2>/dev/null || true
 
-          INSTALL_SCRIPT=""
-          if [ -f "$SCRIPT_DIR/安装依赖_mac.command" ]; then
-            INSTALL_SCRIPT="$SCRIPT_DIR/安装依赖_mac.command"
-          elif [ -f "$SCRIPT_DIR/install_mac.command" ]; then
-            INSTALL_SCRIPT="$SCRIPT_DIR/install_mac.command"
-          fi
-
-          READY_FLAG="$SCRIPT_DIR/.venv/.invault_ready_v1"
-          if [ ! -f "$READY_FLAG" ] && [ -n "$INSTALL_SCRIPT" ]; then
-            bash "$INSTALL_SCRIPT"
+          # Bootstrap local runtime without depending on localized script names.
+          if [ ! -x "$SCRIPT_DIR/.venv/bin/python" ] && command -v python3 >/dev/null 2>&1; then
+            python3 -m venv "$SCRIPT_DIR/.venv" || true
+            if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
+              "$SCRIPT_DIR/.venv/bin/python" -m pip install --upgrade pip >/dev/null 2>&1 || true
+              if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
+                "$SCRIPT_DIR/.venv/bin/python" -m pip install -r "$SCRIPT_DIR/requirements.txt" >/dev/null 2>&1 || true
+              fi
+              touch "$SCRIPT_DIR/.venv/.invault_ready_v1" || true
+            fi
           fi
 
           if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
