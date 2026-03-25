@@ -1,4 +1,4 @@
-name: deploy-website
+﻿name: deploy-website
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
       - main
     paths:
       - ".github/workflows/deploy-website.yml"
-      - "外贸助理_交接包/外贸助理_windows_内测包/website/**"
+      - "**/website/**"
 
 permissions:
   contents: read
@@ -28,11 +28,23 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Prepare static site
         run: |
+          set -euo pipefail
           mkdir -p _site
-          cp -R "外贸助理_交接包/外贸助理_windows_内测包/website/." _site/
+          WEBSITE_DIR="$(find . -type d -path "*/website" | grep "windows" | head -n 1 || true)"
+          if [ -z "${WEBSITE_DIR}" ]; then
+            WEBSITE_DIR="$(find . -type d -path "*/website" | head -n 1 || true)"
+          fi
+          if [ -z "${WEBSITE_DIR}" ]; then
+            echo "website directory not found"
+            exit 1
+          fi
+          echo "Using website dir: ${WEBSITE_DIR}"
+          cp -R "${WEBSITE_DIR}/." _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
