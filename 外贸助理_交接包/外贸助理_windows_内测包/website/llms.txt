@@ -1,0 +1,8 @@
+﻿# Trade Assistant LLM Access Notes
+
+- Product: Trade Assistant (外贸助理)
+- Purpose: Local-first assistant for foreign trade workflow memory and model switching.
+- Human docs: /docs.html
+- Privacy policy: /privacy.html
+- Agent metadata: /.well-known/agent.json
+- API contract stub: /api/openapi.json

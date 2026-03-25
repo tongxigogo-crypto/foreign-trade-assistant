@@ -1,0 +1,63 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文档 - 外贸助理 Trade Assistant</title>
+  <meta name="description" content="外贸助理 Trade Assistant 新手安装与使用文档。" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body data-page="docs">
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">TA</span>
+      <div>
+        <h1 data-i18n="brand_name">外贸助理 Trade Assistant</h1>
+        <p data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
+      </div>
+    </div>
+    <nav>
+      <a href="./index.html" data-i18n="nav_home">首页</a>
+      <a href="./download.html" data-i18n="nav_download">下载</a>
+      <a href="./docs.html" data-i18n="nav_docs">文档</a>
+      <a href="./privacy.html" data-i18n="nav_privacy">隐私</a>
+      <button id="lang-toggle" type="button" aria-label="language">EN</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2 data-i18n="docs_quickstart_title">新手三步</h2>
+      <ol>
+        <li data-i18n="docs_quickstart_1">下载并解压对应系统的内测包（Windows 或 macOS）。</li>
+        <li data-i18n="docs_quickstart_2">启动桌面助手，在 API Settings 填入你的模型 API 信息。</li>
+        <li data-i18n="docs_quickstart_3">点击一键启动，导入历史资料和邮件线程开始使用。</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="docs_windows_title">Windows 安装</h2>
+      <ol>
+        <li data-i18n="docs_windows_1">先解压到本地目录，不要在压缩包内直接运行。</li>
+        <li data-i18n="docs_windows_2">双击 <code>Launch_InVault_Windows.bat</code>。</li>
+        <li data-i18n="docs_windows_3">若出现安全提示，选择“更多信息 -> 仍要运行”。</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="docs_mac_title">macOS 安装</h2>
+      <ol>
+        <li data-i18n="docs_mac_1">首次被拦截时，打开“系统设置 -> 隐私与安全性”。</li>
+        <li data-i18n="docs_mac_2">在底部找到应用拦截提示，点击“仍要打开”。</li>
+        <li data-i18n="docs_mac_3">若仍提示损坏，在终端执行：<code>xattr -dr com.apple.quarantine /Applications/InVault.app</code>。</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="year"></span> Trade Assistant</p>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
