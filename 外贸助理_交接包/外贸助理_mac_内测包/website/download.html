@@ -1,0 +1,64 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>下载 - 外贸助理 Trade Assistant</title>
+  <meta name="description" content="下载外贸助理 Trade Assistant 的 Windows 与 macOS 内测版本。" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body data-page="download">
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">TA</span>
+      <div>
+        <h1 data-i18n="brand_name">外贸助理 Trade Assistant</h1>
+        <p data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
+      </div>
+    </div>
+    <nav>
+      <a href="./index.html" data-i18n="nav_home">首页</a>
+      <a href="./download.html" data-i18n="nav_download">下载</a>
+      <a href="./docs.html" data-i18n="nav_docs">文档</a>
+      <a href="./privacy.html" data-i18n="nav_privacy">隐私</a>
+      <button id="lang-toggle" type="button" aria-label="language">EN</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero card">
+      <h2 data-i18n="download_title">内测版本下载</h2>
+      <p data-i18n="download_subtitle">优先读取站内发布清单，失败时回退到 GitHub Release。</p>
+      <p class="version-line"><span data-i18n="release_label">当前版本</span>: <strong id="version-tag">loading...</strong></p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h3>Windows</h3>
+        <p id="win-asset-name" class="muted">-</p>
+        <a id="win-download" class="btn primary disabled" href="#" aria-disabled="true" data-i18n="download_button_win">下载 Windows 包</a>
+      </article>
+      <article class="card">
+        <h3>macOS</h3>
+        <p id="mac-asset-name" class="muted">-</p>
+        <a id="mac-download" class="btn primary disabled" href="#" aria-disabled="true" data-i18n="download_button_mac">下载 macOS 包</a>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3 data-i18n="download_notice_title">安装提示</h3>
+      <ul>
+        <li data-i18n="download_notice_1">先看新手文档，再开始安装。</li>
+        <li data-i18n="download_notice_2">macOS 首次可能出现“未验证开发者”，按文档流程放行。</li>
+        <li data-i18n="download_notice_3">建议保留上一个稳定包，出现问题可快速回滚。</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="year"></span> Trade Assistant</p>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>

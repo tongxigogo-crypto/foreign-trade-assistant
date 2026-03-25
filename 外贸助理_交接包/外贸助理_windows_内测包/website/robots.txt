@@ -1,0 +1,4 @@
+﻿User-agent: *
+Allow: /
+
+Sitemap: https://tongxigogo-crypto.github.io/foreign-trade-assistant/sitemap.xml
