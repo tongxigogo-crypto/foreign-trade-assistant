@@ -1,46 +1,53 @@
 ﻿const I18N = {
   zh: {
-    brand_name: "外贸助理 Trade Assistant",
-    brand_tagline: "让 AI 继承你的外贸工作习惯",
-    brand_short: "TRADE_ASSISTANT",
+    brand_name: "Tongxi Dev Site",
+    brand_tagline: "个人开发与产品实验",
+    brand_short: "TONGXI_DEV",
     nav_home: "首页",
-    nav_download: "下载",
-    nav_docs: "文档",
-    nav_privacy: "隐私",
+    nav_download: "外贸助理下载",
+    nav_docs: "外贸助理文档",
+    nav_privacy: "外贸助理隐私",
     release_label: "当前版本",
 
-    home_kicker: "本地优先的外贸 AI 助手",
-    home_big_title: "TRADE ASSISTANT",
-    home_title: "同样的问题，越用越懂你；换模型，也不用重头再来",
-    home_subtitle: "导入历史邮件、报价、事件后，外贸助理会基于你的编辑反馈持续学习，形成可追溯、可迁移的个人业务记忆。",
-    home_cta_download: "立即下载内测版",
-    home_cta_docs: "查看新手指南",
-    home_footer_note: "数据不搬家 · 能力不绑平台",
+    home_kicker: "PERSONAL DEV PORTFOLIO",
+    home_big_title: "TONGXI LAB",
+    home_title: "个人开发网站",
+    home_subtitle: "这是我的个人开发网站，用于展示我持续迭代的应用与自动化产品。外贸助理是当前主推项目，后续会陆续上架更多作品。",
+    home_cta_download: "体验外贸助理",
+    home_cta_docs: "查看项目文档",
+    home_footer_note: "持续构建 · 持续交付 · 持续进化",
 
-    feature_section_1_title: "核心问题",
-    feature_section_1_desc: "用户觉得 AI 不聪明，本质是没有用户习惯与上下文；换模型后又要从零开始。",
-    feature_section_2_title: "解决方式",
-    feature_section_2_headline: "规则 + RAG + 编辑反馈成长",
-    feature_section_2_desc: "先做可追溯、可解释、低错误率，再逐步增强模型能力，优先验证商业付费意愿。",
-    feature_section_3_title: "核心能力",
+    hero_right_kicker: "Current Focus",
+    hero_right_title: "外贸助理（Trade Assistant）",
+    hero_right_desc: "当前主线是可追溯、可解释、低错误率的 AI 决策层，目标是服务真实业务并形成可验证的产品闭环。",
+    hero_right_point_1: "• 本地优先：业务数据默认在用户设备",
+    hero_right_point_2: "• 自动成长：基于编辑反馈持续优化",
+    hero_right_point_3: "• 模型可切换：减少平台绑定",
 
-    feature_1_title: "自动成长",
-    feature_1_desc: "基于 before/after 编辑差异，自动学习你的价格偏好与话术习惯。",
-    feature_2_title: "模型可切换",
-    feature_2_desc: "支持 NVIDIA、OpenAI、OpenRouter、DeepSeek、千问、豆包、Google 等接口。",
-    feature_3_title: "证据可追溯",
-    feature_3_desc: "每次建议都可回看依据来源，降低“看着聪明但不可控”的风险。",
+    feature_section_1_title: "网站定位",
+    feature_section_1_desc: "一个可持续更新的个人产品站：展示能力、沉淀案例、连接用户反馈，并持续发布新版本。",
+    feature_section_2_title: "当前主线",
+    feature_section_2_headline: "外贸助理 Trade Assistant",
+    feature_section_2_desc: "聚焦“自动成长 + 可追溯 + 跨模型复用”，服务不懂技术的一线业务用户。",
+    feature_section_3_title: "已开发应用",
 
-    home_flow_title: "使用流程",
-    home_flow_1_title: "导入历史资料",
-    home_flow_1_desc: "支持历史邮件、报价、事件，快速形成初始上下文。",
-    home_flow_2_title: "生成并修改",
-    home_flow_2_desc: "由模型先出草稿，你做最后确认和微调，保证可控。",
-    home_flow_3_title: "自动成长",
-    home_flow_3_desc: "系统把你的修改转成偏好权重，下次自动命中更高。",
+    feature_1_title: "外贸助理",
+    feature_1_desc: "本地优先的外贸 AI 参谋，支持历史导入、动作注入、偏好成长和多模型 API。",
+    feature_2_title: "Video Workflow Test Beta",
+    feature_2_desc: "面向视频生产流程的自动化实验项目，用于验证多步骤智能工作流。",
+    feature_3_title: "MiniProgram Recovered",
+    feature_3_desc: "小程序项目恢复与工程化重构实践，保留业务结构并重建可维护开发链路。",
+
+    home_flow_title: "下一批上架计划",
+    home_flow_1_title: "Agent 协作工具",
+    home_flow_1_desc: "面向多模型协同工作的轻量调度与日志管理工具。",
+    home_flow_2_title: "自动化运营面板",
+    home_flow_2_desc: "统一查看反馈、版本、指标和发布状态，提升个人开发效率。",
+    home_flow_3_title: "跨端发布工具链",
+    home_flow_3_desc: "继续强化 Windows / macOS 双端打包与更新体验。",
 
     agent_ready_title: "Agent Ready",
-    agent_ready_desc: "网站预留机器可读入口，便于未来 Agent-to-Agent 对接。",
+    agent_ready_desc: "Machine-readable endpoints are reserved for future Agent-to-Agent integration.",
 
     download_kicker: "发布渠道",
     download_title: "内测版本下载",
@@ -81,44 +88,51 @@
     privacy_4: "若调用第三方模型 API，请遵守对应厂商的数据政策。"
   },
   en: {
-    brand_name: "Trade Assistant",
-    brand_tagline: "Let AI inherit your trade workflow habits",
-    brand_short: "TRADE_ASSISTANT",
+    brand_name: "Tongxi Dev Site",
+    brand_tagline: "Personal products and dev experiments",
+    brand_short: "TONGXI_DEV",
     nav_home: "Home",
-    nav_download: "Download",
-    nav_docs: "Docs",
-    nav_privacy: "Privacy",
+    nav_download: "TA Download",
+    nav_docs: "TA Docs",
+    nav_privacy: "TA Privacy",
     release_label: "Version",
 
-    home_kicker: "Local-First AI Trade Copilot",
-    home_big_title: "TRADE ASSISTANT",
-    home_title: "Same request, smarter over time. Switch models without restarting memory.",
-    home_subtitle: "Import your historical emails, quotes and events. Trade Assistant learns from your edits and builds traceable, portable memory.",
-    home_cta_download: "Download Beta",
-    home_cta_docs: "Quick Start",
-    home_footer_note: "Data stays with you · Capability stays portable",
+    home_kicker: "PERSONAL DEV PORTFOLIO",
+    home_big_title: "TONGXI LAB",
+    home_title: "Personal Dev Website",
+    home_subtitle: "This is my personal development website for showcasing continuously evolving apps and automation products. Trade Assistant is the current focus, with more projects to be added.",
+    home_cta_download: "Try Trade Assistant",
+    home_cta_docs: "View Project Docs",
+    home_footer_note: "Build Fast · Ship Often · Improve Continuously",
 
-    feature_section_1_title: "Core Problem",
-    feature_section_1_desc: "AI feels generic because it lacks user-specific habits and context; model switching resets everything.",
-    feature_section_2_title: "Approach",
-    feature_section_2_headline: "Rules + RAG + Edit-Feedback Growth",
-    feature_section_2_desc: "Prioritize traceability, explainability, and low error rate first; scale model sophistication after validation.",
-    feature_section_3_title: "Core Capabilities",
+    hero_right_kicker: "Current Focus",
+    hero_right_title: "Trade Assistant",
+    hero_right_desc: "Current track is a traceable, explainable, low-error AI decision layer for real business workflows.",
+    hero_right_point_1: "• Local-first: business data stays on user device by default",
+    hero_right_point_2: "• Adaptive growth: continuously improves from edit feedback",
+    hero_right_point_3: "• Multi-model ready: reduces platform lock-in",
 
-    feature_1_title: "Adaptive Learning",
-    feature_1_desc: "Learns pricing and tone preferences from before/after edits.",
-    feature_2_title: "Model Switch Ready",
-    feature_2_desc: "Supports NVIDIA, OpenAI, OpenRouter, DeepSeek, Qwen, Doubao, Google and custom endpoints.",
-    feature_3_title: "Traceable Evidence",
-    feature_3_desc: "Each suggestion can be traced back to source snippets and rules.",
+    feature_section_1_title: "Site Positioning",
+    feature_section_1_desc: "A continuously updated personal product site: show capabilities, accumulate cases, collect feedback, and ship new versions.",
+    feature_section_2_title: "Current Mainline",
+    feature_section_2_headline: "Trade Assistant",
+    feature_section_2_desc: "Focused on adaptive growth, traceability, and model portability for non-technical frontline users.",
+    feature_section_3_title: "Built Applications",
 
-    home_flow_title: "Workflow",
-    home_flow_1_title: "Import History",
-    home_flow_1_desc: "Import emails, quotes, and events to establish high-quality context.",
-    home_flow_2_title: "Generate & Edit",
-    home_flow_2_desc: "Model drafts first, you finalize with controlled edits.",
-    home_flow_3_title: "Auto Growth",
-    home_flow_3_desc: "Your edits are converted into preference weights for better next responses.",
+    feature_1_title: "Trade Assistant",
+    feature_1_desc: "Local-first AI copilot for trade operations with history import, action injection, preference growth, and multi-model APIs.",
+    feature_2_title: "Video Workflow Test Beta",
+    feature_2_desc: "An automation experiment for video production workflows, validating multi-step intelligent orchestration.",
+    feature_3_title: "MiniProgram Recovered",
+    feature_3_desc: "Mini-program recovery and engineering refactor to restore business structure and maintainable workflows.",
+
+    home_flow_title: "Next Releases",
+    home_flow_1_title: "Agent Collaboration Toolkit",
+    home_flow_1_desc: "Lightweight scheduling and logging tools for multi-model collaborative work.",
+    home_flow_2_title: "Automation Ops Panel",
+    home_flow_2_desc: "Unified panel for feedback, versions, metrics, and release status.",
+    home_flow_3_title: "Cross-Platform Release Toolchain",
+    home_flow_3_desc: "Further improve Windows/macOS packaging and update experience.",
 
     agent_ready_title: "Agent Ready",
     agent_ready_desc: "Machine-readable endpoints are reserved for future Agent-to-Agent integration.",
@@ -163,9 +177,7 @@
   }
 };
 
-function byId(id) {
-  return document.getElementById(id);
-}
+function byId(id) { return document.getElementById(id); }
 
 function applyLang(lang) {
   const dict = I18N[lang] || I18N.zh;
@@ -174,15 +186,11 @@ function applyLang(lang) {
 
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
-    if (dict[key]) {
-      el.textContent = dict[key];
-    }
+    if (dict[key]) el.textContent = dict[key];
   });
 
   const toggle = byId("lang-toggle");
-  if (toggle) {
-    toggle.textContent = lang === "zh" ? "EN" : "中文";
-  }
+  if (toggle) toggle.textContent = lang === "zh" ? "EN" : "中文";
 }
 
 function setFooterYear() {
@@ -216,18 +224,14 @@ function pickAssets(assets) {
 
 async function fetchManifest() {
   const localRes = await fetch("./api/release-manifest.json", { cache: "no-store" });
-  if (!localRes.ok) {
-    throw new Error(`manifest status ${localRes.status}`);
-  }
+  if (!localRes.ok) throw new Error(`manifest status ${localRes.status}`);
   return await localRes.json();
 }
 
 async function fetchGithubFallback() {
   const repo = "tongxigogo-crypto/foreign-trade-assistant";
   const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`github status ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`github status ${res.status}`);
   const data = await res.json();
   return {
     version: data.tag_name || "unknown",
@@ -239,7 +243,6 @@ async function fetchGithubFallback() {
 async function initDownloadPage() {
   if (document.body.dataset.page !== "download") return;
   const versionNode = byId("version-tag");
-
   let manifest;
   try {
     manifest = await fetchManifest();
@@ -247,13 +250,9 @@ async function initDownloadPage() {
     try {
       manifest = await fetchGithubFallback();
     } catch {
-      manifest = {
-        version: "unavailable",
-        assets: []
-      };
+      manifest = { version: "unavailable", assets: [] };
     }
   }
-
   if (versionNode) versionNode.textContent = manifest.version || "unknown";
   const assets = pickAssets(manifest.assets || []);
   setAssetLink("win-download", "win-asset-name", assets.win, "not available");
