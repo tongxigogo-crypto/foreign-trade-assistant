@@ -10,28 +10,37 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tongxigogo-crypto.github.io/foreign-trade-assistant-site/" />
   <meta name="twitter:card" content="summary_large_image" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-  <script>
+
+  <script id="tailwind-config">
     tailwind.config = {
-      darkMode: 'class',
+      darkMode: "class",
       theme: {
         extend: {
           colors: {
-            'surface-lowest': '#000000',
-            'surface-low': '#131313',
-            'surface': '#0e0e0e',
-            'surface-high': '#1f1f1f',
-            'surface-highest': '#262626',
-            'on-surface': '#ffffff',
-            'on-surface-variant': '#ababab',
-            'outline-variant': '#484848',
-            primary: '#8ff5ff',
-            secondary: '#bf81ff'
+            "surface-container-lowest": "#000000",
+            "surface-container-low": "#131313",
+            "surface-container": "#191919",
+            "surface-container-high": "#1f1f1f",
+            "surface-container-highest": "#262626",
+            "on-surface": "#ffffff",
+            "on-surface-variant": "#ababab",
+            "outline-variant": "#484848",
+            "primary": "#8ff5ff",
+            "secondary": "#bf81ff"
+          },
+          fontFamily: {
+            "headline": ["Inter", "sans-serif"],
+            "body": ["Inter", "sans-serif"],
+            "label": ["Inter", "sans-serif"]
           }
         }
       }
     }
   </script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="./styles.css" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -45,88 +54,153 @@
     "softwareVersion": "v0.1.1-beta1-build4"
   }
   </script>
-  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .violet-glow { box-shadow: 0 0 80px 10px rgba(191, 129, 255, 0.15); }
+    .cyan-glow { box-shadow: 0 0 60px 5px rgba(143, 245, 255, 0.1); }
+    body { background-color: #000000; color: #ffffff; -webkit-font-smoothing: antialiased; }
+  </style>
 </head>
-<body data-page="home" class="bg-surface-lowest text-on-surface font-sans antialiased">
-  <div class="fixed inset-0 pointer-events-none overflow-hidden">
-    <div class="absolute -top-40 -left-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl"></div>
-    <div class="absolute top-40 -right-28 h-[32rem] w-[32rem] rounded-full bg-secondary/10 blur-3xl"></div>
+<body data-page="home" class="font-body selection:bg-secondary selection:text-black overflow-x-hidden">
+  <nav class="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-sm bg-black/70 backdrop-blur-xl z-50 shadow-[0px_20px_40px_rgba(143,245,255,0.05)] flex justify-between items-center px-4 md:px-8 py-4 border border-outline-variant/20">
+    <a href="./index.html" class="text-xl font-black tracking-tighter text-white" data-i18n="brand_short">TRADE_ASSISTANT</a>
+    <div class="hidden md:flex items-center space-x-8 lg:space-x-12">
+      <a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-white after:content-[''] after:block after:w-1 after:h-1 after:bg-cyan-400 after:rounded-full after:mx-auto after:mt-1" href="./index.html" data-i18n="nav_home">首页</a>
+      <a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-gray-400 hover:text-white transition-colors duration-300" href="./download.html" data-i18n="nav_download">下载</a>
+      <a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-gray-400 hover:text-white transition-colors duration-300" href="./docs.html" data-i18n="nav_docs">文档</a>
+      <a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-gray-400 hover:text-white transition-colors duration-300" href="./privacy.html" data-i18n="nav_privacy">隐私</a>
+    </div>
+    <button id="lang-toggle" type="button" class="rounded-sm border border-outline-variant px-3 py-1 text-xs font-bold text-white hover:border-primary">EN</button>
+  </nav>
+
+  <div class="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 flex flex-col space-y-6 items-center z-40">
+    <div class="flex flex-col items-center space-y-4 text-[10px] font-medium">
+      <span class="text-cyan-400">01</span>
+      <span class="text-gray-600">02</span>
+      <span class="text-gray-600">03</span>
+      <span class="text-gray-600">04</span>
+    </div>
   </div>
 
-  <header class="fixed top-4 left-1/2 z-50 w-[96%] max-w-7xl -translate-x-1/2 rounded-sm border border-outline-variant/20 bg-black/70 px-4 py-3 backdrop-blur-xl md:px-6">
-    <div class="flex items-center justify-between gap-3">
-      <a href="./index.html" class="flex items-center gap-3">
-        <span class="grid h-8 w-8 place-items-center rounded-sm bg-primary text-black text-xs font-black">TA</span>
-        <div>
-          <p class="text-sm font-bold tracking-tight" data-i18n="brand_name">外贸助理 Trade Assistant</p>
-          <p class="text-[10px] text-on-surface-variant" data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
-        </div>
-      </a>
-      <nav class="flex items-center gap-2 text-xs md:gap-5 md:text-sm">
-        <a href="./index.html" data-i18n="nav_home" class="hover:text-primary">首页</a>
-        <a href="./download.html" data-i18n="nav_download" class="hover:text-primary">下载</a>
-        <a href="./docs.html" data-i18n="nav_docs" class="hover:text-primary">文档</a>
-        <a href="./privacy.html" data-i18n="nav_privacy" class="hover:text-primary">隐私</a>
-        <button id="lang-toggle" type="button" class="rounded-sm border border-outline-variant/40 px-2 py-1 text-xs hover:border-primary">EN</button>
-      </nav>
+  <main class="relative min-h-screen pt-32 pb-24 px-4 md:px-10 lg:px-20">
+    <div class="fixed top-0 right-[-10%] w-[60%] h-screen opacity-60 z-0 pointer-events-none">
+      <div class="absolute inset-0 bg-gradient-to-l from-black via-transparent to-black z-10"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-secondary/10 blur-[120px] violet-glow"></div>
     </div>
-  </header>
 
-  <main class="relative mx-auto max-w-7xl px-4 pb-16 pt-28 md:px-6 md:pt-32">
-    <section class="grid gap-8 lg:grid-cols-12 lg:gap-10">
-      <div class="lg:col-span-7">
-        <p class="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-secondary" data-i18n="home_kicker">Local-First AI Trade Copilot</p>
-        <h1 class="text-5xl font-black leading-[0.9] tracking-tight md:text-7xl" data-i18n="home_title">同样的问题，越用越懂你；换模型，也不用重头再来</h1>
-        <p class="mt-6 max-w-2xl text-base leading-relaxed text-on-surface-variant md:text-lg" data-i18n="home_subtitle">导入历史邮件、报价、事件后，外贸助理会基于你的编辑反馈持续学习，形成可追溯、可迁移的个人业务记忆。</p>
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href="./download.html" class="rounded-sm bg-primary px-5 py-3 text-sm font-semibold text-black shadow-[0_0_30px_rgba(143,245,255,0.2)] hover:brightness-110" data-i18n="home_cta_download">立即下载内测版</a>
-          <a href="./docs.html" class="rounded-sm border border-outline-variant/40 px-5 py-3 text-sm font-semibold hover:border-primary hover:text-primary" data-i18n="home_cta_docs">查看新手指南</a>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="mb-16 md:mb-20">
+        <span class="font-inter text-[11px] font-bold tracking-[0.3em] text-secondary uppercase mb-4 block" data-i18n="home_kicker">Local-First AI Trade Copilot</span>
+        <h1 class="text-[2.4rem] md:text-[6rem] lg:text-[8rem] font-black tracking-tighter leading-[0.9] text-white" data-i18n="home_big_title">TRADE<br/>ASSISTANT</h1>
+        <p class="mt-5 max-w-3xl text-sm md:text-lg text-on-surface-variant leading-relaxed" data-i18n="home_subtitle">导入历史邮件、报价、事件后，外贸助理会基于你的编辑反馈持续学习，形成可追溯、可迁移的个人业务记忆。</p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="./download.html" class="rounded-sm bg-primary text-black px-5 py-2.5 text-sm font-bold hover:brightness-110" data-i18n="home_cta_download">立即下载内测版</a>
+          <a href="./docs.html" class="rounded-sm border border-outline-variant text-white px-5 py-2.5 text-sm font-bold hover:border-primary hover:text-primary" data-i18n="home_cta_docs">查看新手指南</a>
         </div>
-        <p class="mt-6 text-sm text-on-surface-variant"><span data-i18n="release_label">当前版本</span>: <strong id="version-tag">v0.1.1-beta1-build4</strong></p>
+        <p class="mt-4 text-xs text-on-surface-variant"><span data-i18n="release_label">当前版本</span>: <strong id="version-tag" class="text-white">v0.1.1-beta1-build4</strong></p>
       </div>
-      <aside class="lg:col-span-5">
-        <div class="rounded-sm border border-outline-variant/20 bg-surface-low p-4 backdrop-blur-xl">
-          <p class="mb-3 text-xs uppercase tracking-[0.2em] text-on-surface-variant" data-i18n="home_snapshot_label">Product Snapshot</p>
-          <img src="./assets/screen.png" alt="Trade Assistant preview" class="w-full rounded-sm border border-outline-variant/20" />
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 mb-20">
+        <div class="md:col-span-5 space-y-10">
+          <section>
+            <h2 class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-4 flex items-center">
+              <span class="w-8 h-px bg-outline-variant mr-4"></span>
+              <span data-i18n="feature_section_1_title">核心问题</span>
+            </h2>
+            <p class="text-base md:text-xl text-on-surface-variant leading-relaxed font-light" data-i18n="feature_section_1_desc">用户觉得 AI 不聪明，本质是没有用户习惯与上下文；换模型后又要从零开始。</p>
+          </section>
+
+          <section>
+            <h2 class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-4 flex items-center">
+              <span class="w-8 h-px bg-outline-variant mr-4"></span>
+              <span data-i18n="feature_section_2_title">解决方式</span>
+            </h2>
+            <div class="flex items-baseline space-x-4">
+              <span class="text-2xl md:text-3xl font-bold text-primary" data-i18n="feature_section_2_headline">规则 + RAG + 编辑反馈成长</span>
+            </div>
+            <p class="mt-3 text-sm text-on-surface-variant max-w-md" data-i18n="feature_section_2_desc">先做可追溯、可解释、低错误率，再逐步增强模型能力，优先验证商业付费意愿。</p>
+          </section>
+
+          <section>
+            <h2 class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-6 flex items-center">
+              <span class="w-8 h-px bg-outline-variant mr-4"></span>
+              <span data-i18n="feature_section_3_title">核心能力</span>
+            </h2>
+            <div class="grid grid-cols-1 gap-4">
+              <div class="flex items-start space-x-4 p-4 rounded-sm bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-all duration-300">
+                <span class="material-symbols-outlined text-secondary text-2xl">trending_up</span>
+                <div>
+                  <h4 class="text-white font-bold text-sm uppercase tracking-tight mb-1" data-i18n="feature_1_title">自动成长</h4>
+                  <p class="text-xs text-on-surface-variant" data-i18n="feature_1_desc">基于 before/after 编辑差异，自动学习你的价格偏好与话术习惯。</p>
+                </div>
+              </div>
+              <div class="flex items-start space-x-4 p-4 rounded-sm bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-all duration-300">
+                <span class="material-symbols-outlined text-primary text-2xl">swap_horiz</span>
+                <div>
+                  <h4 class="text-white font-bold text-sm uppercase tracking-tight mb-1" data-i18n="feature_2_title">模型可切换</h4>
+                  <p class="text-xs text-on-surface-variant" data-i18n="feature_2_desc">支持 NVIDIA、OpenAI、OpenRouter、DeepSeek、千问、豆包、Google 等接口。</p>
+                </div>
+              </div>
+              <div class="flex items-start space-x-4 p-4 rounded-sm bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-all duration-300">
+                <span class="material-symbols-outlined text-secondary text-2xl">manage_search</span>
+                <div>
+                  <h4 class="text-white font-bold text-sm uppercase tracking-tight mb-1" data-i18n="feature_3_title">证据可追溯</h4>
+                  <p class="text-xs text-on-surface-variant" data-i18n="feature_3_desc">每次建议都可回看依据来源，降低“看着聪明但不可控”的风险。</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-      </aside>
-    </section>
 
-    <section class="mt-16">
-      <h2 class="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant" data-i18n="home_modules_title">Core Modules</h2>
-      <div class="grid gap-4 md:grid-cols-3">
-        <article class="rounded-sm border border-outline-variant/20 bg-surface-low p-5 transition hover:bg-surface-high">
-          <h3 class="text-lg font-bold" data-i18n="feature_1_title">自动成长</h3>
-          <p class="mt-2 text-sm leading-relaxed text-on-surface-variant" data-i18n="feature_1_desc">基于 before/after 编辑差异，自动学习你的价格偏好与话术习惯。</p>
-        </article>
-        <article class="rounded-sm border border-outline-variant/20 bg-surface-low p-5 transition hover:bg-surface-high">
-          <h3 class="text-lg font-bold" data-i18n="feature_2_title">模型可切换</h3>
-          <p class="mt-2 text-sm leading-relaxed text-on-surface-variant" data-i18n="feature_2_desc">支持 NVIDIA、OpenAI、OpenRouter、DeepSeek、千问、豆包、Google 等接口。</p>
-        </article>
-        <article class="rounded-sm border border-outline-variant/20 bg-surface-low p-5 transition hover:bg-surface-high">
-          <h3 class="text-lg font-bold" data-i18n="feature_3_title">证据可追溯</h3>
-          <p class="mt-2 text-sm leading-relaxed text-on-surface-variant" data-i18n="feature_3_desc">每次建议都可回看依据来源，降低“看着聪明但不可控”的风险。</p>
-        </article>
+        <div class="md:col-span-7">
+          <section class="mt-4 md:mt-0">
+            <div class="flex justify-between items-end mb-8">
+              <h3 class="text-2xl font-bold tracking-tight text-white" data-i18n="home_flow_title">使用流程</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="group rounded-sm border border-outline-variant/20 bg-surface-container-low p-5 hover:bg-surface-container-high transition-colors">
+                <div class="text-[10px] font-bold text-white tracking-widest uppercase">01 / Import</div>
+                <h4 class="mt-3 text-sm font-bold text-white uppercase tracking-wider" data-i18n="home_flow_1_title">导入历史资料</h4>
+                <p class="text-xs text-on-surface-variant mt-2 leading-relaxed" data-i18n="home_flow_1_desc">支持历史邮件、报价、事件，快速形成初始上下文。</p>
+              </div>
+              <div class="group rounded-sm border border-outline-variant/20 bg-surface-container-low p-5 hover:bg-surface-container-high transition-colors">
+                <div class="text-[10px] font-bold text-white tracking-widest uppercase">02 / Act</div>
+                <h4 class="mt-3 text-sm font-bold text-white uppercase tracking-wider" data-i18n="home_flow_2_title">生成并修改</h4>
+                <p class="text-xs text-on-surface-variant mt-2 leading-relaxed" data-i18n="home_flow_2_desc">由模型先出草稿，你做最后确认和微调，保证可控。</p>
+              </div>
+              <div class="group rounded-sm border border-outline-variant/20 bg-surface-container-low p-5 hover:bg-surface-container-high transition-colors">
+                <div class="text-[10px] font-bold text-white tracking-widest uppercase">03 / Grow</div>
+                <h4 class="mt-3 text-sm font-bold text-white uppercase tracking-wider" data-i18n="home_flow_3_title">自动成长</h4>
+                <p class="text-xs text-on-surface-variant mt-2 leading-relaxed" data-i18n="home_flow_3_desc">系统把你的修改转成偏好权重，下次自动命中更高。</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="mt-10 rounded-sm border border-outline-variant/20 bg-surface-container-low p-6">
+            <h3 class="text-lg font-bold text-white" data-i18n="agent_ready_title">Agent Ready</h3>
+            <p class="mt-2 text-sm text-on-surface-variant" data-i18n="agent_ready_desc">网站预留机器可读入口，便于未来 Agent-to-Agent 对接。</p>
+            <ul class="mt-3 text-sm text-on-surface-variant space-y-1">
+              <li><code>/.well-known/agent.json</code></li>
+              <li><code>/api/openapi.json</code></li>
+              <li><code>/llms.txt</code></li>
+            </ul>
+          </section>
+        </div>
       </div>
-    </section>
-
-    <section class="mt-10 rounded-sm border border-outline-variant/20 bg-surface-low p-6">
-      <h2 class="text-xl font-bold" data-i18n="agent_ready_title">Agent Ready</h2>
-      <p class="mt-2 text-sm text-on-surface-variant" data-i18n="agent_ready_desc">网站预留机器可读入口，便于未来 Agent-to-Agent 对接。</p>
-      <ul class="mt-4 space-y-2 text-sm">
-        <li><code>/.well-known/agent.json</code></li>
-        <li><code>/api/openapi.json</code></li>
-        <li><code>/llms.txt</code></li>
-      </ul>
-    </section>
+    </div>
   </main>
 
-  <footer class="relative border-t border-outline-variant/20 bg-black/60 px-4 py-6 backdrop-blur-xl md:px-6">
-    <div class="mx-auto flex max-w-7xl items-center justify-between text-xs text-on-surface-variant">
-      <p>© <span id="year"></span> Trade Assistant</p>
-      <p data-i18n="home_footer_note">数据不搬家 · 能力不绑平台</p>
+  <footer class="py-10 px-6 md:px-16 border-t border-outline-variant/20 bg-surface-container-lowest relative z-10">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center opacity-80 gap-3">
+      <div class="text-[10px] font-bold tracking-[0.3em] uppercase text-white">© <span id="year"></span> TRADE ASSISTANT</div>
+      <div class="text-[10px] font-bold tracking-[0.3em] uppercase text-on-surface-variant" data-i18n="home_footer_note">数据不搬家 · 能力不绑平台</div>
     </div>
   </footer>
+
+  <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[1] overflow-hidden opacity-30">
+    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px]"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[180px]"></div>
+  </div>
 
   <script src="./app.js"></script>
 </body>

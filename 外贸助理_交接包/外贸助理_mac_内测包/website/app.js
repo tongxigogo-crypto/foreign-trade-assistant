@@ -2,6 +2,7 @@
   zh: {
     brand_name: "外贸助理 Trade Assistant",
     brand_tagline: "让 AI 继承你的外贸工作习惯",
+    brand_short: "TRADE_ASSISTANT",
     nav_home: "首页",
     nav_download: "下载",
     nav_docs: "文档",
@@ -9,13 +10,19 @@
     release_label: "当前版本",
 
     home_kicker: "本地优先的外贸 AI 助手",
+    home_big_title: "TRADE ASSISTANT",
     home_title: "同样的问题，越用越懂你；换模型，也不用重头再来",
     home_subtitle: "导入历史邮件、报价、事件后，外贸助理会基于你的编辑反馈持续学习，形成可追溯、可迁移的个人业务记忆。",
     home_cta_download: "立即下载内测版",
     home_cta_docs: "查看新手指南",
-    home_snapshot_label: "产品界面预览",
-    home_modules_title: "核心模块",
     home_footer_note: "数据不搬家 · 能力不绑平台",
+
+    feature_section_1_title: "核心问题",
+    feature_section_1_desc: "用户觉得 AI 不聪明，本质是没有用户习惯与上下文；换模型后又要从零开始。",
+    feature_section_2_title: "解决方式",
+    feature_section_2_headline: "规则 + RAG + 编辑反馈成长",
+    feature_section_2_desc: "先做可追溯、可解释、低错误率，再逐步增强模型能力，优先验证商业付费意愿。",
+    feature_section_3_title: "核心能力",
 
     feature_1_title: "自动成长",
     feature_1_desc: "基于 before/after 编辑差异，自动学习你的价格偏好与话术习惯。",
@@ -23,6 +30,15 @@
     feature_2_desc: "支持 NVIDIA、OpenAI、OpenRouter、DeepSeek、千问、豆包、Google 等接口。",
     feature_3_title: "证据可追溯",
     feature_3_desc: "每次建议都可回看依据来源，降低“看着聪明但不可控”的风险。",
+
+    home_flow_title: "使用流程",
+    home_flow_1_title: "导入历史资料",
+    home_flow_1_desc: "支持历史邮件、报价、事件，快速形成初始上下文。",
+    home_flow_2_title: "生成并修改",
+    home_flow_2_desc: "由模型先出草稿，你做最后确认和微调，保证可控。",
+    home_flow_3_title: "自动成长",
+    home_flow_3_desc: "系统把你的修改转成偏好权重，下次自动命中更高。",
+
     agent_ready_title: "Agent Ready",
     agent_ready_desc: "网站预留机器可读入口，便于未来 Agent-to-Agent 对接。",
 
@@ -67,6 +83,7 @@
   en: {
     brand_name: "Trade Assistant",
     brand_tagline: "Let AI inherit your trade workflow habits",
+    brand_short: "TRADE_ASSISTANT",
     nav_home: "Home",
     nav_download: "Download",
     nav_docs: "Docs",
@@ -74,13 +91,19 @@
     release_label: "Version",
 
     home_kicker: "Local-First AI Trade Copilot",
+    home_big_title: "TRADE ASSISTANT",
     home_title: "Same request, smarter over time. Switch models without restarting memory.",
     home_subtitle: "Import your historical emails, quotes and events. Trade Assistant learns from your edits and builds traceable, portable memory.",
     home_cta_download: "Download Beta",
     home_cta_docs: "Quick Start",
-    home_snapshot_label: "Product Preview",
-    home_modules_title: "Core Modules",
     home_footer_note: "Data stays with you · Capability stays portable",
+
+    feature_section_1_title: "Core Problem",
+    feature_section_1_desc: "AI feels generic because it lacks user-specific habits and context; model switching resets everything.",
+    feature_section_2_title: "Approach",
+    feature_section_2_headline: "Rules + RAG + Edit-Feedback Growth",
+    feature_section_2_desc: "Prioritize traceability, explainability, and low error rate first; scale model sophistication after validation.",
+    feature_section_3_title: "Core Capabilities",
 
     feature_1_title: "Adaptive Learning",
     feature_1_desc: "Learns pricing and tone preferences from before/after edits.",
@@ -88,6 +111,15 @@
     feature_2_desc: "Supports NVIDIA, OpenAI, OpenRouter, DeepSeek, Qwen, Doubao, Google and custom endpoints.",
     feature_3_title: "Traceable Evidence",
     feature_3_desc: "Each suggestion can be traced back to source snippets and rules.",
+
+    home_flow_title: "Workflow",
+    home_flow_1_title: "Import History",
+    home_flow_1_desc: "Import emails, quotes, and events to establish high-quality context.",
+    home_flow_2_title: "Generate & Edit",
+    home_flow_2_desc: "Model drafts first, you finalize with controlled edits.",
+    home_flow_3_title: "Auto Growth",
+    home_flow_3_desc: "Your edits are converted into preference weights for better next responses.",
+
     agent_ready_title: "Agent Ready",
     agent_ready_desc: "Machine-readable endpoints are reserved for future Agent-to-Agent integration.",
 
