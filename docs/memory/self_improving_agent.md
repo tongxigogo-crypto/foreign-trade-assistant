@@ -53,3 +53,10 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - Signal: After a substantial run, the agent should inspect `git status --short` before finishing and make an explicit judgment: commit-ready coherent change set, still-in-progress work, or pure noise that should be cleaned.
 - Rule: Treat functional closure, test pass status, theme cohesion, and single-revertability as commit checkpoint criteria; when the criteria are met, prompt to收口提交; when the work is exploratory or partial, say to continue; when the status is mostly caches/build noise, say to clean instead of commit.
 - Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包 - Action: Keep the submit/cleanup decision in the workflow, not only in memory.
+
+## [2026-03-27] language-toggle-needs-full-widget-coverage
+
+- Context: The English toggle only partially translated the desktop window because several sections were built with local-only labels/buttons and never stored as attributes for later refresh.
+- Signal: If a screen supports runtime language switching, every visible label/button/section title that should change language must be kept as a reusable widget reference or routed through a shared text map.
+- Rule: When adding or revising language switching, first audit the whole window for text-bearing widgets, store reusable references during build, then update both zh and en branches symmetrically; add a regression test that checks the previously missed sections.
+- Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包 - Action: Treat partial translation as a widget-coverage bug, not a copy-text bug.

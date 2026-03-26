@@ -42,5 +42,10 @@ def test_desktop_switching_language_updates_core_labels(tmp_path: Path) -> None:
         assert window.service_section_box.cget("text") == "1) Work Entry (Recommended)"
         assert window.api_box.cget("text") == "Conversation Core (API)"
         assert window.open_workbench_button.cget("text") == "Open Web Workbench"
+        assert window.import_section_box.cget("text") == "History Import"
+        assert window.guide_section_box.cget("text") == "Extension Setup Guide"
+        assert window.email_import_button.cget("text") == "Batch Import Mail Threads"
+        assert window.pull_mail_button.cget("text") == "Mail Pull and Import"
+        assert window.feedback_section_box.cget("text") == "7) Feedback"
     finally:
         window.root.destroy()
