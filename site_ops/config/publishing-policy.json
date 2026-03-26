@@ -1,0 +1,11 @@
+{
+  "preview_only_default": true,
+  "require_confirmation_for_release": true,
+  "require_confirmation_for_output_write": true,
+  "required_quality_gates": [
+    "content_review_passed",
+    "seo_review_passed",
+    "ui_review_passed",
+    "qa_review_passed"
+  ]
+}

@@ -1,0 +1,21 @@
+﻿{
+  "name": "Trade Assistant",
+  "name_zh": "外贸助理",
+  "description": "Local-first AI assistant for foreign trade workflow memory and cross-model continuity.",
+  "url": "https://tongxigogo-crypto.github.io/foreign-trade-assistant-site/",
+  "version": "v0.1.1-beta1-build4",
+  "capabilities": [
+    "memory-import",
+    "quote-draft",
+    "followup-suggestion",
+    "model-switch"
+  ],
+  "endpoints": {
+    "openapi": "/api/openapi.json",
+    "release_manifest": "/api/release-manifest.json"
+  },
+  "auth": {
+    "type": "none"
+  }
+}
+

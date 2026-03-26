@@ -1,0 +1,23 @@
+{
+  "required_agents": [
+    "orchestrator",
+    "strategy_agent",
+    "content_agent",
+    "seo_agent",
+    "ui_stitch_agent",
+    "implementation_agent",
+    "qa_agent",
+    "release_agent",
+    "analytics_agent"
+  ],
+  "default_flow": [
+    "strategy_agent",
+    "content_agent",
+    "seo_agent",
+    "ui_stitch_agent",
+    "implementation_agent",
+    "qa_agent",
+    "release_agent",
+    "analytics_agent"
+  ]
+}

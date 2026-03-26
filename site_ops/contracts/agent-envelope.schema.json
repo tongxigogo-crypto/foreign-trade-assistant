@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SitePublishingAgentEnvelope",
+  "type": "object",
+  "required": ["agent", "status", "summary", "artifacts", "risks", "missing_data", "next_actions"],
+  "properties": {
+    "agent": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "blocked", "needs_confirmation", "done", "failed"]
+    },
+    "summary": { "type": "string" },
+    "artifacts": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "missing_data": { "type": "array", "items": { "type": "string" } },
+    "next_actions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+﻿{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Trade Assistant Public API",
+    "version": "0.1.0",
+    "description": "Public discovery stubs for release and metadata endpoints."
+  },
+  "paths": {
+    "/api/release-manifest.json": {
+      "get": {
+        "summary": "Get latest public release manifest",
+        "responses": {
+          "200": {
+            "description": "Release manifest returned"
+          }
+        }
+      }
+    },
+    "/.well-known/agent.json": {
+      "get": {
+        "summary": "Get agent metadata",
+        "responses": {
+          "200": {
+            "description": "Agent metadata returned"
+          }
+        }
+      }
+    }
+  }
+}

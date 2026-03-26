@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SitePublishingWorkflowReport",
+  "type": "object",
+  "required": ["run_id", "status", "mode", "required_agents", "flow", "agent_results", "missing_data"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["done", "needs_confirmation", "blocked", "failed"] },
+    "mode": { "type": "string", "enum": ["preview", "confirm_write"] },
+    "required_agents": { "type": "array", "items": { "type": "string" } },
+    "flow": { "type": "array", "items": { "type": "string" } },
+    "agent_results": {
+      "type": "array",
+      "items": { "$ref": "agent-envelope.schema.json" }
+    },
+    "missing_data": { "type": "array", "items": { "type": "string" },
+      "default": []
+    },
+    "message": { "type": "string" }
+  },
+  "additionalProperties": true
+}
