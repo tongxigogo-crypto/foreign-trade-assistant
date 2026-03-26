@@ -60,7 +60,7 @@
 </div>
 </nav>
 
-<div class="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col space-y-6 items-center z-50">
+<div class="fixed right-3 md:right-8 top-1/2 -translate-y-1/2 flex flex-col space-y-6 items-center z-50">
   <div class="flex flex-col items-center space-y-4">
     <span class="text-cyan-400 text-[10px] font-semibold">01</span>
     <span class="text-gray-600 text-[10px] font-semibold">02</span>
@@ -70,13 +70,13 @@
 </div>
 
 <main class="relative min-h-screen pt-32 pb-24 px-6 md:px-16 lg:px-24">
-<div class="fixed top-0 right-[-10%] w-[60%] h-screen opacity-70 z-0 pointer-events-none">
+<div class="fixed top-0 right-0 xl:right-[-10%] w-full md:w-[72%] xl:w-[60%] h-screen opacity-70 z-0 pointer-events-none">
   <div class="absolute inset-0 bg-gradient-to-l from-black via-transparent to-black z-10"></div>
   <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-secondary/10 blur-[120px] violet-glow"></div>
   <img class="absolute inset-0 w-full h-full object-cover grayscale brightness-75 contrast-125" alt="Futuristic robot profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDU9r3JCByb3cCLXqmX70u6E1-LkcELXeNeLQD0X8s_KL4t3eYC2mC3Q1IMH4msMmacNcRNUa_BM36Z6fCdu7zf6Kn2edc0iF-ffpYOxrH3XncMJgkukj40Cs5sT_bz2dOFaCKzm1jDdTuvSaKKP3hLMrv_Bg5y9TPR_AtytuxiRhHdnwyfKFaShBG-MLO5BvnvAvQ9zJ7tdJsv2bEqzHyqIzI9F3lL6W2lCGhfTspYOqqGu3PqVW9exEp5G3J_DcBIGBTJtxlDGGP"/>
-  <div class="absolute right-16 top-32 w-[420px] rounded-sm border border-outline-variant/20 bg-black/40 backdrop-blur-md p-6">
+  <div class="hidden md:block absolute right-3 md:right-8 xl:right-16 top-24 md:top-32 w-[min(420px,calc(100vw-1.5rem))] rounded-sm border border-outline-variant/20 bg-black/40 backdrop-blur-md p-4 md:p-6">
     <div class="text-[10px] tracking-[0.2em] uppercase text-primary" data-i18n="hero_right_kicker">Current Focus</div>
-    <h3 class="mt-3 text-2xl font-bold text-white" data-i18n="hero_right_title">外贸助理（Trade Assistant）</h3>
+    <h3 class="mt-3 text-xl md:text-2xl leading-tight font-bold text-white break-words" data-i18n="hero_right_title">外贸助理（Trade Assistant）</h3>
     <p class="mt-3 text-sm text-on-surface-variant leading-relaxed" data-i18n="hero_right_desc">当前主线是可追溯、可解释、低错误率的 AI 决策层，目标是服务真实业务并形成可验证的产品闭环。</p>
     <div class="mt-4 space-y-2 text-xs text-on-surface-variant">
       <div data-i18n="hero_right_point_1">• 本地优先：业务数据默认在用户设备</div>
@@ -89,7 +89,7 @@
 <div class="relative z-10 max-w-7xl mx-auto">
 <div class="mb-20">
 <span class="font-inter text-[11px] font-bold tracking-[0.3em] text-secondary uppercase mb-4 block" data-i18n="home_kicker">PERSONAL DEV PORTFOLIO</span>
-<h1 class="text-[5rem] md:text-[8rem] font-black tracking-tighter leading-[0.85] text-white" data-i18n="home_big_title">TONGXI<br/>LAB</h1>
+<h1 class="text-[3.2rem] sm:text-[4.2rem] md:text-[8rem] font-black tracking-tighter leading-[0.9] md:leading-[0.85] text-white" data-i18n="home_big_title">TONGXI<br/>LAB</h1>
 <p class="max-w-xl text-sm text-on-surface-variant mt-4" data-i18n="home_subtitle">这是我的个人开发网站，用于展示我持续迭代的应用与自动化产品。外贸助理是当前主推项目，后续会陆续上架更多作品。</p>
 <div class="mt-6 flex gap-3">
 <a href="./download.html" class="rounded-sm bg-primary text-black px-4 py-2 text-sm font-bold" data-i18n="home_cta_download">体验外贸助理</a>
