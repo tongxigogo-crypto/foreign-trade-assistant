@@ -18,6 +18,14 @@ from urllib.request import Request, urlopen
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from .api_chat import (
+    ApiChatError,
+    ApiChatSettings,
+    build_local_context,
+    default_api_url,
+    default_model,
+    send_chat_request,
+)
 from .capsule_builder import CapsuleBuilder
 from .config import AppConfig
 from .contracts import CapsuleRequest
@@ -29,6 +37,10 @@ from .state_board import StateBoard
 from .update_manager import check_and_prepare_update, is_http_not_found_error, is_network_error, open_path
 from .user_settings import UserSettings, UserSettingsStore
 from .version import APP_VERSION
+
+# 中文 | 邮箱一键拉取 | 批量导入邮件线程
+
+# 中文 | 邮箱一键拉取 | 批量导入邮件线程
 
 
 class DesktopWindow:
@@ -51,65 +63,189 @@ class DesktopWindow:
         self.last_action_customer_id: str = ""
         self.last_action_customer_name: str = ""
         self.last_action_task_id: str = ""
+        self.ui_lang: str = "zh"
+        self.keep_alive_enabled = True
 
         self._build_ui()
 
     def _build_ui(self) -> None:
         self.root = tk.Tk()
-        self.root.title("外贸助理桌面版")
-        self.root.geometry("1180x860")
+        self.root.title("\u5916\u8d38\u52a9\u7406\u684c\u9762\u7248")
+        self.root.geometry("1320x860")
         self.root.minsize(980, 720)
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close_request)
         try:
             self.root.state("zoomed")
         except tk.TclError:
             pass
 
-        frame = ttk.Frame(self.root, padding=14)
+        frame = ttk.Frame(self.root, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        notice = ttk.Label(
-            frame,
-            text="只读权限声明：导入仅扫描你选择的文件夹，不会修改或删除原始工作文件。",
-            foreground="#8b5a00",
-            wraplength=1120,
-            justify=tk.LEFT,
-        )
-        notice.pack(fill=tk.X, pady=(0, 8))
+        top = ttk.Frame(frame)
+        top.pack(fill=tk.X, pady=(0, 8))
+        self.notice_label = ttk.Label(top, text="\u6743\u9650\u53ea\u8bfb\uff1a\u4ec5\u626b\u63cf\u4f60\u9009\u62e9\u7684\u6587\u4ef6\u3002", foreground="#8b5a00")
+        self.notice_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.lang_zh_btn = ttk.Button(top, text="\u4e2d\u6587", width=6, command=lambda: self._switch_language("zh"))
+        self.lang_zh_btn.pack(side=tk.RIGHT, padx=(6, 0))
+        self.lang_en_btn = ttk.Button(top, text="EN", width=6, command=lambda: self._switch_language("en"))
+        self.lang_en_btn.pack(side=tk.RIGHT)
 
-        self._build_service_section(frame)
-        self._build_runtime_section(frame)
-        self._build_radar_section(frame)
-        self._build_output_section(frame)
-        self._build_import_section(frame)
-        self._build_guide_section(frame)
-        self._build_feedback_section(frame)
+        self.main_canvas = tk.Canvas(frame, highlightthickness=0)
+        self.main_scroll_y = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.main_canvas.yview)
+        self.main_scroll_x = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=self.main_canvas.xview)
+        self.main_canvas.configure(yscrollcommand=self.main_scroll_y.set, xscrollcommand=self.main_scroll_x.set)
+        self.main_scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
+        self.main_scroll_x.pack(side=tk.BOTTOM, fill=tk.X)
+        self.main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.main_content = ttk.Frame(self.main_canvas)
+        self.main_window = self.main_canvas.create_window((0, 0), window=self.main_content, anchor="nw")
+        self.main_content.bind("<Configure>", self._configure_canvas_scrollregion)
+        self.main_canvas.bind("<Configure>", self._on_canvas_configure)
+
+        self.main_panes = ttk.Panedwindow(self.main_content, orient=tk.HORIZONTAL)
+        self.main_panes.pack(fill=tk.BOTH, expand=True)
+        self.left_panel = ttk.Frame(self.main_panes, padding=(0, 0, 6, 0))
+        self.middle_panel = ttk.Frame(self.main_panes, padding=(6, 0, 6, 0))
+        self.right_panel = ttk.Frame(self.main_panes, padding=(6, 0, 0, 0))
+        self.main_panes.add(self.left_panel, weight=3)
+        self.main_panes.add(self.middle_panel, weight=4)
+        self.main_panes.add(self.right_panel, weight=3)
+
+        self._build_service_section(self.left_panel)
+        self._build_import_section(self.left_panel)
+        self._build_output_section(self.left_panel)
+
+        self._build_api_section(self.middle_panel)
+
+        self._build_radar_section(self.left_panel)
+        self._build_guide_section(self.left_panel)
+
+        self._build_runtime_section(self.right_panel)
+        self._build_feedback_section(self.right_panel)
+        self._apply_language_texts()
         self._apply_beginner_mode()
         self.root.after(500, self.begin_work_session)
         self.root.after(1200, self._focus_primary_entry)
         self.root.after(1500, self.refresh_runtime_status)
+        self.root.after(2500, self._service_watchdog_tick)
+
+    def _configure_canvas_scrollregion(self, _event: tk.Event | None = None) -> None:
+        self.main_canvas.configure(scrollregion=self.main_canvas.bbox("all"))
+
+    def _on_canvas_configure(self, event: tk.Event) -> None:
+        self.main_canvas.itemconfigure(self.main_window, width=max(event.width, 1360))
+        self._configure_canvas_scrollregion()
+
+    def _switch_language(self, lang: str) -> None:
+        self.ui_lang = "en" if lang == "en" else "zh"
+        self._apply_language_texts()
+
+    def _apply_language_texts(self) -> None:
+        is_zh = self.ui_lang == "zh"
+        if is_zh:
+            self.root.title("\u5916\u8d38\u52a9\u7406\u684c\u9762\u7248")
+            self.notice_label.configure(text="\u6743\u9650\u53ea\u8bfb\uff1a\u4ec5\u626b\u63cf\u4f60\u9009\u62e9\u7684\u6587\u4ef6\u3002")
+            self.service_section_box.configure(text="1) \u5de5\u4f5c\u5165\u53e3\uff08\u63a8\u8350\uff09")
+            self.start_work_button.configure(text="\u4e00\u952e\u542f\u52a8")
+            self.open_workbench_button.configure(text="\u6253\u5f00\u7f51\u9875\u770b\u677f")
+            self.quick_start_button.configure(text="1) \u4e00\u952e\u542f\u52a8")
+            self.quick_import_button.configure(text="2) \u4e00\u952e\u5bfc\u5165")
+            self.quick_task_button.configure(text="3) \u5f00\u59cb\u5904\u7406\u4efb\u52a1")
+            self.update_button.configure(text="\u4e00\u952e\u66f4\u65b0")
+            self.service_only_button.configure(text="\u4ec5\u542f\u52a8\u670d\u52a1")
+            self.edge_extension_button.configure(text="\u6253\u5f00 Edge \u6269\u5c55\u9875")
+            self.health_check_button.configure(text="\u5065\u5eb7\u68c0\u67e5")
+            self.export_diag_button.configure(text="\u5bfc\u51fa\u8bca\u65ad")
+            self.feedback_inbox_button.configure(text="\u53cd\u9988\u6536\u4ef6\u7bb1")
+            self.runtime_section_box.configure(text="2) \u770b\u677f\u8f93\u51fa\uff08\u7f51\u9875\u770b\u677f\u5904\u7406\u4e1a\u52a1\uff09")
+            self.runtime_hint_var.set("\u684c\u9762\u7aef\u5904\u7406\u542f\u52a8/\u5bfc\u5165/\u540c\u6b65\uff0c\u5176\u4ed6\u4e1a\u52a1\u7ee7\u7eed\u5728\u7f51\u9875\u770b\u677f\u5b8c\u6210\u3002")
+            self.output_section_box.configure(text="\u8f93\u51fa\u76ee\u5f55")
+            self.import_section_box.configure(text="\u5386\u53f2\u5bfc\u5165")
+            self.guide_section_box.configure(text="\u6269\u5c55\u5b89\u88c5\u5411\u5bfc")
+            self.feedback_section_box.configure(text="7) \u53cd\u9988")
+            self.api_box.configure(text="\u5bf9\u8bdd\u4e2d\u67a2\uff08API\uff09")
+            self.api_provider_label.configure(text="\u670d\u52a1\u5546")
+            self.api_key_label.configure(text="API Key")
+            self.api_model_label.configure(text="\u6a21\u578b")
+            self.api_url_label.configure(text="API \u5730\u5740")
+            self.api_use_local_context_check.configure(text="\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587")
+            self.api_input_label.configure(text="\u8f93\u5165")
+            self.api_reply_label.configure(text="\u56de\u590d")
+            self.api_basis_label.configure(text="\u56de\u7b54\u4f9d\u636e")
+            self.api_save_button.configure(text="\u4fdd\u5b58 API")
+            self.api_test_button.configure(text="\u8fde\u63a5\u6d4b\u8bd5")
+            self.api_send_button.configure(text="\u53d1\u9001")
+        else:
+            self.root.title("Trade Assistant Desktop")
+            self.notice_label.configure(text="Read-only: scans selected files only.")
+            self.service_section_box.configure(text="1) Work Entry (Recommended)")
+            self.start_work_button.configure(text="Start Work")
+            self.open_workbench_button.configure(text="Open Web Workbench")
+            self.quick_start_button.configure(text="1) Start Work")
+            self.quick_import_button.configure(text="2) One-click Import")
+            self.quick_task_button.configure(text="3) Start Handling Tasks")
+            self.update_button.configure(text="One-click Update")
+            self.service_only_button.configure(text="Start Service Only")
+            self.edge_extension_button.configure(text="Open Edge Extensions")
+            self.health_check_button.configure(text="Health Check")
+            self.export_diag_button.configure(text="Export Diagnostics")
+            self.feedback_inbox_button.configure(text="Feedback Inbox")
+            self.runtime_section_box.configure(text="2) Workbench Output (Web Workbench handles business)")
+            self.runtime_hint_var.set("Desktop handles startup/import/sync. Continue operations in Web Workbench (tasks/customers/events).")
+            self.output_section_box.configure(text="Output Directory")
+            self.import_section_box.configure(text="History Import")
+            self.guide_section_box.configure(text="Extension Setup Guide")
+            self.feedback_section_box.configure(text="7) Feedback")
+            self.api_box.configure(text="Conversation Core (API)")
+            self.api_provider_label.configure(text="Provider")
+            self.api_key_label.configure(text="API Key")
+            self.api_model_label.configure(text="Model")
+            self.api_url_label.configure(text="API URL")
+            self.api_use_local_context_check.configure(text="Use Local Context")
+            self.api_input_label.configure(text="Input")
+            self.api_reply_label.configure(text="Reply")
+            self.api_basis_label.configure(text="Answer Basis")
+            self.api_save_button.configure(text="Save API")
+            self.api_test_button.configure(text="Connection Test")
+            self.api_send_button.configure(text="Send")
+
+    def _set_text_content(self, widget: tk.Text, text: str) -> None:
+        widget.configure(state=tk.NORMAL)
+        widget.delete("1.0", tk.END)
+        widget.insert(tk.END, text)
+        widget.see(tk.END)
+        widget.configure(state=tk.NORMAL)
+
+    def _append_text_content(self, widget: tk.Text, text: str) -> None:
+        widget.configure(state=tk.NORMAL)
+        widget.insert(tk.END, text)
+        widget.see(tk.END)
+        widget.configure(state=tk.NORMAL)
 
     def _build_service_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="1) Start Work (Recommended)", padding=10)
+        box = ttk.LabelFrame(parent, text="1) \u5de5\u4f5c\u5165\u53e3\uff08\u63a8\u8350\uff09", padding=10)
         box.pack(fill=tk.X, pady=6)
         self.service_section_box = box
         row = ttk.Frame(box)
         row.pack(fill=tk.X)
-        self.service_status = tk.StringVar(value="Not started")
-        self.start_work_button = ttk.Button(row, text="Start Work", command=self.begin_work_session)
+        self.service_status = tk.StringVar(value="\u672a\u542f\u52a8")
+        self.start_work_button = ttk.Button(row, text="\u4e00\u952e\u542f\u52a8", command=self.begin_work_session)
         self.start_work_button.pack(side=tk.LEFT)
-        self.open_workbench_button = ttk.Button(row, text="Open Web Workbench", command=self.open_dashboard_workbench)
+        self.open_workbench_button = ttk.Button(row, text="\u6253\u5f00\u7f51\u9875\u770b\u677f", command=self.open_dashboard_workbench)
         self.open_workbench_button.pack(side=tk.LEFT, padx=8)
         self.beginner_mode_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(
             row,
-            text="Beginner Mode",
+            text="\u65b0\u624b\u6a21\u5f0f",
             variable=self.beginner_mode_var,
             command=self._apply_beginner_mode,
         ).pack(side=tk.LEFT, padx=8)
         self.show_advanced_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(
             row,
-            text="Show Advanced",
+            text="\u663e\u793a\u9ad8\u7ea7\u9879",
             variable=self.show_advanced_var,
             command=self._toggle_service_advanced,
         ).pack(side=tk.LEFT, padx=8)
@@ -117,42 +253,50 @@ class DesktopWindow:
 
         self.quick_actions_frame = ttk.Frame(box)
         self.quick_actions_frame.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(self.quick_actions_frame, text="1) One-click Start", command=self.begin_work_session).pack(side=tk.LEFT)
-        ttk.Button(self.quick_actions_frame, text="2) One-click Import", command=self._beginner_quick_import).pack(side=tk.LEFT, padx=8)
-        ttk.Button(
+        self.quick_start_button = ttk.Button(self.quick_actions_frame, text="1) \u4e00\u952e\u542f\u52a8", command=self.begin_work_session)
+        self.quick_start_button.pack(side=tk.LEFT)
+        self.quick_import_button = ttk.Button(self.quick_actions_frame, text="2) \u4e00\u952e\u5bfc\u5165", command=self._beginner_quick_import)
+        self.quick_import_button.pack(side=tk.LEFT, padx=8)
+        self.quick_task_button = ttk.Button(
             self.quick_actions_frame,
-            text="3) Start Handling Tasks",
+            text="3) \u5f00\u59cb\u5904\u7406\u4efb\u52a1",
             command=lambda: self.open_dashboard_workbench(task_status="open"),
-        ).pack(side=tk.LEFT, padx=8)
-        self.update_button = ttk.Button(self.quick_actions_frame, text="One-click Update", command=self.one_click_update)
+        )
+        self.quick_task_button.pack(side=tk.LEFT, padx=8)
+        self.update_button = ttk.Button(self.quick_actions_frame, text="\u4e00\u952e\u66f4\u65b0", command=self.one_click_update)
         self.update_button.pack(side=tk.LEFT, padx=8)
 
         self.service_advanced_frame = ttk.Frame(box)
         self.service_advanced_frame.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(self.service_advanced_frame, text="Start Services Only", command=self.start_services).pack(side=tk.LEFT)
-        ttk.Button(self.service_advanced_frame, text="Open Edge Extensions", command=self.open_edge_extensions_page).pack(side=tk.LEFT, padx=8)
-        ttk.Button(self.service_advanced_frame, text="Health Check", command=self.run_health_check).pack(side=tk.LEFT, padx=8)
-        ttk.Button(self.service_advanced_frame, text="Export Diagnostics", command=self.export_diagnostics).pack(side=tk.LEFT, padx=8)
-        ttk.Button(self.service_advanced_frame, text="Feedback Inbox", command=self.open_feedback_inbox).pack(side=tk.LEFT, padx=8)
+        self.service_only_button = ttk.Button(self.service_advanced_frame, text="\u4ec5\u542f\u52a8\u670d\u52a1", command=self.start_services)
+        self.service_only_button.pack(side=tk.LEFT)
+        self.edge_extension_button = ttk.Button(self.service_advanced_frame, text="\u6253\u5f00 Edge \u6269\u5c55\u9875", command=self.open_edge_extensions_page)
+        self.edge_extension_button.pack(side=tk.LEFT, padx=8)
+        self.health_check_button = ttk.Button(self.service_advanced_frame, text="\u5065\u5eb7\u68c0\u67e5", command=self.run_health_check)
+        self.health_check_button.pack(side=tk.LEFT, padx=8)
+        self.export_diag_button = ttk.Button(self.service_advanced_frame, text="\u5bfc\u51fa\u8bca\u65ad", command=self.export_diagnostics)
+        self.export_diag_button.pack(side=tk.LEFT, padx=8)
+        self.feedback_inbox_button = ttk.Button(self.service_advanced_frame, text="\u53cd\u9988\u6536\u4ef6\u7bb1", command=self.open_feedback_inbox)
+        self.feedback_inbox_button.pack(side=tk.LEFT, padx=8)
         self.service_advanced_frame.pack_forget()
 
     def _build_runtime_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="2) System Status (Do operations in Web Workbench)", padding=10)
+        box = ttk.LabelFrame(parent, text="2) \u770b\u677f\u8f93\u51fa\uff08\u7f51\u9875\u770b\u677f\u5904\u7406\u4e1a\u52a1\uff09", padding=10)
         box.pack(fill=tk.BOTH, pady=6)
         self.runtime_section_box = box
 
         top = ttk.Frame(box)
         top.pack(fill=tk.X, pady=(0, 6))
-        self.sync_status_var = tk.StringVar(value="Last sync: none")
+        self.sync_status_var = tk.StringVar(value="\u6700\u8fd1\u540c\u6b65\uff1a\u65e0")
         ttk.Label(top, textvariable=self.sync_status_var).pack(side=tk.LEFT)
-        ttk.Button(top, text="Open Web Workbench", command=self.open_dashboard_workbench).pack(side=tk.RIGHT)
-        ttk.Button(top, text="Refresh", command=self.refresh_runtime_status).pack(side=tk.RIGHT, padx=(0, 8))
+        ttk.Button(top, text="\u6253\u5f00\u7f51\u9875\u770b\u677f", command=self.open_dashboard_workbench).pack(side=tk.RIGHT)
+        ttk.Button(top, text="\u5237\u65b0", command=self.refresh_runtime_status).pack(side=tk.RIGHT, padx=(0, 8))
 
         metrics = ttk.Frame(box)
         metrics.pack(fill=tk.X, pady=(0, 8))
-        self.metric_events = tk.StringVar(value="Events: 0")
-        self.metric_focus = tk.StringVar(value="Focus tasks: 0")
-        self.metric_alerts = tk.StringVar(value="Critical alerts: 0")
+        self.metric_events = tk.StringVar(value="\u6700\u8fd1\u4e8b\u4ef6\uff1a0")
+        self.metric_focus = tk.StringVar(value="\u91cd\u70b9\u4efb\u52a1\uff1a0")
+        self.metric_alerts = tk.StringVar(value="\u98ce\u9669\u63d0\u9192\uff1a0")
         ttk.Label(metrics, textvariable=self.metric_events).pack(side=tk.LEFT, padx=(0, 16))
         ttk.Label(metrics, textvariable=self.metric_focus).pack(side=tk.LEFT, padx=(0, 16))
         ttk.Label(metrics, textvariable=self.metric_alerts).pack(side=tk.LEFT)
@@ -172,21 +316,216 @@ class DesktopWindow:
         action_row.pack(fill=tk.X, pady=(8, 0))
         self.action_input_var = tk.StringVar(value="")
         ttk.Entry(action_row, textvariable=self.action_input_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(action_row, text="Execute Action Tag", command=self.execute_action_tag).pack(side=tk.LEFT, padx=8)
+        ttk.Button(action_row, text="\u52a8\u4f5c\u6807\u7b7e\u6267\u884c", command=self.execute_action_tag).pack(side=tk.LEFT, padx=8)
+
+    def _build_api_section(self, parent: ttk.Frame) -> None:
+        self.api_box = ttk.LabelFrame(parent, text="\u5bf9\u8bdd\u4e2d\u67a2\uff08API\uff09", padding=10)
+        self.api_box.pack(fill=tk.BOTH, expand=True, pady=6)
+
+        settings_row = ttk.Frame(self.api_box)
+        settings_row.pack(fill=tk.X)
+        self.api_provider_label = ttk.Label(settings_row, text="\u670d\u52a1\u5546")
+        self.api_provider_label.pack(side=tk.LEFT)
+        self.api_provider_var = tk.StringVar(value=self.settings.api_provider or "nvidia")
+        provider_box = ttk.Combobox(
+            settings_row,
+            width=10,
+            textvariable=self.api_provider_var,
+            values=["nvidia", "openai", "openrouter", "deepseek", "qwen", "doubao", "google", "custom"],
+            state="readonly",
+        )
+        provider_box.pack(side=tk.LEFT, padx=(6, 8))
+        provider_box.bind("<<ComboboxSelected>>", self._on_api_provider_changed)
+
+        self.api_key_label = ttk.Label(settings_row, text="API Key")
+        self.api_key_label.pack(side=tk.LEFT)
+        self.api_key_var = tk.StringVar(value=self.settings.api_key or "")
+        ttk.Entry(settings_row, textvariable=self.api_key_var, show="*", width=26).pack(side=tk.LEFT, padx=(6, 8))
+        self.api_model_label = ttk.Label(settings_row, text="\u6a21\u578b")
+        self.api_model_label.pack(side=tk.LEFT)
+        self.api_model_var = tk.StringVar(value=self.settings.api_model or default_model(self.api_provider_var.get()))
+        ttk.Entry(settings_row, textvariable=self.api_model_var, width=24).pack(side=tk.LEFT, padx=(6, 0))
+
+        settings_row2 = ttk.Frame(self.api_box)
+        settings_row2.pack(fill=tk.X, pady=(6, 0))
+        self.api_url_label = ttk.Label(settings_row2, text="API \u5730\u5740")
+        self.api_url_label.pack(side=tk.LEFT)
+        self.api_url_var = tk.StringVar(value=self.settings.api_url or default_api_url(self.api_provider_var.get()))
+        ttk.Entry(settings_row2, textvariable=self.api_url_var).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(6, 8))
+        self.api_save_button = ttk.Button(settings_row2, text="\u4fdd\u5b58 API", command=self.save_api_settings)
+        self.api_save_button.pack(side=tk.LEFT, padx=(0, 6))
+        self.api_test_button = ttk.Button(settings_row2, text="\u8fde\u63a5\u6d4b\u8bd5", command=self.test_api_connection)
+        self.api_test_button.pack(side=tk.LEFT)
+
+        self.api_use_local_context_var = tk.BooleanVar(value=bool(self.settings.api_use_local_context))
+        self.api_use_local_context_check = ttk.Checkbutton(self.api_box, text="\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587", variable=self.api_use_local_context_var)
+        self.api_use_local_context_check.pack(anchor=tk.W, pady=(6, 0))
+
+        self.api_input_label = ttk.Label(self.api_box, text="\u8f93\u5165")
+        self.api_input_label.pack(anchor=tk.W, pady=(6, 0))
+        self.api_input_text = tk.Text(self.api_box, height=4, wrap=tk.WORD)
+        self.api_input_text.pack(fill=tk.X)
+        self.api_input_text.bind("<Return>", self._on_api_input_return)
+        self.api_input_text.bind("<KP_Enter>", self._on_api_input_return)
+
+        send_row = ttk.Frame(self.api_box)
+        send_row.pack(fill=tk.X, pady=(6, 0))
+        self.api_status_var = tk.StringVar(value="\u5f85\u8fde\u63a5")
+        ttk.Label(send_row, textvariable=self.api_status_var).pack(side=tk.LEFT)
+        self.api_send_button = ttk.Button(send_row, text="\u53d1\u9001", command=self.send_api_message)
+        self.api_send_button.pack(side=tk.RIGHT)
+
+        self.api_result_pane = ttk.Panedwindow(self.api_box, orient=tk.VERTICAL)
+        self.api_result_pane.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+
+        self.api_reply_frame = ttk.Frame(self.api_result_pane)
+        self.api_result_pane.add(self.api_reply_frame, weight=3)
+        self.api_reply_label = ttk.Label(self.api_reply_frame, text="\u56de\u590d")
+        self.api_reply_label.pack(anchor=tk.W, pady=(0, 2))
+        self.api_reply_text = tk.Text(self.api_reply_frame, height=6, wrap=tk.WORD)
+        self.api_reply_text.pack(fill=tk.BOTH, expand=True)
+
+        self.api_basis_frame = ttk.Frame(self.api_result_pane)
+        self.api_result_pane.add(self.api_basis_frame, weight=2)
+        self.api_basis_label = ttk.Label(self.api_basis_frame, text="\u56de\u7b54\u4f9d\u636e")
+        self.api_basis_label.pack(anchor=tk.W, pady=(0, 2))
+        self.api_basis_text = tk.Text(self.api_basis_frame, height=4, wrap=tk.WORD)
+        self.api_basis_text.pack(fill=tk.BOTH, expand=True)
+        self._set_text_content(self.api_basis_text, "\u5c1a\u672a\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587\u3002")
+        self.root.after_idle(lambda: self._set_api_result_split(0.72))
+
+    def _on_api_provider_changed(self, _event: tk.Event | None = None) -> None:
+        provider = self.api_provider_var.get().strip().lower() or "nvidia"
+        if provider != "custom":
+            self.api_url_var.set(default_api_url(provider))
+            if not self.api_model_var.get().strip():
+                self.api_model_var.set(default_model(provider))
+
+    def _collect_api_settings(self) -> ApiChatSettings:
+        provider = self.api_provider_var.get().strip().lower() or "nvidia"
+        api_url = self.api_url_var.get().strip() or default_api_url(provider)
+        model = self.api_model_var.get().strip() or default_model(provider)
+        return ApiChatSettings(
+            provider=provider,
+            api_key=self.api_key_var.get().strip(),
+            model=model,
+            api_url=api_url,
+            timeout_sec=self.settings.api_timeout_sec,
+        )
+
+    def save_api_settings(self) -> None:
+        settings = self._collect_api_settings()
+        self.settings.api_provider = settings.provider
+        self.settings.api_key = settings.api_key
+        self.settings.api_model = settings.model
+        self.settings.api_url = settings.api_url
+        self.settings.api_use_local_context = bool(self.api_use_local_context_var.get())
+        self.settings_store.save(self.settings)
+        self.api_status_var.set("\u5df2\u4fdd\u5b58")
+
+    def _handle_api_error(self, exc: ApiChatError, *, title: str) -> None:
+        self.api_send_button.configure(state=tk.NORMAL)
+        self.api_status_var.set("\u5931\u8d25")
+        self._append_text_content(self.api_reply_text, f"\n[ERROR] {exc}\n")
+        messagebox.showerror(title, str(exc))
+
+    def _on_api_input_return(self, event: tk.Event) -> str | None:
+        if getattr(event, "state", 0) & 0x0001:
+            return None
+        self.send_api_message()
+        return "break"
+
+    def _set_api_result_split(self, ratio: float) -> None:
+        try:
+            total_height = self.api_result_pane.winfo_height()
+            if total_height <= 1:
+                total_height = self.api_box.winfo_height()
+            if total_height > 1:
+                self.api_result_pane.sashpos(0, max(120, int(total_height * ratio)))
+        except tk.TclError:
+            pass
+
+    def test_api_connection(self) -> None:
+        settings = self._collect_api_settings()
+        if not settings.api_key:
+            messagebox.showwarning("API", "\u8bf7\u5148\u586b\u5199 API Key\u3002")
+            return
+        self.api_send_button.configure(state=tk.DISABLED)
+        self.api_status_var.set("\u6d4b\u8bd5\u4e2d...")
+
+        def worker() -> None:
+            try:
+                reply = send_chat_request(settings, "Ping")
+            except ApiChatError as exc:
+                self.root.after(0, lambda e=exc: self._handle_api_error(e, title="Connection Test"))
+                return
+            self.root.after(
+                0,
+                lambda r=reply: (
+                    self.api_send_button.configure(state=tk.NORMAL),
+                    self.api_status_var.set("API \u6b63\u5e38"),
+                    self._append_text_content(self.api_reply_text, r + "\n"),
+                ),
+            )
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def send_api_message(self) -> None:
+        user_text = self.api_input_text.get("1.0", tk.END).strip()
+        if not user_text:
+            return
+        settings = self._collect_api_settings()
+        if not settings.api_key:
+            messagebox.showwarning("API", "\u8bf7\u5148\u586b\u5199 API Key\u3002")
+            return
+
+        prompt = user_text
+        if bool(self.api_use_local_context_var.get()):
+            context = build_local_context(
+                capsule_builder=self.capsule_builder,
+                user_input=user_text,
+                model_name=settings.model,
+                template_lang="zh" if self.ui_lang == "zh" else "en",
+            )
+            prompt = context.prompt
+            self._set_text_content(self.api_basis_text, context.answer_basis)
+        else:
+            self._set_text_content(self.api_basis_text, "Local context disabled.")
+
+        self.api_send_button.configure(state=tk.DISABLED)
+        self.api_status_var.set("\u53d1\u9001\u4e2d...")
+        self._append_text_content(self.api_reply_text, "[Sending...]\n")
+
+        def worker() -> None:
+            try:
+                reply = send_chat_request(settings, prompt)
+            except ApiChatError as exc:
+                self.root.after(0, lambda e=exc: self._handle_api_error(e, title="API Chat"))
+                return
+            self.root.after(
+                0,
+                lambda r=reply: (
+                    self.api_send_button.configure(state=tk.NORMAL),
+                    self.api_status_var.set("\u5b8c\u6210"),
+                    self._append_text_content(self.api_reply_text, r + "\n"),
+                    self.api_input_text.delete("1.0", tk.END),
+                ),
+            )
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _build_radar_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="3) 雷达检索（客户 / 产品 / 成交与历史记录）", padding=10)
+        box = ttk.LabelFrame(parent, text="\u96f7\u8fbe\u68c0\u7d22", padding=10)
         box.pack(fill=tk.BOTH, pady=6)
 
         top = ttk.Frame(box)
         top.pack(fill=tk.X)
         self.radar_query_var = tk.StringVar(value="")
         ttk.Entry(top, textvariable=self.radar_query_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(top, text="检索", command=self.run_radar_search).pack(side=tk.LEFT, padx=8)
-        ttk.Button(top, text="一键生成胶囊", command=self.generate_radar_capsule).pack(side=tk.LEFT, padx=8)
+        ttk.Button(top, text="\u68c0\u7d22", command=self.run_radar_search).pack(side=tk.LEFT, padx=8)
+        ttk.Button(top, text="\u751f\u6210\u80f6\u56ca", command=self.generate_radar_capsule).pack(side=tk.LEFT, padx=8)
 
-        tips = "支持模糊词和精准词：客户名/邮箱/电话/产品名/SKU/系列词"
-        ttk.Label(box, text=tips, foreground="#444").pack(anchor=tk.W, pady=(6, 4))
+        ttk.Label(box, text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002", foreground="#444").pack(anchor=tk.W, pady=(6, 4))
 
         wrap = ttk.Frame(box)
         wrap.pack(fill=tk.BOTH, expand=True)
@@ -195,22 +534,23 @@ class DesktopWindow:
         scroll = ttk.Scrollbar(wrap, orient=tk.VERTICAL, command=self.radar_result.yview)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.radar_result.config(yscrollcommand=scroll.set)
-        self.radar_result.insert(tk.END, "输入关键词后点击“检索”。\n")
+        self.radar_placeholder = "\u8f93\u5165\u5173\u952e\u8bcd\u540e\u70b9\u51fb\u68c0\u7d22\u3002\n"
+        self.radar_result.insert(tk.END, self.radar_placeholder)
         self.radar_result.configure(state=tk.DISABLED)
 
     def _build_output_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="4) 输出文件夹（可自定义）", padding=10)
+        box = ttk.LabelFrame(parent, text="\u8f93\u51fa\u76ee\u5f55", padding=10)
         box.pack(fill=tk.X, pady=6)
         self.output_section_box = box
         row = ttk.Frame(box)
         row.pack(fill=tk.X)
         self.output_var = tk.StringVar(value=self.settings.output_dir or str(self.config.output_dir))
         ttk.Entry(row, textvariable=self.output_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(row, text="选择文件夹", command=self.choose_output_dir).pack(side=tk.LEFT, padx=8)
-        ttk.Button(row, text="保存", command=self.save_output_dir).pack(side=tk.LEFT)
+        ttk.Button(row, text="\u9009\u62e9\u76ee\u5f55", command=self.choose_output_dir).pack(side=tk.LEFT, padx=8)
+        ttk.Button(row, text="\u4fdd\u5b58", command=self.save_output_dir).pack(side=tk.LEFT)
 
     def _build_import_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="5) 一键导入历史（支持多模型目录）", padding=10)
+        box = ttk.LabelFrame(parent, text="\u5386\u53f2\u5bfc\u5165", padding=10)
         box.pack(fill=tk.BOTH, expand=True, pady=6)
         self.import_section_box = box
 
@@ -218,47 +558,32 @@ class DesktopWindow:
         top.pack(fill=tk.X)
         self.import_dir_var = tk.StringVar(value="")
         ttk.Entry(top, textvariable=self.import_dir_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(top, text="选择历史文件夹", command=self.choose_import_dir).pack(side=tk.LEFT, padx=8)
+        ttk.Button(top, text="\u9009\u62e9\u5386\u53f2\u76ee\u5f55", command=self.choose_import_dir).pack(side=tk.LEFT, padx=8)
 
-        helper = (
-            "可重复导入：支持每天/每周多次导入。\n"
-            "自动去重：已导入内容不会重复写入。\n"
-            "推荐用法：首次全量导入，后续使用“导入新增资料”。"
-        )
-        ttk.Label(box, text=helper, justify=tk.LEFT, foreground="#444").pack(fill=tk.X, pady=(8, 6))
+        ttk.Label(box, text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002", justify=tk.LEFT, foreground="#444").pack(fill=tk.X, pady=(8, 6))
 
         actions = ttk.Frame(box)
         actions.pack(fill=tk.X, pady=8)
-        self.import_button = ttk.Button(actions, text="首次全量导入", command=lambda: self.start_import(mode="full"))
+        self.import_button = ttk.Button(actions, text="\u9996\u6b21\u5168\u91cf\u5bfc\u5165", command=lambda: self.start_import(mode="full"))
         self.import_button.pack(side=tk.LEFT)
-        self.incremental_button = ttk.Button(
-            actions, text="导入新增资料（推荐）", command=lambda: self.start_import(mode="incremental")
-        )
+        self.incremental_button = ttk.Button(actions, text="\u5bfc\u5165\u65b0\u589e\u8d44\u6599", command=lambda: self.start_import(mode="incremental"))
         self.incremental_button.pack(side=tk.LEFT, padx=8)
-        self.retry_button = ttk.Button(actions, text="重试失败文件", command=self.retry_failed, state=tk.DISABLED)
+        self.retry_button = ttk.Button(actions, text="\u91cd\u8bd5\u5931\u8d25\u6587\u4ef6", command=self.retry_failed, state=tk.DISABLED)
         self.retry_button.pack(side=tk.LEFT, padx=8)
 
         email_actions = ttk.Frame(box)
         email_actions.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(email_actions, text="邮件线程：").pack(side=tk.LEFT)
-        self.email_import_button = ttk.Button(email_actions, text="批量导入邮件线程", command=self.start_email_import)
+        ttk.Label(email_actions, text="\u90ae\u4ef6\u7ebf\u7a0b\uff1a").pack(side=tk.LEFT)
+        self.email_import_button = ttk.Button(email_actions, text="\u6279\u91cf\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b", command=self.start_email_import)
         self.email_import_button.pack(side=tk.LEFT, padx=(8, 0))
-        self.email_retry_button = ttk.Button(
-            email_actions, text="重试失败邮件文件", command=self.retry_failed_email, state=tk.DISABLED
-        )
+        self.email_retry_button = ttk.Button(email_actions, text="\u91cd\u8bd5\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6", command=self.retry_failed_email, state=tk.DISABLED)
         self.email_retry_button.pack(side=tk.LEFT, padx=8)
 
         connector = ttk.Frame(box)
         connector.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(connector, text="邮箱一键拉取：").pack(side=tk.LEFT)
+        ttk.Label(connector, text="\u90ae\u7bb1\u4e00\u952e\u62c9\u53d6\uff1a").pack(side=tk.LEFT)
         self.mail_provider_var = tk.StringVar(value=self.settings.mail_provider or "gmail")
-        provider_box = ttk.Combobox(
-            connector,
-            width=8,
-            textvariable=self.mail_provider_var,
-            values=["gmail", "outlook"],
-            state="readonly",
-        )
+        provider_box = ttk.Combobox(connector, width=8, textvariable=self.mail_provider_var, values=["gmail", "outlook"], state="readonly")
         provider_box.pack(side=tk.LEFT, padx=(8, 6))
         self.mail_account_var = tk.StringVar(value=self.settings.mail_account or "")
         ttk.Entry(connector, textvariable=self.mail_account_var, width=24).pack(side=tk.LEFT, padx=(0, 6))
@@ -266,18 +591,18 @@ class DesktopWindow:
         ttk.Entry(connector, textvariable=self.mail_password_var, show="*", width=20).pack(side=tk.LEFT, padx=(0, 6))
         self.mail_days_var = tk.StringVar(value=str(self.settings.mail_days or 30))
         ttk.Entry(connector, textvariable=self.mail_days_var, width=6).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Label(connector, text="天").pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Label(connector, text="\u5929").pack(side=tk.LEFT, padx=(0, 6))
         self.mail_limit_var = tk.StringVar(value=str(self.settings.mail_max_messages or 200))
         ttk.Entry(connector, textvariable=self.mail_limit_var, width=7).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Label(connector, text="封").pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Label(connector, text="\u4e0a\u9650").pack(side=tk.LEFT, padx=(0, 6))
         self.remember_mail_password_var = tk.BooleanVar(value=self.settings.remember_mail_password)
-        ttk.Checkbutton(connector, text="记住密码", variable=self.remember_mail_password_var).pack(side=tk.LEFT, padx=(0, 8))
-        self.pull_mail_button = ttk.Button(connector, text="一键拉取并导入", command=self.start_mail_pull)
+        ttk.Checkbutton(connector, text="\u8bb0\u4f4f\u5bc6\u7801", variable=self.remember_mail_password_var).pack(side=tk.LEFT, padx=(0, 8))
+        self.pull_mail_button = ttk.Button(connector, text="\u4e00\u952e\u62c9\u53d6\u5e76\u5bfc\u5165", command=self.start_mail_pull)
         self.pull_mail_button.pack(side=tk.LEFT)
 
         self.progress = ttk.Progressbar(box, orient="horizontal", mode="determinate")
         self.progress.pack(fill=tk.X)
-        self.import_status = tk.StringVar(value="等待导入")
+        self.import_status = tk.StringVar(value="\u7b49\u5f85\u5bfc\u5165")
         ttk.Label(box, textvariable=self.import_status).pack(fill=tk.X, pady=(6, 4))
 
         result_wrap = ttk.Frame(box)
@@ -287,38 +612,33 @@ class DesktopWindow:
         result_scroll = ttk.Scrollbar(result_wrap, orient=tk.VERTICAL, command=self.result_text.yview)
         result_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.result_text.config(yscrollcommand=result_scroll.set)
-        self.result_text.insert(tk.END, "导入结果会显示在这里。\n")
+        self.result_text.insert(tk.END, "\u5bfc\u5165\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002\n")
         self.result_text.configure(state=tk.DISABLED)
 
     def _build_guide_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="6) 扩展安装向导", padding=10)
+        box = ttk.LabelFrame(parent, text="\u6269\u5c55\u5b89\u88c5\u5411\u5bfc", padding=10)
         box.pack(fill=tk.X, pady=6)
         self.guide_section_box = box
-        guide = (
-            "步骤 1：点击“打开 Chrome 扩展页”（chrome://extensions）。\n"
-            "步骤 2：打开右上角“开发者模式”。\n"
-            "步骤 3：点击“加载已解压扩展程序”，选择项目 extension 文件夹。\n"
-            "步骤 4：打开豆包/DeepSeek/Gemini 网页，刷新后输入 @ 测试。"
-        )
+        guide = "\u6b65\u9aa4 1\uff1a\u6253\u5f00 chrome://extensions\n\u6b65\u9aa4 2\uff1a\u5f00\u542f\u5f00\u53d1\u8005\u6a21\u5f0f\n\u6b65\u9aa4 3\uff1a\u52a0\u8f7d extension \u76ee\u5f55"
         ttk.Label(box, text=guide, justify=tk.LEFT).pack(fill=tk.X)
         btns = ttk.Frame(box)
         btns.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(btns, text="打开 Chrome 扩展页", command=self.open_chrome_extensions_page).pack(side=tk.LEFT)
-        ttk.Button(btns, text="打开 extension 文件夹", command=self.open_extension_folder).pack(side=tk.LEFT, padx=8)
+        ttk.Button(btns, text="\u6253\u5f00 Chrome \u6269\u5c55\u9875", command=self.open_chrome_extensions_page).pack(side=tk.LEFT)
+        ttk.Button(btns, text="\u6253\u5f00 extension \u76ee\u5f55", command=self.open_extension_folder).pack(side=tk.LEFT, padx=8)
 
     def _build_feedback_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="7) Feedback", padding=10)
+        box = ttk.LabelFrame(parent, text="7) \u53cd\u9988", padding=10)
         box.pack(fill=tk.X, pady=6)
         self.feedback_section_box = box
         row = ttk.Frame(box)
         row.pack(fill=tk.X)
         self.feedback_var = tk.StringVar(value="")
         ttk.Entry(row, textvariable=self.feedback_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(row, text="Submit Feedback", command=self.submit_feedback).pack(side=tk.LEFT, padx=8)
-        ttk.Button(row, text="Open Inbox", command=self.open_feedback_inbox).pack(side=tk.LEFT)
+        ttk.Button(row, text="\u63d0\u4ea4\u53cd\u9988", command=self.submit_feedback).pack(side=tk.LEFT, padx=8)
+        ttk.Button(row, text="\u6253\u5f00\u53cd\u9988\u6536\u4ef6\u7bb1", command=self.open_feedback_inbox).pack(side=tk.LEFT)
 
     def choose_output_dir(self) -> None:
-        selected = filedialog.askdirectory(title="选择输出文件夹")
+        selected = filedialog.askdirectory(title="\u9009\u62e9\u8f93\u51fa\u6587\u4ef6\u5939")
         if selected:
             self.output_var.set(selected)
 
@@ -327,14 +647,14 @@ class DesktopWindow:
         try:
             path.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            messagebox.showerror("保存失败", str(exc))
+            messagebox.showerror("\u4fdd\u5b58\u5931\u8d25", str(exc))
             return
         self.settings.output_dir = str(path)
         self.settings_store.save(self.settings)
-        messagebox.showinfo("已保存", f"输出文件夹已保存：\n{path}")
+        messagebox.showinfo("\u5df2\u4fdd\u5b58", f"\u8f93\u51fa\u6587\u4ef6\u5939\u5df2\u4fdd\u5b58\uff1a\n{path}")
 
     def choose_import_dir(self) -> None:
-        selected = filedialog.askdirectory(title="选择历史文件夹（只读扫描）")
+        selected = filedialog.askdirectory(title="\u9009\u62e9\u5386\u53f2\u6587\u4ef6\u5939\uff08\u53ea\u8bfb\u626b\u63cf\uff09")
         if selected:
             self.import_dir_var.set(selected)
 
@@ -455,18 +775,18 @@ class DesktopWindow:
         webbrowser.open("http://127.0.0.1:8765/feedback/inbox")
 
     def start_services(self) -> None:
-        self.service_status.set("启动中...")
+        self.service_status.set("\u542f\u52a8\u4e2d...")
 
         def worker() -> None:
             self._start_service_processes()
             bridge_ok = self._wait_health("http://127.0.0.1:8765/health", timeout_sec=12)
             dashboard_ok = self._wait_health("http://127.0.0.1:8787/", timeout_sec=12)
             if bridge_ok and dashboard_ok:
-                msg = "已启动（Bridge + Dashboard）"
+                msg = "\u5df2\u542f\u52a8\uff08Bridge + Dashboard\uff09"
             elif bridge_ok:
-                msg = "Bridge 已启动，Dashboard 未就绪"
+                msg = "Bridge \u5df2\u542f\u52a8\uff0cDashboard \u672a\u5c31\u7eea"
             else:
-                msg = "启动失败，请重试"
+                msg = "\u542f\u52a8\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5"
             self.root.after(0, lambda: self.service_status.set(msg))
             if bridge_ok and not self.did_initial_self_check:
                 self.root.after(0, self.run_health_check_silent)
@@ -605,6 +925,30 @@ class DesktopWindow:
                 return True
             time.sleep(0.2)
         return False
+
+    def _service_watchdog_tick(self) -> None:
+        if not self.keep_alive_enabled:
+            return
+        bridge_dead = self.bridge_process is not None and self.bridge_process.poll() is not None
+        dashboard_dead = self.dashboard_process is not None and self.dashboard_process.poll() is not None
+        bridge_ready = self._is_bridge_ready()
+        dashboard_ready = self._is_dashboard_ready()
+        if bridge_dead or dashboard_dead or not (bridge_ready and dashboard_ready):
+            self.start_services()
+        self.root.after(2500, self._service_watchdog_tick)
+
+    def _on_close_request(self) -> None:
+        if not messagebox.askyesno("Exit", "Close Trade Assistant desktop?"):
+            return
+        self.keep_alive_enabled = False
+        try:
+            if self.bridge_process and self.bridge_process.poll() is None:
+                self.bridge_process.terminate()
+            if self.dashboard_process and self.dashboard_process.poll() is None:
+                self.dashboard_process.terminate()
+        except OSError:
+            pass
+        self.root.destroy()
 
     def one_click_update(self) -> None:
         if hasattr(self, "update_button"):
@@ -779,12 +1123,12 @@ class DesktopWindow:
 
     def _event_action_label(self, action_name: str) -> str:
         mapping = {
-            "generate_quote_draft": "已生成报价草稿",
-            "generate_followup_draft": "已生成跟进草稿",
-            "ingest_email_thread": "已导入邮件线程",
-            "conversation_sync": "已同步对话记忆",
+            "generate_quote_draft": "\u5df2\u751f\u6210\u62a5\u4ef7\u8349\u7a3f",
+            "generate_followup_draft": "\u5df2\u751f\u6210\u8ddf\u8fdb\u8349\u7a3f",
+            "ingest_email_thread": "\u5df2\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b",
+            "conversation_sync": "\u5df2\u540c\u6b65\u5bf9\u8bdd\u8bb0\u5fc6",
         }
-        return mapping.get(action_name, action_name or "未知动作")
+        return mapping.get(action_name, action_name or "\u672a\u77e5\u52a8\u4f5c")
 
     def _extract_customer_from_event(self, event: dict) -> str:
         results = event.get("results", [])
@@ -936,7 +1280,7 @@ class DesktopWindow:
             action = str(e.get("action_name", ""))
             action_label = self._event_action_label(action)
             created_at = str(e.get("created_at_utc", ""))
-            customer = self._extract_customer_from_event(e) or "未知客户"
+            customer = self._extract_customer_from_event(e) or "\u672a\u77e5\u5ba2\u6237"
             product = self._extract_product_from_event(e)
 
             if action == "generate_quote_draft":
@@ -960,7 +1304,7 @@ class DesktopWindow:
 
             event_lines.append(
                 f"- {created_at} | {action_label}"
-                + (f"（客户: {customer}，产品: {product}）" if product else f"（客户: {customer}）")
+                + (f"\uff08\u5ba2\u6237: {customer}\uff0c\u4ea7\u54c1: {product}\uff09" if product else f"\uff08\u5ba2\u6237: {customer}\uff09")
             )
 
         ranked = sorted(
@@ -970,56 +1314,59 @@ class DesktopWindow:
         )
 
         view_lines: list[str] = [
-            f"检索词: {query}",
+            f"\u68c0\u7d22\u8bcd: {query}",
             "",
-            f"客户命中: {len(customer_hits)}",
+            f"\u5ba2\u6237\u547d\u4e2d: {len(customer_hits)}",
         ]
         for c in customer_hits[:6]:
-            view_lines.append(f"- {c.name} ({c.customer_id}) | 地区: {c.region or '-'} | 币种: {c.currency}")
-        view_lines.extend(["", f"产品命中: {len(product_hits)}"])
+            view_lines.append(f"- {c.name} ({c.customer_id}) | \u5730\u533a: {c.region or '-'} | \u5e01\u79cd: {c.currency}")
+        view_lines.extend(["", f"\u4ea7\u54c1\u547d\u4e2d: {len(product_hits)}"])
         for p in product_hits[:6]:
             view_lines.append(f"- {p.sku} | {p.name}")
-        view_lines.extend(["", f"历史记忆命中: {len(doc_hits)}"])
+        view_lines.extend(["", f"\u5386\u53f2\u8bb0\u5fc6\u547d\u4e2d: {len(doc_hits)}"])
         for d in doc_hits[:8]:
             view_lines.append(f"- {d}")
-        view_lines.extend(["", f"成交/动作记录命中: {len(event_hits)}"])
+        view_lines.extend(["", f"\u6210\u4ea4/\u52a8\u4f5c\u8bb0\u5f55\u547d\u4e2d: {len(event_hits)}"])
 
         if ranked:
-            view_lines.append("客户聚合摘要:")
+            view_lines.append("\u5ba2\u6237\u805a\u5408\u6458\u8981:")
             for customer, stats in ranked[:8]:
                 products = list(stats["products"])[:3]
-                product_text = f"，相关产品: {', '.join(products)}" if products else ""
+                product_text = f"\uff0c\u76f8\u5173\u4ea7\u54c1: {', '.join(products)}" if products else ""
                 view_lines.append(
-                    f"- {customer} | 报价 {stats['quotes']} 次 | 跟进 {stats['followups']} 次 | 最近 {stats['last_time']}{product_text}"
+                    f"- {customer} | \u62a5\u4ef7 {stats['quotes']} \u6b21 | \u8ddf\u8fdb {stats['followups']} \u6b21 | \u6700\u8fd1 {stats['last_time']}{product_text}"
                 )
+
         cross_ranked = sorted(
             cross_stats.items(),
             key=lambda item: (item[1]["quotes"], item[1]["followups"], item[1]["last_time"]),
             reverse=True,
         )
         if cross_ranked:
-            view_lines.append("成交档案视图（客户 × 产品）:")
+            view_lines.append("\u6210\u4ea4\u6863\u6848\u89c6\u56fe\uff08\u5ba2\u6237 \u00d7 \u4ea7\u54c1\uff09:")
             for (customer, product), stats in cross_ranked[:12]:
                 view_lines.append(
-                    f"- {customer} × {product} | 报价 {stats['quotes']} 次 | 跟进 {stats['followups']} 次 | 最近 {stats['last_time']}"
+                    f"- {customer} \u00d7 {product} | \u62a5\u4ef7 {stats['quotes']} \u6b21 | \u8ddf\u8fdb {stats['followups']} \u6b21 | \u6700\u8fd1 {stats['last_time']}"
                 )
-        if event_lines:
-            view_lines.append("最近语义事件:")
-            view_lines.extend(event_lines[:8])
-        if not customer_hits and not product_hits and not doc_hits and not event_hits:
-            view_lines.append("- 无命中，请更换关键词或先导入更多历史资料。")
 
-        capsule_lines = [f"雷达检索词: {query}", "雷达摘要:"]
+        if event_lines:
+            view_lines.append("\u6700\u8fd1\u8bed\u4e49\u4e8b\u4ef6:")
+            view_lines.extend(event_lines[:8])
+
+        if not customer_hits and not product_hits and not doc_hits and not event_hits:
+            view_lines.append("- \u65e0\u547d\u4e2d\uff0c\u8bf7\u66f4\u6362\u5173\u952e\u8bcd\u6216\u5148\u5bfc\u5165\u66f4\u591a\u5386\u53f2\u8d44\u6599\u3002")
+
+        capsule_lines = [f"\u96f7\u8fbe\u68c0\u7d22\u8bcd: {query}", "\u96f7\u8fbe\u6458\u8981:"]
         for customer, stats in ranked[:6]:
             capsule_lines.append(
-                f"- 客户 {customer}: 报价{stats['quotes']}次, 跟进{stats['followups']}次, 最近记录 {stats['last_time']}"
+                f"- \u5ba2\u6237 {customer}: \u62a5\u4ef7{stats['quotes']}\u6b21 \u8ddf\u8fdb{stats['followups']}\u6b21 \u6700\u8fd1\u8bb0\u5f55{stats['last_time']}"
             )
         for (customer, product), stats in cross_ranked[:8]:
             capsule_lines.append(
-                f"- 成交档案 {customer} × {product}: 报价{stats['quotes']}次, 跟进{stats['followups']}次, 最近 {stats['last_time']}"
+                f"- \u6210\u4ea4\u6863\u6848 {customer} \u00d7 {product}: \u62a5\u4ef7{stats['quotes']}\u6b21 \u8ddf\u8fdb{stats['followups']}\u6b21 \u6700\u8fd1{stats['last_time']}"
             )
         for d in doc_hits[:6]:
-            capsule_lines.append(f"- 历史事实: {d}")
+            capsule_lines.append(f"- \u5386\u53f2\u4e8b\u5b9e: {d}")
         capsule_lines.extend(event_lines[:6])
 
         return "\n".join(view_lines), "\n".join(capsule_lines)
@@ -1027,7 +1374,7 @@ class DesktopWindow:
     def run_radar_search(self) -> None:
         query = self.radar_query_var.get().strip()
         if not query:
-            messagebox.showinfo("提示", "请输入关键词。")
+            messagebox.showinfo("\u63d0\u793a", "\u8bf7\u8f93\u5165\u5173\u952e\u8bcd\u3002")
             return
 
         data = self._collect_radar_data(query)
@@ -1043,7 +1390,7 @@ class DesktopWindow:
     def generate_radar_capsule(self) -> None:
         query = self.radar_query_var.get().strip()
         if not query:
-            messagebox.showinfo("提示", "请先输入检索词。")
+            messagebox.showinfo("\u63d0\u793a", "\u8bf7\u5148\u8f93\u5165\u68c0\u7d22\u8bcd\u3002")
             return
 
         data = self._collect_radar_data(query)
@@ -1064,7 +1411,7 @@ class DesktopWindow:
         self.radar_result.configure(state=tk.NORMAL)
         self.radar_result.delete("1.0", tk.END)
         self.radar_result.insert(tk.END, view_text)
-        self.radar_result.insert(tk.END, "\n\n--- 生成胶囊 ---\n")
+        self.radar_result.insert(tk.END, "\n\n--- \u751f\u6210\u80f6\u56ca ---\n")
         self.radar_result.insert(tk.END, text + "\n")
         self.radar_result.configure(state=tk.DISABLED)
         self.radar_result.see(tk.END)
@@ -1072,29 +1419,29 @@ class DesktopWindow:
         try:
             self.root.clipboard_clear()
             self.root.clipboard_append(text)
-            messagebox.showinfo("已生成", "胶囊已复制到剪贴板，可直接粘贴到大模型输入框。")
+            messagebox.showinfo("\u5df2\u751f\u6210", "\u80f6\u56ca\u5df2\u590d\u5236\u5230\u526a\u8d34\u677f\uff0c\u53ef\u76f4\u63a5\u7c98\u8d34\u5230\u5927\u6a21\u578b\u8f93\u5165\u6846\u3002")
         except tk.TclError:
-            messagebox.showinfo("已生成", "胶囊已生成，请在结果区复制。")
+            messagebox.showinfo("\u5df2\u751f\u6210", "\u80f6\u56ca\u5df2\u751f\u6210\uff0c\u8bf7\u5728\u7ed3\u679c\u533a\u590d\u5236\u3002")
 
     def start_import(self, mode: str = "full") -> None:
         source = self.import_dir_var.get().strip()
         if not source:
-            messagebox.showwarning("提示", "请先选择历史文件夹。")
+            messagebox.showwarning("\u63d0\u793a", "\u8bf7\u5148\u9009\u62e9\u5386\u53f2\u6587\u4ef6\u5939\u3002")
             return
         root_dir = Path(source).expanduser().resolve()
         if not root_dir.exists() or not root_dir.is_dir():
-            messagebox.showerror("错误", "历史文件夹不存在。")
+            messagebox.showerror("\u9519\u8bef", "\u5386\u53f2\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
             return
 
         self._set_import_buttons_busy(True)
         self.progress.configure(value=0, maximum=1)
         if mode == "incremental":
-            self.import_status.set("正在导入新增资料...")
-            self._append_result(f"\n开始增量导入：{root_dir}\n")
+            self.import_status.set("\u6b63\u5728\u5bfc\u5165\u65b0\u589e\u8d44\u6599...")
+            self._append_result(f"\n\u5f00\u59cb\u589e\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
             max_files = 600
         else:
-            self.import_status.set("正在全量扫描...")
-            self._append_result(f"\n开始全量导入：{root_dir}\n")
+            self.import_status.set("\u6b63\u5728\u5168\u91cf\u626b\u63cf...")
+            self._append_result(f"\n\u5f00\u59cb\u5168\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
             max_files = 1500
 
         def worker() -> None:
@@ -1108,7 +1455,7 @@ class DesktopWindow:
                     lambda: (
                         self.progress.configure(value=event.get("current", 0)),
                         self.import_status.set(
-                            f"处理中 {event.get('current', 0)}/{event.get('total', 0)} | 成功文件 {event.get('imported_files', 0)} | 记忆 {event.get('facts', 0)} | 失败 {event.get('failed_files', 0)}"
+                            f"\u5904\u7406\u4e2d {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f\u6587\u4ef6 {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}"
                         ),
                     ),
                 )
@@ -1129,14 +1476,14 @@ class DesktopWindow:
 
     def retry_failed(self) -> None:
         if not self.last_failed_files:
-            messagebox.showinfo("提示", "当前没有失败文件可重试。")
+            messagebox.showinfo("\u63d0\u793a", "\u5f53\u524d\u6ca1\u6709\u5931\u8d25\u6587\u4ef6\u53ef\u91cd\u8bd5\u3002")
             return
 
         self._set_import_buttons_busy(True)
 
         total = max(1, len(self.last_failed_files))
         self.progress.configure(value=0, maximum=total)
-        self.import_status.set("正在重试失败文件...")
+        self.import_status.set("\u6b63\u5728\u91cd\u8bd5\u5931\u8d25\u6587\u4ef6...")
 
         def worker() -> None:
             def on_progress(event: dict) -> None:
@@ -1159,17 +1506,17 @@ class DesktopWindow:
     def start_email_import(self) -> None:
         source = self.import_dir_var.get().strip()
         if not source:
-            messagebox.showwarning("提示", "请先选择邮件文件夹。")
+            messagebox.showwarning("\u63d0\u793a", "\u8bf7\u5148\u9009\u62e9\u90ae\u4ef6\u6587\u4ef6\u5939\u3002")
             return
         root_dir = Path(source).expanduser().resolve()
         if not root_dir.exists() or not root_dir.is_dir():
-            messagebox.showerror("错误", "邮件文件夹不存在。")
+            messagebox.showerror("\u9519\u8bef", "\u90ae\u4ef6\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
             return
 
         self._set_import_buttons_busy(True)
         self.progress.configure(value=0, maximum=1)
-        self.import_status.set("正在批量导入邮件线程...")
-        self._append_result(f"\n开始邮件批量导入：{root_dir}\n")
+        self.import_status.set("\u6b63\u5728\u6279\u91cf\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b...")
+        self._append_result(f"\n\u5f00\u59cb\u90ae\u4ef6\u6279\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
 
         def worker() -> None:
             files = scan_email_thread_files(root_dir, recursive=True, max_files=1200)
@@ -1182,7 +1529,7 @@ class DesktopWindow:
                     lambda: (
                         self.progress.configure(value=event.get("current", 0)),
                         self.import_status.set(
-                            f"邮件导入 {event.get('current', 0)}/{event.get('total', 0)} | 成功 {event.get('imported_files', 0)} | 记忆 {event.get('facts', 0)} | 失败 {event.get('failed_files', 0)}"
+                            f"\u90ae\u4ef6\u5bfc\u5165 {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}"
                         ),
                     ),
                 )
@@ -1203,13 +1550,13 @@ class DesktopWindow:
 
     def retry_failed_email(self) -> None:
         if not self.last_failed_email_files:
-            messagebox.showinfo("提示", "当前没有失败邮件文件可重试。")
+            messagebox.showinfo("\u63d0\u793a", "\u5f53\u524d\u6ca1\u6709\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6\u53ef\u91cd\u8bd5\u3002")
             return
 
         self._set_import_buttons_busy(True)
         total = max(1, len(self.last_failed_email_files))
         self.progress.configure(value=0, maximum=total)
-        self.import_status.set("正在重试失败邮件文件...")
+        self.import_status.set("\u6b63\u5728\u91cd\u8bd5\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6...")
 
         def worker() -> None:
             def on_progress(event: dict) -> None:
@@ -1234,24 +1581,24 @@ class DesktopWindow:
         account = self.mail_account_var.get().strip()
         password = self.mail_password_var.get().strip()
         if not account:
-            messagebox.showwarning("提示", "请先输入邮箱账号。")
+            messagebox.showwarning("\u63d0\u793a", "\u8bf7\u5148\u8f93\u5165\u90ae\u7bb1\u8d26\u53f7\u3002")
             return
         if not password:
-            messagebox.showwarning("提示", "请先输入邮箱密码（建议应用专用密码）。")
+            messagebox.showwarning("\u63d0\u793a", "\u8bf7\u5148\u8f93\u5165\u90ae\u7bb1\u5bc6\u7801\uff08\u5efa\u8bae\u5e94\u7528\u4e13\u7528\u5bc6\u7801\uff09\u3002")
             return
         try:
             days = max(1, min(int(self.mail_days_var.get().strip() or "30"), 3650))
             max_messages = max(1, min(int(self.mail_limit_var.get().strip() or "200"), 5000))
         except ValueError:
-            messagebox.showwarning("提示", "拉取天数和封数需为数字。")
+            messagebox.showwarning("\u63d0\u793a", "\u62c9\u53d6\u5929\u6570\u548c\u5c01\u6570\u9700\u4e3a\u6570\u5b57\u3002")
             return
 
         remember_password = bool(self.remember_mail_password_var.get())
         self._save_mail_settings(remember_password=remember_password, password=password)
         self._set_import_buttons_busy(True)
         self.progress.configure(value=0, maximum=1)
-        self.import_status.set("正在拉取邮箱邮件并导入...")
-        self._append_result(f"\n开始邮箱拉取：provider={provider}, account={account}, days={days}, max={max_messages}\n")
+        self.import_status.set("\u6b63\u5728\u62c9\u53d6\u90ae\u7bb1\u90ae\u4ef6\u5e76\u5bfc\u5165...")
+        self._append_result(f"\n\u5f00\u59cb\u90ae\u7bb1\u62c9\u53d6\uff1aprovider={provider}, account={account}, days={days}, max={max_messages}\n")
 
         def worker() -> None:
             ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -1263,7 +1610,7 @@ class DesktopWindow:
                     lambda: (
                         self.progress.configure(value=event.get("current", 0), maximum=max(1, event.get("total", 1))),
                         self.import_status.set(
-                            f"邮箱拉取 {event.get('current', 0)}/{event.get('total', 0)} | 成功 {event.get('pulled_messages', 0)} | 失败 {event.get('failed_messages', 0)}"
+                            f"\u90ae\u7bb1\u62c9\u53d6 {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f {event.get('pulled_messages', 0)} | \u5931\u8d25 {event.get('failed_messages', 0)}"
                         ),
                     ),
                 )
@@ -1300,37 +1647,37 @@ class DesktopWindow:
     def _finish_import(self, result: dict, retry: bool = False, mode: str = "full") -> None:
         self._set_import_buttons_busy(False)
 
-        tag = "重试完成" if retry else "导入完成"
+        tag = "\u91cd\u8bd5\u5b8c\u6210" if retry else "\u5bfc\u5165\u5b8c\u6210"
         self.import_status.set(
-            f"{tag}：扫描 {result.get('scanned_files', 0)}，成功 {result.get('imported_files', 0)}，新增记忆 {result.get('extracted_facts', 0)}，重复跳过 {result.get('duplicate_skipped', 0)}，失败 {len(result.get('failed_files', []))}"
+            f"{tag}\uff1a\u626b\u63cf{result.get('scanned_files', 0)}\uff0c\u6210\u529f{result.get('imported_files', 0)}\uff0c\u65b0\u589e\u8bb0\u5fc6{result.get('extracted_facts', 0)}\uff0c\u91cd\u590d\u8df3\u8fc7{result.get('duplicate_skipped', 0)}\uff0c\u5931\u8d25{len(result.get('failed_files', []))}"
         )
         if not retry:
             messagebox.showinfo(
-                "导入完成",
+                "\u5bfc\u5165\u5b8c\u6210",
                 (
-                    f"本次扫描 {result.get('scanned_files', 0)} 个文件\n"
-                    f"新增记忆 {result.get('extracted_facts', 0)} 条\n"
-                    f"重复跳过 {result.get('duplicate_skipped', 0)} 条（自动去重）\n"
-                    f"失败文件 {len(result.get('failed_files', []))} 个"
+                    f"\u672c\u6b21\u626b\u63cf {result.get('scanned_files', 0)} \u4e2a\u6587\u4ef6\n"
+                    f"\u65b0\u589e\u8bb0\u5fc6 {result.get('extracted_facts', 0)} \u6761\n"
+                    f"\u91cd\u590d\u8df3\u8fc7 {result.get('duplicate_skipped', 0)} \u6761\uff08\u81ea\u52a8\u53bb\u91cd\uff09\n"
+                    f"\u5931\u8d25\u6587\u4ef6 {len(result.get('failed_files', []))} \u4e2a"
                 ),
             )
         self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
 
     def _finish_email_import(self, result: dict, retry: bool = False) -> None:
         self._set_import_buttons_busy(False)
-        tag = "邮件重试完成" if retry else "邮件导入完成"
+        tag = "\u90ae\u4ef6\u91cd\u8bd5\u5b8c\u6210" if retry else "\u90ae\u4ef6\u5bfc\u5165\u5b8c\u6210"
         self.import_status.set(
-            f"{tag}：扫描 {result.get('scanned_files', 0)}，成功 {result.get('imported_files', 0)}，跳过 {result.get('skipped_files', 0)}，新增记忆 {result.get('extracted_facts', 0)}，重复跳过 {result.get('duplicate_skipped', 0)}，失败 {len(result.get('failed_files', []))}"
+            f"{tag}\uff1a\u626b\u63cf{result.get('scanned_files', 0)}\uff0c\u6210\u529f{result.get('imported_files', 0)}\uff0c\u8df3\u8fc7{result.get('skipped_files', 0)}\uff0c\u65b0\u589e\u8bb0\u5fc6{result.get('extracted_facts', 0)}\uff0c\u91cd\u590d\u8df3\u8fc7{result.get('duplicate_skipped', 0)}\uff0c\u5931\u8d25{len(result.get('failed_files', []))}"
         )
         if not retry:
             messagebox.showinfo(
-                "邮件导入完成",
+                "\u90ae\u4ef6\u5bfc\u5165\u5b8c\u6210",
                 (
-                    f"本次扫描 {result.get('scanned_files', 0)} 个邮件文件\n"
-                    f"成功导入 {result.get('imported_files', 0)} 个\n"
-                    f"新增记忆 {result.get('extracted_facts', 0)} 条\n"
-                    f"重复跳过 {result.get('duplicate_skipped', 0)} 条\n"
-                    f"失败文件 {len(result.get('failed_files', []))} 个"
+                    f"\u672c\u6b21\u626b\u63cf {result.get('scanned_files', 0)} \u4e2a\u90ae\u4ef6\u6587\u4ef6\n"
+                    f"\u6210\u529f\u5bfc\u5165 {result.get('imported_files', 0)} \u4e2a\n"
+                    f"\u65b0\u589e\u8bb0\u5fc6 {result.get('extracted_facts', 0)} \u6761\n"
+                    f"\u91cd\u590d\u8df3\u8fc7 {result.get('duplicate_skipped', 0)} \u6761\n"
+                    f"\u5931\u8d25\u6587\u4ef6 {len(result.get('failed_files', []))} \u4e2a"
                 ),
             )
         self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
@@ -1338,19 +1685,19 @@ class DesktopWindow:
     def _finish_mail_pull(self, pull_result: dict, ingest_result: dict) -> None:
         self._set_import_buttons_busy(False)
         if pull_result.get("error"):
-            self.import_status.set(f"邮箱拉取失败：{pull_result.get('error')}")
-            messagebox.showerror("拉取失败", str(pull_result.get("error")))
+            self.import_status.set(f"\u90ae\u7bb1\u62c9\u53d6\u5931\u8d25\uff1a{pull_result.get('error')}")
+            messagebox.showerror("\u62c9\u53d6\u5931\u8d25", str(pull_result.get("error")))
             return
         self.import_status.set(
-            f"邮箱拉取完成：拉取 {pull_result.get('pulled_messages', 0)} 封，导入 {ingest_result.get('imported_files', 0)} 封，失败 {len(ingest_result.get('failed_files', []))}"
+            f"\u90ae\u7bb1\u62c9\u53d6\u5b8c\u6210\uff1a\u62c9\u53d6{pull_result.get('pulled_messages', 0)} \u5c01\uff0c\u5bfc\u5165 {ingest_result.get('imported_files', 0)} \u5c01\uff0c\u5931\u8d25 {len(ingest_result.get('failed_files', []))}"
         )
         messagebox.showinfo(
-            "拉取并导入完成",
+            "\u62c9\u53d6\u5e76\u5bfc\u5165\u5b8c\u6210",
             (
-                f"拉取邮件 {pull_result.get('pulled_messages', 0)} 封\n"
-                f"导入成功 {ingest_result.get('imported_files', 0)} 封\n"
-                f"新增记忆 {ingest_result.get('extracted_facts', 0)} 条\n"
-                f"失败文件 {len(ingest_result.get('failed_files', []))} 个"
+                f"\u62c9\u53d6\u90ae\u4ef6 {pull_result.get('pulled_messages', 0)} \u5c01\n"
+                f"\u5bfc\u5165\u6210\u529f {ingest_result.get('imported_files', 0)} \u5c01\n"
+                f"\u65b0\u589e\u8bb0\u5fc6 {ingest_result.get('extracted_facts', 0)} \u6761\n"
+                f"\u5931\u8d25\u6587\u4ef6 {len(ingest_result.get('failed_files', []))} \u4e2a"
             ),
         )
         self._append_result(

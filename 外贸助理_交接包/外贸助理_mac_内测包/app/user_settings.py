@@ -17,6 +17,12 @@ class UserSettings:
     mail_max_messages: int = 200
     mail_password: str = ""
     remember_mail_password: bool = False
+    api_provider: str = "nvidia"
+    api_key: str = ""
+    api_model: str = ""
+    api_url: str = ""
+    api_timeout_sec: int = 30
+    api_use_local_context: bool = True
     extra: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -33,6 +39,12 @@ class UserSettings:
                 "mail_max_messages": int(self.mail_max_messages),
                 "mail_password": self.mail_password if self.remember_mail_password else "",
                 "remember_mail_password": bool(self.remember_mail_password),
+                "api_provider": self.api_provider,
+                "api_key": self.api_key,
+                "api_model": self.api_model,
+                "api_url": self.api_url,
+                "api_timeout_sec": int(self.api_timeout_sec),
+                "api_use_local_context": bool(self.api_use_local_context),
             }
         )
         return payload
@@ -60,6 +72,17 @@ class UserSettings:
             mail_max_messages = 200
         remember_mail_password = bool(data.get("remember_mail_password", False))
         mail_password = str(data.get("mail_password", "")).strip() if remember_mail_password else ""
+        api_provider = str(data.get("api_provider", "nvidia")).strip().lower() or "nvidia"
+        if api_provider not in {"nvidia", "openai", "openrouter", "deepseek", "qwen", "doubao", "google", "custom"}:
+            api_provider = "nvidia"
+        api_key = str(data.get("api_key", "")).strip()
+        api_model = str(data.get("api_model", "")).strip()
+        api_url = str(data.get("api_url", "")).strip()
+        try:
+            api_timeout_sec = int(data.get("api_timeout_sec", 30))
+        except (TypeError, ValueError):
+            api_timeout_sec = 30
+        api_use_local_context = bool(data.get("api_use_local_context", True))
         extra = {
             key: value
             for key, value in data.items()
@@ -75,6 +98,12 @@ class UserSettings:
                 "mail_max_messages",
                 "mail_password",
                 "remember_mail_password",
+                "api_provider",
+                "api_key",
+                "api_model",
+                "api_url",
+                "api_timeout_sec",
+                "api_use_local_context",
             }
         }
         return cls(
@@ -88,6 +117,12 @@ class UserSettings:
             mail_max_messages=max(1, min(mail_max_messages, 5000)),
             mail_password=mail_password,
             remember_mail_password=remember_mail_password,
+            api_provider=api_provider,
+            api_key=api_key,
+            api_model=api_model,
+            api_url=api_url,
+            api_timeout_sec=max(5, min(api_timeout_sec, 180)),
+            api_use_local_context=api_use_local_context,
             extra=extra,
         )
 

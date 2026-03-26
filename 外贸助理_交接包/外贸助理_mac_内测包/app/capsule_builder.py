@@ -68,7 +68,8 @@ class CapsuleBuilder:
             constraints.extend([f"Pricing rule: {rule}" for rule in kb.preference.pricing_rules[:3]])
 
         facts.extend([f"Global fact: {item}" for item in kb.global_facts[:5]])
-        doc_top_k = 2 if trigger_only else 8
+        greeting_only = self._is_greeting_only(req.user_input)
+        doc_top_k = 0 if trigger_only or greeting_only else 8
         structured_for_dedupe = set()
         for item in facts:
             normalized = self._normalize_fact_text(item)
@@ -106,6 +107,29 @@ class CapsuleBuilder:
             visible_mentions=visible_mentions,
             injected_prompt=prompt,
         )
+
+    def _is_greeting_only(self, text: str) -> bool:
+        t = text.strip().lower()
+        if not t:
+            return True
+        greetings = {
+            "hi",
+            "hello",
+            "hey",
+            "你好",
+            "您好",
+            "嗨",
+            "在吗",
+            "在么",
+            "早上好",
+            "下午好",
+            "晚上好",
+        }
+        if t in greetings:
+            return True
+        if len(t) <= 4 and not self._looks_like_question(t):
+            return t in {"ok", "thx", "thanks"}
+        return False
 
     def _resolve_customer(self, req: CapsuleRequest, kb: KnowledgeBase):
         hint = req.customer_hint.strip()

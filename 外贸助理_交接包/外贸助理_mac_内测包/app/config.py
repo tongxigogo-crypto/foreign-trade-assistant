@@ -17,7 +17,9 @@ class AppConfig:
     @classmethod
     def load(cls, root_dir: Path) -> "AppConfig":
         policy_path = root_dir / "config" / "partner-policy.json"
-        data = json.loads(policy_path.read_text(encoding="utf-8"))
+        data: dict = {}
+        if policy_path.exists():
+            data = json.loads(policy_path.read_text(encoding="utf-8"))
         data_dir = root_dir / data.get("data_dir", "local_data")
         knowledge_file = data_dir / data.get("knowledge_file", "knowledge_base.json")
         output_dir = data_dir / data.get("output_dir", "artifacts")

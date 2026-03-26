@@ -1,0 +1,10 @@
+﻿# Runtime and generated files
+local_data/
+release/
+build/
+dist/
+__pycache__/
+*.pyc
+website/assets/downloads/
+.venv/
+.venv-build/
