@@ -52,5 +52,16 @@ def test_desktop_switching_language_updates_core_labels(tmp_path: Path) -> None:
         assert window.action_execute_button.cget("text") == "Execute Action Tag"
         assert window.radar_search_button.cget("text") == "Search"
         assert window.radar_capsule_button.cget("text") == "Build Capsule"
+        assert window.beginner_mode_check.cget("text") == "Beginner Mode"
+        assert window.show_advanced_check.cget("text") == "Show Advanced"
+        assert window.radar_section_box.cget("text") == "Radar Search"
+        assert window.radar_hint_label.cget("text").startswith("Supports fuzzy and exact terms")
+        assert window.import_hint_label.cget("text").startswith("Repeatable import + auto-dedup")
+        assert window.email_thread_label.cget("text") == "Mail Threads:"
+        assert window.api_status_var.get() == "Waiting for connection"
+        assert window.import_status.get() == "Waiting for import"
+        assert window.api_basis_text.get("1.0", "end").strip() == "No local context used yet."
+        assert window.result_text.get("1.0", "end").strip() == "Import results will appear here."
+        assert window.radar_result.get("1.0", "end").strip() == "Enter keywords then click Search."
     finally:
         window.root.destroy()

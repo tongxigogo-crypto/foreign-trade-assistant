@@ -67,3 +67,11 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - Signal: Build script should not hard-fail if venv bootstrap is unavailable in this environment.
 - Rule: Keep `build_mac_release.sh` resilient: when venv bootstrap fails, continue assembling a source-only offline package and clearly print `BUILD_MODE=source_only`; use `python3` in zip fallback path for cross-host compatibility.
 - Scope: E:\CodexWorkspace\Playground-pm / å¤–è´¸åŠ©ç†_äº¤æ¥åŒ… - Action: Distinguish source-only package from native mac binary package in logs and release expectations.
+
+## [2026-03-27] desktop-i18n-placeholder-sync
+
+- Context: EN switch still showed Chinese for radar/import default placeholder texts even after label translations were complete.
+- Signal: Tk Text widgets append trailing newline; exact-string placeholder matching misses updates.
+- Rule: For runtime placeholder localization, compare both raw value and .strip() value before deciding whether to replace defaults.
+- Scope: E:\CodexWorkspace\Playground-pm / ÍâÃ³ÖúÀí_½»½Ó°ü
+- Action: Keep placeholder defaults as explicit zh/en constants and run a language-switch contract test that checks placeholder/body/status strings, not only button labels.

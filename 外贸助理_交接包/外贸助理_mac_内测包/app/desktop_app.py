@@ -65,6 +65,12 @@ class DesktopWindow:
         self.last_action_task_id: str = ""
         self.ui_lang: str = "zh"
         self.keep_alive_enabled = True
+        self.api_basis_default_zh = "尚未使用本地上下文。"
+        self.api_basis_default_en = "No local context used yet."
+        self.radar_placeholder_zh = "输入关键词后点击检索。\n"
+        self.radar_placeholder_en = "Enter keywords then click Search.\n"
+        self.import_result_placeholder_zh = "导入结果会显示在这里。\n"
+        self.import_result_placeholder_en = "Import results will appear here.\n"
 
         self._build_ui()
 
@@ -142,6 +148,9 @@ class DesktopWindow:
         self.ui_lang = "en" if lang == "en" else "zh"
         self._apply_language_texts()
 
+    def _tr(self, zh: str, en: str) -> str:
+        return zh if self.ui_lang == "zh" else en
+
     def _apply_language_texts(self) -> None:
         is_zh = self.ui_lang == "zh"
         if is_zh:
@@ -153,6 +162,8 @@ class DesktopWindow:
             self.quick_start_button.configure(text="1) \u4e00\u952e\u542f\u52a8")
             self.quick_import_button.configure(text="2) \u4e00\u952e\u5bfc\u5165")
             self.quick_task_button.configure(text="3) \u5f00\u59cb\u5904\u7406\u4efb\u52a1")
+            self.beginner_mode_check.configure(text="\u65b0\u624b\u6a21\u5f0f")
+            self.show_advanced_check.configure(text="\u663e\u793a\u9ad8\u7ea7\u9879")
             self.update_button.configure(text="\u4e00\u952e\u66f4\u65b0")
             self.service_only_button.configure(text="\u4ec5\u542f\u52a8\u670d\u52a1")
             self.edge_extension_button.configure(text="\u6253\u5f00 Edge \u6269\u5c55\u9875")
@@ -165,6 +176,10 @@ class DesktopWindow:
             self.import_section_box.configure(text="\u5386\u53f2\u5bfc\u5165")
             self.guide_section_box.configure(text="\u6269\u5c55\u5b89\u88c5\u5411\u5bfc")
             self.feedback_section_box.configure(text="7) \u53cd\u9988")
+            self.radar_section_box.configure(text="\u96f7\u8fbe\u68c0\u7d22")
+            self.radar_hint_label.configure(text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002")
+            self.import_hint_label.configure(text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002")
+            self.email_thread_label.configure(text="\u90ae\u4ef6\u7ebf\u7a0b\uff1a")
             self.runtime_refresh_button.configure(text="\u5237\u65b0")
             self.runtime_open_workbench_button.configure(text="\u6253\u5f00\u7f51\u9875\u770b\u677f")
             self.action_execute_button.configure(text="\u52a8\u4f5c\u6807\u7b7e\u6267\u884c")
@@ -213,6 +228,8 @@ class DesktopWindow:
             self.quick_start_button.configure(text="1) Start Work")
             self.quick_import_button.configure(text="2) One-click Import")
             self.quick_task_button.configure(text="3) Start Handling Tasks")
+            self.beginner_mode_check.configure(text="Beginner Mode")
+            self.show_advanced_check.configure(text="Show Advanced")
             self.update_button.configure(text="One-click Update")
             self.service_only_button.configure(text="Start Service Only")
             self.edge_extension_button.configure(text="Open Edge Extensions")
@@ -225,6 +242,10 @@ class DesktopWindow:
             self.import_section_box.configure(text="History Import")
             self.guide_section_box.configure(text="Extension Setup Guide")
             self.feedback_section_box.configure(text="7) Feedback")
+            self.radar_section_box.configure(text="Radar Search")
+            self.radar_hint_label.configure(text="Supports fuzzy and exact terms: customer/email/phone/product/SKU/series.")
+            self.import_hint_label.configure(text="Repeatable import + auto-dedup. First full import, then incremental import.")
+            self.email_thread_label.configure(text="Mail Threads:")
             self.runtime_refresh_button.configure(text="Refresh")
             self.runtime_open_workbench_button.configure(text="Open Web Workbench")
             self.action_execute_button.configure(text="Execute Action Tag")
@@ -264,6 +285,44 @@ class DesktopWindow:
             self.feedback_section_box.configure(text="7) Feedback")
             self.submit_feedback_button.configure(text="Submit Feedback")
             self.open_feedback_inbox_button.configure(text="Open Feedback Inbox")
+        self._sync_localized_placeholders()
+
+    def _sync_localized_placeholders(self) -> None:
+        api_status = self.api_status_var.get().strip()
+        if api_status in {"\u5f85\u8fde\u63a5", "Waiting for connection"}:
+            self.api_status_var.set(self._tr("\u5f85\u8fde\u63a5", "Waiting for connection"))
+        import_status = self.import_status.get().strip()
+        if import_status in {"\u7b49\u5f85\u5bfc\u5165", "Waiting for import"}:
+            self.import_status.set(self._tr("\u7b49\u5f85\u5bfc\u5165", "Waiting for import"))
+        service_status = self.service_status.get().strip()
+        if service_status in {"\u672a\u542f\u52a8", "Not started"}:
+            self.service_status.set(self._tr("\u672a\u542f\u52a8", "Not started"))
+
+        basis_value = self.api_basis_text.get("1.0", tk.END).strip()
+        if basis_value in {self.api_basis_default_zh, self.api_basis_default_en}:
+            self._set_text_content(self.api_basis_text, self._tr(self.api_basis_default_zh, self.api_basis_default_en))
+
+        radar_value = self.radar_result.get("1.0", tk.END)
+        radar_value_stripped = radar_value.strip()
+        if radar_value in {
+            self.radar_placeholder_zh,
+            self.radar_placeholder_en,
+        } or radar_value_stripped in {self.radar_placeholder_zh.strip(), self.radar_placeholder_en.strip()}:
+            self.radar_result.configure(state=tk.NORMAL)
+            self.radar_result.delete("1.0", tk.END)
+            self.radar_result.insert(tk.END, self._tr(self.radar_placeholder_zh, self.radar_placeholder_en))
+            self.radar_result.configure(state=tk.DISABLED)
+
+        result_value = self.result_text.get("1.0", tk.END)
+        result_value_stripped = result_value.strip()
+        if result_value in {
+            self.import_result_placeholder_zh,
+            self.import_result_placeholder_en,
+        } or result_value_stripped in {self.import_result_placeholder_zh.strip(), self.import_result_placeholder_en.strip()}:
+            self.result_text.configure(state=tk.NORMAL)
+            self.result_text.delete("1.0", tk.END)
+            self.result_text.insert(tk.END, self._tr(self.import_result_placeholder_zh, self.import_result_placeholder_en))
+            self.result_text.configure(state=tk.DISABLED)
 
     def _set_text_content(self, widget: tk.Text, text: str) -> None:
         widget.configure(state=tk.NORMAL)
@@ -290,20 +349,23 @@ class DesktopWindow:
         self.open_workbench_button = ttk.Button(row, text="\u6253\u5f00\u7f51\u9875\u770b\u677f", command=self.open_dashboard_workbench)
         self.open_workbench_button.pack(side=tk.LEFT, padx=8)
         self.beginner_mode_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(
+        self.beginner_mode_check = ttk.Checkbutton(
             row,
             text="\u65b0\u624b\u6a21\u5f0f",
             variable=self.beginner_mode_var,
             command=self._apply_beginner_mode,
-        ).pack(side=tk.LEFT, padx=8)
+        )
+        self.beginner_mode_check.pack(side=tk.LEFT, padx=8)
         self.show_advanced_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(
+        self.show_advanced_check = ttk.Checkbutton(
             row,
             text="\u663e\u793a\u9ad8\u7ea7\u9879",
             variable=self.show_advanced_var,
             command=self._toggle_service_advanced,
-        ).pack(side=tk.LEFT, padx=8)
-        ttk.Label(row, textvariable=self.service_status).pack(side=tk.LEFT, padx=12)
+        )
+        self.show_advanced_check.pack(side=tk.LEFT, padx=8)
+        self.service_status_label = ttk.Label(row, textvariable=self.service_status)
+        self.service_status_label.pack(side=tk.LEFT, padx=12)
 
         self.quick_actions_frame = ttk.Frame(box)
         self.quick_actions_frame.pack(fill=tk.X, pady=(8, 0))
@@ -439,7 +501,7 @@ class DesktopWindow:
         self.api_result_pane.add(self.api_reply_frame, weight=3)
         self.api_reply_label = ttk.Label(self.api_reply_frame, text="\u56de\u590d")
         self.api_reply_label.pack(anchor=tk.W, pady=(0, 2))
-        self.api_reply_text = tk.Text(self.api_reply_frame, height=6, wrap=tk.WORD)
+        self.api_reply_text = tk.Text(self.api_reply_frame, height=8, wrap=tk.WORD)
         self.api_reply_text.pack(fill=tk.BOTH, expand=True)
 
         self.api_basis_frame = ttk.Frame(self.api_result_pane)
@@ -448,7 +510,7 @@ class DesktopWindow:
         self.api_basis_label.pack(anchor=tk.W, pady=(0, 2))
         self.api_basis_text = tk.Text(self.api_basis_frame, height=4, wrap=tk.WORD)
         self.api_basis_text.pack(fill=tk.BOTH, expand=True)
-        self._set_text_content(self.api_basis_text, "\u5c1a\u672a\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587\u3002")
+        self._set_text_content(self.api_basis_text, self.api_basis_default_zh)
         self.root.after_idle(lambda: self._set_api_result_split(0.72))
 
     def _on_api_provider_changed(self, _event: tk.Event | None = None) -> None:
@@ -478,11 +540,11 @@ class DesktopWindow:
         self.settings.api_url = settings.api_url
         self.settings.api_use_local_context = bool(self.api_use_local_context_var.get())
         self.settings_store.save(self.settings)
-        self.api_status_var.set("\u5df2\u4fdd\u5b58")
+        self.api_status_var.set(self._tr("\u5df2\u4fdd\u5b58", "Saved"))
 
     def _handle_api_error(self, exc: ApiChatError, *, title: str) -> None:
         self.api_send_button.configure(state=tk.NORMAL)
-        self.api_status_var.set("\u5931\u8d25")
+        self.api_status_var.set(self._tr("\u5931\u8d25", "Failed"))
         self._append_text_content(self.api_reply_text, f"\n[ERROR] {exc}\n")
         messagebox.showerror(title, str(exc))
 
@@ -508,7 +570,7 @@ class DesktopWindow:
             messagebox.showwarning("API", "\u8bf7\u5148\u586b\u5199 API Key\u3002")
             return
         self.api_send_button.configure(state=tk.DISABLED)
-        self.api_status_var.set("\u6d4b\u8bd5\u4e2d...")
+        self.api_status_var.set(self._tr("\u6d4b\u8bd5\u4e2d...", "Testing..."))
 
         def worker() -> None:
             try:
@@ -520,7 +582,7 @@ class DesktopWindow:
                 0,
                 lambda r=reply: (
                     self.api_send_button.configure(state=tk.NORMAL),
-                    self.api_status_var.set("API \u6b63\u5e38"),
+                    self.api_status_var.set(self._tr("API \u6b63\u5e38", "API Ready")),
                     self._append_text_content(self.api_reply_text, r + "\n"),
                 ),
             )
@@ -550,7 +612,7 @@ class DesktopWindow:
             self._set_text_content(self.api_basis_text, "Local context disabled.")
 
         self.api_send_button.configure(state=tk.DISABLED)
-        self.api_status_var.set("\u53d1\u9001\u4e2d...")
+        self.api_status_var.set(self._tr("\u53d1\u9001\u4e2d...", "Sending..."))
         self._append_text_content(self.api_reply_text, "[Sending...]\n")
 
         def worker() -> None:
@@ -563,7 +625,7 @@ class DesktopWindow:
                 0,
                 lambda r=reply: (
                     self.api_send_button.configure(state=tk.NORMAL),
-                    self.api_status_var.set("\u5b8c\u6210"),
+                    self.api_status_var.set(self._tr("\u5b8c\u6210", "Done")),
                     self._append_text_content(self.api_reply_text, r + "\n"),
                     self.api_input_text.delete("1.0", tk.END),
                 ),
@@ -574,6 +636,7 @@ class DesktopWindow:
     def _build_radar_section(self, parent: ttk.Frame) -> None:
         box = ttk.LabelFrame(parent, text="\u96f7\u8fbe\u68c0\u7d22", padding=10)
         box.pack(fill=tk.BOTH, pady=6)
+        self.radar_section_box = box
 
         top = ttk.Frame(box)
         top.pack(fill=tk.X)
@@ -584,7 +647,12 @@ class DesktopWindow:
         self.radar_capsule_button = ttk.Button(top, text="\u751f\u6210\u80f6\u56ca", command=self.generate_radar_capsule)
         self.radar_capsule_button.pack(side=tk.LEFT, padx=8)
 
-        ttk.Label(box, text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002", foreground="#444").pack(anchor=tk.W, pady=(6, 4))
+        self.radar_hint_label = ttk.Label(
+            box,
+            text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002",
+            foreground="#444",
+        )
+        self.radar_hint_label.pack(anchor=tk.W, pady=(6, 4))
 
         wrap = ttk.Frame(box)
         wrap.pack(fill=tk.BOTH, expand=True)
@@ -593,7 +661,7 @@ class DesktopWindow:
         scroll = ttk.Scrollbar(wrap, orient=tk.VERTICAL, command=self.radar_result.yview)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.radar_result.config(yscrollcommand=scroll.set)
-        self.radar_placeholder = "\u8f93\u5165\u5173\u952e\u8bcd\u540e\u70b9\u51fb\u68c0\u7d22\u3002\n"
+        self.radar_placeholder = self.radar_placeholder_zh
         self.radar_result.insert(tk.END, self.radar_placeholder)
         self.radar_result.configure(state=tk.DISABLED)
 
@@ -622,7 +690,13 @@ class DesktopWindow:
         self.choose_import_dir_button = ttk.Button(top, text="\u9009\u62e9\u5386\u53f2\u76ee\u5f55", command=self.choose_import_dir)
         self.choose_import_dir_button.pack(side=tk.LEFT, padx=8)
 
-        ttk.Label(box, text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002", justify=tk.LEFT, foreground="#444").pack(fill=tk.X, pady=(8, 6))
+        self.import_hint_label = ttk.Label(
+            box,
+            text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002",
+            justify=tk.LEFT,
+            foreground="#444",
+        )
+        self.import_hint_label.pack(fill=tk.X, pady=(8, 6))
 
         actions = ttk.Frame(box)
         actions.pack(fill=tk.X, pady=8)
@@ -635,7 +709,8 @@ class DesktopWindow:
 
         email_actions = ttk.Frame(box)
         email_actions.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(email_actions, text="\u90ae\u4ef6\u7ebf\u7a0b\uff1a").pack(side=tk.LEFT)
+        self.email_thread_label = ttk.Label(email_actions, text="\u90ae\u4ef6\u7ebf\u7a0b\uff1a")
+        self.email_thread_label.pack(side=tk.LEFT)
         self.email_import_button = ttk.Button(email_actions, text="\u6279\u91cf\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b", command=self.start_email_import)
         self.email_import_button.pack(side=tk.LEFT, padx=(8, 0))
         self.email_retry_button = ttk.Button(email_actions, text="\u91cd\u8bd5\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6", command=self.retry_failed_email, state=tk.DISABLED)
@@ -673,7 +748,8 @@ class DesktopWindow:
         self.progress = ttk.Progressbar(box, orient="horizontal", mode="determinate")
         self.progress.pack(fill=tk.X)
         self.import_status = tk.StringVar(value="\u7b49\u5f85\u5bfc\u5165")
-        ttk.Label(box, textvariable=self.import_status).pack(fill=tk.X, pady=(6, 4))
+        self.import_status_label = ttk.Label(box, textvariable=self.import_status)
+        self.import_status_label.pack(fill=tk.X, pady=(6, 4))
 
         result_wrap = ttk.Frame(box)
         result_wrap.pack(fill=tk.BOTH, expand=True)
@@ -682,7 +758,7 @@ class DesktopWindow:
         result_scroll = ttk.Scrollbar(result_wrap, orient=tk.VERTICAL, command=self.result_text.yview)
         result_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.result_text.config(yscrollcommand=result_scroll.set)
-        self.result_text.insert(tk.END, "\u5bfc\u5165\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002\n")
+        self.result_text.insert(tk.END, self.import_result_placeholder_zh)
         self.result_text.configure(state=tk.DISABLED)
 
     def _build_guide_section(self, parent: ttk.Frame) -> None:
@@ -851,18 +927,18 @@ class DesktopWindow:
         webbrowser.open("http://127.0.0.1:8765/feedback/inbox")
 
     def start_services(self) -> None:
-        self.service_status.set("\u542f\u52a8\u4e2d...")
+        self.service_status.set(self._tr("\u542f\u52a8\u4e2d...", "Starting..."))
 
         def worker() -> None:
             self._start_service_processes()
             bridge_ok = self._wait_health("http://127.0.0.1:8765/health", timeout_sec=12)
             dashboard_ok = self._wait_health("http://127.0.0.1:8787/", timeout_sec=12)
             if bridge_ok and dashboard_ok:
-                msg = "\u5df2\u542f\u52a8\uff08Bridge + Dashboard\uff09"
+                msg = self._tr("\u5df2\u542f\u52a8\uff08Bridge + Dashboard\uff09", "Started (Bridge + Dashboard)")
             elif bridge_ok:
-                msg = "Bridge \u5df2\u542f\u52a8\uff0cDashboard \u672a\u5c31\u7eea"
+                msg = self._tr("Bridge \u5df2\u542f\u52a8\uff0cDashboard \u672a\u5c31\u7eea", "Bridge ready, Dashboard not ready")
             else:
-                msg = "\u542f\u52a8\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5"
+                msg = self._tr("\u542f\u52a8\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5", "Start failed, please retry")
             self.root.after(0, lambda: self.service_status.set(msg))
             if bridge_ok and not self.did_initial_self_check:
                 self.root.after(0, self.run_health_check_silent)
@@ -1512,11 +1588,11 @@ class DesktopWindow:
         self._set_import_buttons_busy(True)
         self.progress.configure(value=0, maximum=1)
         if mode == "incremental":
-            self.import_status.set("\u6b63\u5728\u5bfc\u5165\u65b0\u589e\u8d44\u6599...")
+            self.import_status.set(self._tr("\u6b63\u5728\u5bfc\u5165\u65b0\u589e\u8d44\u6599...", "Importing incremental files..."))
             self._append_result(f"\n\u5f00\u59cb\u589e\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
             max_files = 600
         else:
-            self.import_status.set("\u6b63\u5728\u5168\u91cf\u626b\u63cf...")
+            self.import_status.set(self._tr("\u6b63\u5728\u5168\u91cf\u626b\u63cf...", "Running full scan..."))
             self._append_result(f"\n\u5f00\u59cb\u5168\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
             max_files = 1500
 
@@ -1531,7 +1607,10 @@ class DesktopWindow:
                     lambda: (
                         self.progress.configure(value=event.get("current", 0)),
                         self.import_status.set(
-                            f"\u5904\u7406\u4e2d {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f\u6587\u4ef6 {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}"
+                            self._tr(
+                                f"\u5904\u7406\u4e2d {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f\u6587\u4ef6 {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}",
+                                f"Processing {event.get('current', 0)}/{event.get('total', 0)} | Imported files {event.get('imported_files', 0)} | Facts {event.get('facts', 0)} | Failed {event.get('failed_files', 0)}",
+                            )
                         ),
                     ),
                 )
@@ -1559,7 +1638,7 @@ class DesktopWindow:
 
         total = max(1, len(self.last_failed_files))
         self.progress.configure(value=0, maximum=total)
-        self.import_status.set("\u6b63\u5728\u91cd\u8bd5\u5931\u8d25\u6587\u4ef6...")
+        self.import_status.set(self._tr("\u6b63\u5728\u91cd\u8bd5\u5931\u8d25\u6587\u4ef6...", "Retrying failed files..."))
 
         def worker() -> None:
             def on_progress(event: dict) -> None:
@@ -1591,7 +1670,7 @@ class DesktopWindow:
 
         self._set_import_buttons_busy(True)
         self.progress.configure(value=0, maximum=1)
-        self.import_status.set("\u6b63\u5728\u6279\u91cf\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b...")
+        self.import_status.set(self._tr("\u6b63\u5728\u6279\u91cf\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b...", "Batch importing mail threads..."))
         self._append_result(f"\n\u5f00\u59cb\u90ae\u4ef6\u6279\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
 
         def worker() -> None:
@@ -1605,7 +1684,10 @@ class DesktopWindow:
                     lambda: (
                         self.progress.configure(value=event.get("current", 0)),
                         self.import_status.set(
-                            f"\u90ae\u4ef6\u5bfc\u5165 {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}"
+                            self._tr(
+                                f"\u90ae\u4ef6\u5bfc\u5165 {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}",
+                                f"Mail import {event.get('current', 0)}/{event.get('total', 0)} | Imported {event.get('imported_files', 0)} | Facts {event.get('facts', 0)} | Failed {event.get('failed_files', 0)}",
+                            )
                         ),
                     ),
                 )
@@ -1632,7 +1714,7 @@ class DesktopWindow:
         self._set_import_buttons_busy(True)
         total = max(1, len(self.last_failed_email_files))
         self.progress.configure(value=0, maximum=total)
-        self.import_status.set("\u6b63\u5728\u91cd\u8bd5\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6...")
+        self.import_status.set(self._tr("\u6b63\u5728\u91cd\u8bd5\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6...", "Retrying failed mail files..."))
 
         def worker() -> None:
             def on_progress(event: dict) -> None:
@@ -1673,7 +1755,7 @@ class DesktopWindow:
         self._save_mail_settings(remember_password=remember_password, password=password)
         self._set_import_buttons_busy(True)
         self.progress.configure(value=0, maximum=1)
-        self.import_status.set("\u6b63\u5728\u62c9\u53d6\u90ae\u7bb1\u90ae\u4ef6\u5e76\u5bfc\u5165...")
+        self.import_status.set(self._tr("\u6b63\u5728\u62c9\u53d6\u90ae\u7bb1\u90ae\u4ef6\u5e76\u5bfc\u5165...", "Pulling mailbox and importing..."))
         self._append_result(f"\n\u5f00\u59cb\u90ae\u7bb1\u62c9\u53d6\uff1aprovider={provider}, account={account}, days={days}, max={max_messages}\n")
 
         def worker() -> None:
@@ -1686,7 +1768,10 @@ class DesktopWindow:
                     lambda: (
                         self.progress.configure(value=event.get("current", 0), maximum=max(1, event.get("total", 1))),
                         self.import_status.set(
-                            f"\u90ae\u7bb1\u62c9\u53d6 {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f {event.get('pulled_messages', 0)} | \u5931\u8d25 {event.get('failed_messages', 0)}"
+                            self._tr(
+                                f"\u90ae\u7bb1\u62c9\u53d6 {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f {event.get('pulled_messages', 0)} | \u5931\u8d25 {event.get('failed_messages', 0)}",
+                                f"Mailbox pull {event.get('current', 0)}/{event.get('total', 0)} | Pulled {event.get('pulled_messages', 0)} | Failed {event.get('failed_messages', 0)}",
+                            )
                         ),
                     ),
                 )
@@ -1723,9 +1808,12 @@ class DesktopWindow:
     def _finish_import(self, result: dict, retry: bool = False, mode: str = "full") -> None:
         self._set_import_buttons_busy(False)
 
-        tag = "\u91cd\u8bd5\u5b8c\u6210" if retry else "\u5bfc\u5165\u5b8c\u6210"
+        tag = self._tr("\u91cd\u8bd5\u5b8c\u6210", "Retry complete") if retry else self._tr("\u5bfc\u5165\u5b8c\u6210", "Import complete")
         self.import_status.set(
-            f"{tag}\uff1a\u626b\u63cf{result.get('scanned_files', 0)}\uff0c\u6210\u529f{result.get('imported_files', 0)}\uff0c\u65b0\u589e\u8bb0\u5fc6{result.get('extracted_facts', 0)}\uff0c\u91cd\u590d\u8df3\u8fc7{result.get('duplicate_skipped', 0)}\uff0c\u5931\u8d25{len(result.get('failed_files', []))}"
+            self._tr(
+                f"{tag}\uff1a\u626b\u63cf{result.get('scanned_files', 0)}\uff0c\u6210\u529f{result.get('imported_files', 0)}\uff0c\u65b0\u589e\u8bb0\u5fc6{result.get('extracted_facts', 0)}\uff0c\u91cd\u590d\u8df3\u8fc7{result.get('duplicate_skipped', 0)}\uff0c\u5931\u8d25{len(result.get('failed_files', []))}",
+                f"{tag}: scanned {result.get('scanned_files', 0)}, imported {result.get('imported_files', 0)}, new facts {result.get('extracted_facts', 0)}, duplicates skipped {result.get('duplicate_skipped', 0)}, failed {len(result.get('failed_files', []))}",
+            )
         )
         if not retry:
             messagebox.showinfo(
@@ -1741,9 +1829,12 @@ class DesktopWindow:
 
     def _finish_email_import(self, result: dict, retry: bool = False) -> None:
         self._set_import_buttons_busy(False)
-        tag = "\u90ae\u4ef6\u91cd\u8bd5\u5b8c\u6210" if retry else "\u90ae\u4ef6\u5bfc\u5165\u5b8c\u6210"
+        tag = self._tr("\u90ae\u4ef6\u91cd\u8bd5\u5b8c\u6210", "Mail retry complete") if retry else self._tr("\u90ae\u4ef6\u5bfc\u5165\u5b8c\u6210", "Mail import complete")
         self.import_status.set(
-            f"{tag}\uff1a\u626b\u63cf{result.get('scanned_files', 0)}\uff0c\u6210\u529f{result.get('imported_files', 0)}\uff0c\u8df3\u8fc7{result.get('skipped_files', 0)}\uff0c\u65b0\u589e\u8bb0\u5fc6{result.get('extracted_facts', 0)}\uff0c\u91cd\u590d\u8df3\u8fc7{result.get('duplicate_skipped', 0)}\uff0c\u5931\u8d25{len(result.get('failed_files', []))}"
+            self._tr(
+                f"{tag}\uff1a\u626b\u63cf{result.get('scanned_files', 0)}\uff0c\u6210\u529f{result.get('imported_files', 0)}\uff0c\u8df3\u8fc7{result.get('skipped_files', 0)}\uff0c\u65b0\u589e\u8bb0\u5fc6{result.get('extracted_facts', 0)}\uff0c\u91cd\u590d\u8df3\u8fc7{result.get('duplicate_skipped', 0)}\uff0c\u5931\u8d25{len(result.get('failed_files', []))}",
+                f"{tag}: scanned {result.get('scanned_files', 0)}, imported {result.get('imported_files', 0)}, skipped {result.get('skipped_files', 0)}, new facts {result.get('extracted_facts', 0)}, duplicates skipped {result.get('duplicate_skipped', 0)}, failed {len(result.get('failed_files', []))}",
+            )
         )
         if not retry:
             messagebox.showinfo(
@@ -1761,11 +1852,14 @@ class DesktopWindow:
     def _finish_mail_pull(self, pull_result: dict, ingest_result: dict) -> None:
         self._set_import_buttons_busy(False)
         if pull_result.get("error"):
-            self.import_status.set(f"\u90ae\u7bb1\u62c9\u53d6\u5931\u8d25\uff1a{pull_result.get('error')}")
+            self.import_status.set(self._tr(f"\u90ae\u7bb1\u62c9\u53d6\u5931\u8d25\uff1a{pull_result.get('error')}", f"Mailbox pull failed: {pull_result.get('error')}"))
             messagebox.showerror("\u62c9\u53d6\u5931\u8d25", str(pull_result.get("error")))
             return
         self.import_status.set(
-            f"\u90ae\u7bb1\u62c9\u53d6\u5b8c\u6210\uff1a\u62c9\u53d6{pull_result.get('pulled_messages', 0)} \u5c01\uff0c\u5bfc\u5165 {ingest_result.get('imported_files', 0)} \u5c01\uff0c\u5931\u8d25 {len(ingest_result.get('failed_files', []))}"
+            self._tr(
+                f"\u90ae\u7bb1\u62c9\u53d6\u5b8c\u6210\uff1a\u62c9\u53d6{pull_result.get('pulled_messages', 0)} \u5c01\uff0c\u5bfc\u5165 {ingest_result.get('imported_files', 0)} \u5c01\uff0c\u5931\u8d25 {len(ingest_result.get('failed_files', []))}",
+                f"Mailbox pull complete: pulled {pull_result.get('pulled_messages', 0)}, imported {ingest_result.get('imported_files', 0)}, failed {len(ingest_result.get('failed_files', []))}",
+            )
         )
         messagebox.showinfo(
             "\u62c9\u53d6\u5e76\u5bfc\u5165\u5b8c\u6210",
