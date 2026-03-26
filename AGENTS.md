@@ -30,6 +30,10 @@ For any new conversation in this worktree, read these sources first in this orde
 - Shared business objects should be defined once and reused.
 - Machine handoff must prefer structured outputs.
 - Outbound email recommendations are draft-only for human editing; do not auto-send.
+- After every substantial run, check `git status --short` before reporting back.
+- If the changes are a coherent same-theme set that looks functionally complete, prompt for a收口提交 instead of leaving it hanging.
+- If the changes are caches, build outputs, or other noise, prompt for cleanup and do not treat them as commit candidates.
+- If the tree contains mixed-purpose changes, classify them first and keep unrelated leftovers untouched unless the user explicitly includes them.
 
 ## Source Of Truth
 

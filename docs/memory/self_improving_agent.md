@@ -46,3 +46,10 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - Signal: Deleting obvious caches is safe, but runtime state such as `local_data/` should usually stay uncommitted and be treated as local working data unless the user explicitly asks to package or snapshot it.
 - Rule: Prefer recursive cleanup of `__pycache__`, duplicate build output, and generated download assets; keep runtime state out of commits; if a cleanup script itself causes new cache folders to appear, rerun a repository-wide recursive scan before concluding cleanup is complete.
 - Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包 - Action: Treat `local_data/` as runtime state by default and separate it from source control decisions.
+
+## [2026-03-27] commit-checkpoint-flow
+
+- Context: The user wants commit hygiene to be part of the agent workflow, not a one-off reminder.
+- Signal: After a substantial run, the agent should inspect `git status --short` before finishing and make an explicit judgment: commit-ready coherent change set, still-in-progress work, or pure noise that should be cleaned.
+- Rule: Treat functional closure, test pass status, theme cohesion, and single-revertability as commit checkpoint criteria; when the criteria are met, prompt to收口提交; when the work is exploratory or partial, say to continue; when the status is mostly caches/build noise, say to clean instead of commit.
+- Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包 - Action: Keep the submit/cleanup decision in the workflow, not only in memory.
