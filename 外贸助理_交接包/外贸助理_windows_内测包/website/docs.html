@@ -1,61 +1,96 @@
 ﻿<!doctype html>
-<html lang="zh-CN">
+<html class="dark" lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>文档 - 外贸助理 Trade Assistant</title>
   <meta name="description" content="外贸助理 Trade Assistant 新手安装与使用文档。" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'surface-lowest': '#000000',
+            'surface-low': '#131313',
+            'on-surface': '#ffffff',
+            'on-surface-variant': '#ababab',
+            'outline-variant': '#484848',
+            primary: '#8ff5ff',
+            secondary: '#bf81ff'
+          }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body data-page="docs">
-  <header class="site-header">
-    <div class="brand">
-      <span class="brand-mark">TA</span>
-      <div>
-        <h1 data-i18n="brand_name">外贸助理 Trade Assistant</h1>
-        <p data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
-      </div>
+<body data-page="docs" class="bg-surface-lowest text-on-surface antialiased">
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl"></div>
+    <div class="absolute top-28 -right-28 h-[28rem] w-[28rem] rounded-full bg-secondary/10 blur-3xl"></div>
+  </div>
+
+  <header class="fixed top-4 left-1/2 z-50 w-[96%] max-w-7xl -translate-x-1/2 rounded-sm border border-outline-variant/20 bg-black/70 px-4 py-3 backdrop-blur-xl md:px-6">
+    <div class="flex items-center justify-between gap-3">
+      <a href="./index.html" class="flex items-center gap-3">
+        <span class="grid h-8 w-8 place-items-center rounded-sm bg-primary text-black text-xs font-black">TA</span>
+        <div>
+          <p class="text-sm font-bold tracking-tight" data-i18n="brand_name">外贸助理 Trade Assistant</p>
+          <p class="text-[10px] text-on-surface-variant" data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
+        </div>
+      </a>
+      <nav class="flex items-center gap-2 text-xs md:gap-5 md:text-sm">
+        <a href="./index.html" data-i18n="nav_home" class="hover:text-primary">首页</a>
+        <a href="./download.html" data-i18n="nav_download" class="hover:text-primary">下载</a>
+        <a href="./docs.html" data-i18n="nav_docs" class="hover:text-primary">文档</a>
+        <a href="./privacy.html" data-i18n="nav_privacy" class="hover:text-primary">隐私</a>
+        <button id="lang-toggle" type="button" class="rounded-sm border border-outline-variant/40 px-2 py-1 text-xs hover:border-primary">EN</button>
+      </nav>
     </div>
-    <nav>
-      <a href="./index.html" data-i18n="nav_home">首页</a>
-      <a href="./download.html" data-i18n="nav_download">下载</a>
-      <a href="./docs.html" data-i18n="nav_docs">文档</a>
-      <a href="./privacy.html" data-i18n="nav_privacy">隐私</a>
-      <button id="lang-toggle" type="button" aria-label="language">EN</button>
-    </nav>
   </header>
 
-  <main class="container">
-    <section class="card">
-      <h2 data-i18n="docs_quickstart_title">新手三步</h2>
-      <ol>
-        <li data-i18n="docs_quickstart_1">下载并解压对应系统的内测包（Windows 或 macOS）。</li>
-        <li data-i18n="docs_quickstart_2">启动桌面助手，在 API Settings 填入你的模型 API 信息。</li>
-        <li data-i18n="docs_quickstart_3">点击一键启动，导入历史资料和邮件线程开始使用。</li>
-      </ol>
+  <main class="relative mx-auto max-w-7xl px-4 pb-16 pt-28 md:px-6 md:pt-32">
+    <section class="rounded-sm border border-outline-variant/20 bg-surface-low p-6">
+      <p class="text-xs uppercase tracking-[0.2em] text-secondary" data-i18n="docs_kicker">Quick Start Manual</p>
+      <h1 class="mt-3 text-4xl font-black tracking-tight md:text-6xl" data-i18n="docs_title">新手安装与使用</h1>
+      <p class="mt-3 max-w-3xl text-sm text-on-surface-variant md:text-base" data-i18n="docs_intro">先安装，再配置 API，最后导入历史资料并开始让 AI 学习你的习惯。</p>
     </section>
 
-    <section class="card">
-      <h2 data-i18n="docs_windows_title">Windows 安装</h2>
-      <ol>
-        <li data-i18n="docs_windows_1">先解压到本地目录，不要在压缩包内直接运行。</li>
-        <li data-i18n="docs_windows_2">双击 <code>Launch_InVault_Windows.bat</code>。</li>
-        <li data-i18n="docs_windows_3">若出现安全提示，选择“更多信息 -> 仍要运行”。</li>
-      </ol>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="docs_mac_title">macOS 安装</h2>
-      <ol>
-        <li data-i18n="docs_mac_1">首次被拦截时，打开“系统设置 -> 隐私与安全性”。</li>
-        <li data-i18n="docs_mac_2">在底部找到应用拦截提示，点击“仍要打开”。</li>
-        <li data-i18n="docs_mac_3">若仍提示损坏，在终端执行：<code>xattr -dr com.apple.quarantine /Applications/InVault.app</code>。</li>
-      </ol>
+    <section class="mt-8 grid gap-4 md:grid-cols-3">
+      <article class="rounded-sm border border-outline-variant/20 bg-surface-low p-6">
+        <h2 class="text-lg font-bold" data-i18n="docs_quickstart_title">新手三步</h2>
+        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-on-surface-variant">
+          <li data-i18n="docs_quickstart_1">下载并解压对应系统的内测包（Windows 或 macOS）。</li>
+          <li data-i18n="docs_quickstart_2">启动桌面助手，在 API Settings 填入你的模型 API 信息。</li>
+          <li data-i18n="docs_quickstart_3">点击一键启动，导入历史资料和邮件线程开始使用。</li>
+        </ol>
+      </article>
+      <article class="rounded-sm border border-outline-variant/20 bg-surface-low p-6">
+        <h2 class="text-lg font-bold" data-i18n="docs_windows_title">Windows 安装</h2>
+        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-on-surface-variant">
+          <li data-i18n="docs_windows_1">先解压到本地目录，不要在压缩包内直接运行。</li>
+          <li data-i18n="docs_windows_2">双击 Launch_InVault_Windows.bat。</li>
+          <li data-i18n="docs_windows_3">若出现安全提示，选择“更多信息 -> 仍要运行”。</li>
+        </ol>
+      </article>
+      <article class="rounded-sm border border-outline-variant/20 bg-surface-low p-6">
+        <h2 class="text-lg font-bold" data-i18n="docs_mac_title">macOS 安装</h2>
+        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-on-surface-variant">
+          <li data-i18n="docs_mac_1">首次被拦截时，打开“系统设置 -> 隐私与安全性”。</li>
+          <li data-i18n="docs_mac_2">在底部找到应用拦截提示，点击“仍要打开”。</li>
+          <li data-i18n="docs_mac_3">若仍提示损坏，在终端执行：xattr -dr com.apple.quarantine /Applications/InVault.app。</li>
+        </ol>
+      </article>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>© <span id="year"></span> Trade Assistant</p>
+  <footer class="relative border-t border-outline-variant/20 bg-black/60 px-4 py-6 backdrop-blur-xl md:px-6">
+    <div class="mx-auto flex max-w-7xl items-center justify-between text-xs text-on-surface-variant">
+      <p>© <span id="year"></span> Trade Assistant</p>
+      <p data-i18n="home_footer_note">数据不搬家 · 能力不绑平台</p>
+    </div>
   </footer>
 
   <script src="./app.js"></script>
