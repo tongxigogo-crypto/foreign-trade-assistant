@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 VERSION="${1:-$(date +%Y%m%d)}"
@@ -20,21 +20,28 @@ BUILD_VENV="$ROOT_DIR/.venv-build"
 # Beta default: do not package unsigned InVault binary to avoid Gatekeeper hard block.
 USE_PYINSTALLER="${USE_PYINSTALLER:-0}"
 
+BUILD_MODE="full"
+
 echo "==> Create build virtualenv"
 rm -rf "$BUILD_VENV"
-python3 -m venv "$BUILD_VENV"
-source "$BUILD_VENV/bin/activate"
+if python3 -m venv "$BUILD_VENV" >/dev/null 2>&1; then
+  source "$BUILD_VENV/bin/activate"
 
-echo "==> Install build dependencies"
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pystray pillow
-if [[ "$USE_PYINSTALLER" == "1" ]]; then
-  python -m pip install pyinstaller
-fi
+  echo "==> Install build dependencies"
+  python -m pip install --upgrade pip
+  python -m pip install -r requirements.txt pystray pillow
+  if [[ "$USE_PYINSTALLER" == "1" ]]; then
+    python -m pip install pyinstaller
+  fi
 
-if [[ "$SKIP_TESTS" != "1" ]]; then
-  echo "==> Run tests"
-  python -m pytest -q
+  if [[ "$SKIP_TESTS" != "1" ]]; then
+    echo "==> Run tests"
+    python -m pytest -q
+  fi
+else
+  BUILD_MODE="source_only"
+  echo "WARN: python3 venv unavailable (missing ensurepip/python3-venv)." >&2
+  echo "WARN: fallback to source-only offline package; no local test/build virtualenv." >&2
 fi
 
 echo "==> Assemble beta package"
@@ -66,7 +73,7 @@ fi
 
 chmod +x "$STAGE_DIR"/*.command 2>/dev/null || true
 
-if [[ "$USE_PYINSTALLER" == "1" ]]; then
+if [[ "$USE_PYINSTALLER" == "1" && "$BUILD_MODE" == "full" ]]; then
   echo "==> Build InVault executable (optional)"
   python -m PyInstaller --noconfirm --clean build/InVault.spec
   if [[ -f "dist/InVault" ]]; then
@@ -80,7 +87,7 @@ rm -f "$ZIP_PATH"
 if command -v zip >/dev/null 2>&1; then
   (cd "$RELEASE_ROOT" && zip -r "$(basename "$ZIP_PATH")" "$(basename "$STAGE_DIR")")
 else
-  python - "$RELEASE_ROOT" "$(basename "$STAGE_DIR")" "$ZIP_PATH" <<'PY'
+  python3 - "$RELEASE_ROOT" "$(basename "$STAGE_DIR")" "$ZIP_PATH" <<'PY'
 import os
 import pathlib
 import sys
@@ -104,3 +111,4 @@ echo "Build completed."
 echo "Stage dir: $STAGE_DIR"
 echo "Zip file : $ZIP_PATH"
 echo "USE_PYINSTALLER=$USE_PYINSTALLER"
+echo "BUILD_MODE=$BUILD_MODE"

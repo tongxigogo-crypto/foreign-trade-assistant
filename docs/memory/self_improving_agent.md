@@ -60,3 +60,10 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - Signal: If a screen supports runtime language switching, every visible label/button/section title that should change language must be kept as a reusable widget reference or routed through a shared text map.
 - Rule: When adding or revising language switching, first audit the whole window for text-bearing widgets, store reusable references during build, then update both zh and en branches symmetrically; add a regression test that checks the previously missed sections.
 - Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包 - Action: Treat partial translation as a widget-coverage bug, not a copy-text bug.
+
+## [2026-03-27] mac-build-fallback-in-windows-runner
+
+- Context: Mac package build is often triggered from a non-mac host where `python3 -m venv` may fail due to missing `ensurepip/python3-venv`.
+- Signal: Build script should not hard-fail if venv bootstrap is unavailable in this environment.
+- Rule: Keep `build_mac_release.sh` resilient: when venv bootstrap fails, continue assembling a source-only offline package and clearly print `BUILD_MODE=source_only`; use `python3` in zip fallback path for cross-host compatibility.
+- Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包 - Action: Distinguish source-only package from native mac binary package in logs and release expectations.
