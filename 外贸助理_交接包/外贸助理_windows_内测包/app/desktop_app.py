@@ -26,7 +26,9 @@ from .email_remote_connector import MailPullConfig, pull_mail_threads_to_dir
 from .history_importer import ingest_history_directory, scan_history_files
 from .local_store import LocalKnowledgeStore
 from .state_board import StateBoard
+from .update_manager import check_and_prepare_update, is_http_not_found_error, is_network_error, open_path
 from .user_settings import UserSettings, UserSettingsStore
+from .version import APP_VERSION
 
 
 class DesktopWindow:
@@ -122,6 +124,8 @@ class DesktopWindow:
             text="3) Start Handling Tasks",
             command=lambda: self.open_dashboard_workbench(task_status="open"),
         ).pack(side=tk.LEFT, padx=8)
+        self.update_button = ttk.Button(self.quick_actions_frame, text="One-click Update", command=self.one_click_update)
+        self.update_button.pack(side=tk.LEFT, padx=8)
 
         self.service_advanced_frame = ttk.Frame(box)
         self.service_advanced_frame.pack(fill=tk.X, pady=(8, 0))
@@ -439,9 +443,15 @@ class DesktopWindow:
             query["customer_name"] = customer_name
         if task_id:
             query["task_id"] = task_id
+        if not self._ensure_services_ready(require_dashboard=True):
+            messagebox.showerror("Service", "Dashboard service unavailable. Please retry.")
+            return
         webbrowser.open(f"http://127.0.0.1:8787/?{urlencode(query)}")
 
     def open_feedback_inbox(self) -> None:
+        if not self._ensure_services_ready(require_dashboard=False):
+            messagebox.showerror("Feedback", "Bridge service unavailable.")
+            return
         webbrowser.open("http://127.0.0.1:8765/feedback/inbox")
 
     def start_services(self) -> None:
@@ -574,6 +584,79 @@ class DesktopWindow:
                 time.sleep(0.4)
         return False
 
+    def _is_bridge_ready(self) -> bool:
+        return self._wait_health("http://127.0.0.1:8765/health", timeout_sec=0.8)
+
+    def _is_dashboard_ready(self) -> bool:
+        return self._wait_health("http://127.0.0.1:8787/", timeout_sec=0.8)
+
+    def _ensure_services_ready(self, *, require_dashboard: bool, timeout_sec: float = 12.0) -> bool:
+        bridge_ok = self._is_bridge_ready()
+        dashboard_ok = self._is_dashboard_ready() if require_dashboard else True
+        if bridge_ok and dashboard_ok:
+            return True
+        self.open_dashboard_after_start = False
+        self.start_services()
+        deadline = time.time() + timeout_sec
+        while time.time() < deadline:
+            bridge_ok = self._is_bridge_ready()
+            dashboard_ok = self._is_dashboard_ready() if require_dashboard else True
+            if bridge_ok and dashboard_ok:
+                return True
+            time.sleep(0.2)
+        return False
+
+    def one_click_update(self) -> None:
+        if hasattr(self, "update_button"):
+            self.update_button.configure(state=tk.DISABLED)
+        previous_status = self.service_status.get()
+        self.service_status.set("Checking updates...")
+
+        def worker() -> None:
+            try:
+                info, launcher, prepared_path = check_and_prepare_update(
+                    current_version=APP_VERSION,
+                    updates_root=self.config.data_dir / "updates",
+                )
+            except Exception as exc:
+                err = exc
+
+                def fail() -> None:
+                    if hasattr(self, "update_button"):
+                        self.update_button.configure(state=tk.NORMAL)
+                    self.service_status.set(previous_status)
+                    if is_http_not_found_error(err):
+                        msg = "Update source not found (404). Verify release publishing first."
+                    elif is_network_error(err):
+                        msg = "Network error. Unable to check updates."
+                    else:
+                        msg = "Update failed."
+                    messagebox.showerror("One-click Update", f"{msg}\n{err}")
+
+                self.root.after(0, fail)
+                return
+
+            def done() -> None:
+                if hasattr(self, "update_button"):
+                    self.update_button.configure(state=tk.NORMAL)
+                self.service_status.set(previous_status)
+                if not info.has_update:
+                    messagebox.showinfo("One-click Update", "Already the latest version.")
+                    return
+                prompt = (
+                    f"New version found: {info.latest_version}\n"
+                    f"Source: {info.source_repo}\n"
+                    "Open the new launcher now?"
+                )
+                if launcher and messagebox.askyesno("One-click Update", prompt):
+                    open_path(launcher)
+                    return
+                messagebox.showinfo("One-click Update", f"Update package prepared:\n{prepared_path}")
+
+            self.root.after(0, done)
+
+        threading.Thread(target=worker, daemon=True).start()
+
     def _post_json(self, url: str, payload: dict) -> dict:
         req = Request(
             url=url,
@@ -591,6 +674,9 @@ class DesktopWindow:
             return
         if "<action>" not in action_text or "</action>" not in action_text:
             messagebox.showwarning("Action", "Input must contain one complete <action>...</action> tag.")
+            return
+        if not self._ensure_services_ready(require_dashboard=False):
+            messagebox.showerror("Action", "Bridge service unavailable.")
             return
         try:
             payload = self._post_json("http://127.0.0.1:8765/actions/execute", {"model_output": action_text})
@@ -633,6 +719,9 @@ class DesktopWindow:
         self.refresh_runtime_status()
 
     def run_health_check(self) -> None:
+        if not self._ensure_services_ready(require_dashboard=False):
+            messagebox.showerror("Health Check", "Bridge service unavailable.")
+            return
         try:
             data = self._post_json("http://127.0.0.1:8765/health/check", {})
         except (OSError, URLError, ValueError):
@@ -658,6 +747,9 @@ class DesktopWindow:
             self.service_status.set("Started with warnings (click Health Check)")
 
     def export_diagnostics(self) -> None:
+        if not self._ensure_services_ready(require_dashboard=False):
+            messagebox.showerror("Diagnostics", "Bridge service unavailable.")
+            return
         try:
             data = self._post_json("http://127.0.0.1:8765/diagnostics/export", {})
         except (OSError, URLError, ValueError):
@@ -673,6 +765,9 @@ class DesktopWindow:
         text = self.feedback_var.get().strip() if hasattr(self, "feedback_var") else ""
         if not text:
             messagebox.showinfo("Feedback", "Please enter feedback first.")
+            return
+        if not self._ensure_services_ready(require_dashboard=False):
+            messagebox.showerror("Feedback", "Bridge service unavailable.")
             return
         try:
             self._post_json("http://127.0.0.1:8765/feedback/add", {"source": "desktop", "text": text})
