@@ -47,5 +47,10 @@ def test_desktop_switching_language_updates_core_labels(tmp_path: Path) -> None:
         assert window.email_import_button.cget("text") == "Batch Import Mail Threads"
         assert window.pull_mail_button.cget("text") == "Mail Pull and Import"
         assert window.feedback_section_box.cget("text") == "7) Feedback"
+        assert window.runtime_refresh_button.cget("text") == "Refresh"
+        assert window.runtime_open_workbench_button.cget("text") == "Open Web Workbench"
+        assert window.action_execute_button.cget("text") == "Execute Action Tag"
+        assert window.radar_search_button.cget("text") == "Search"
+        assert window.radar_capsule_button.cget("text") == "Build Capsule"
     finally:
         window.root.destroy()
