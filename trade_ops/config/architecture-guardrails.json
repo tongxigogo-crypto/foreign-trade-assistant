@@ -1,0 +1,35 @@
+{
+  "required_agents": [
+    "orchestrator",
+    "email_agent",
+    "quotation_agent",
+    "crm_agent",
+    "followup_agent",
+    "research_agent"
+  ],
+  "allowed_statuses": [
+    "pending",
+    "running",
+    "blocked",
+    "needs_confirmation",
+    "done",
+    "failed"
+  ],
+  "output_root": "trade_ops/output",
+  "state_path": "trade_ops/state.json",
+  "required_outputs": [
+    "inquiry_quote_pack",
+    "customer_analysis",
+    "mic_daily_40",
+    "site_update_tasks",
+    "run_summary",
+    "closed_loop_verdict"
+  ],
+  "closed_loop_checks": [
+    "quote_count_matches_inquiry_count",
+    "followup_count_matches_quote_count",
+    "mic_batch_count_within_limit",
+    "site_task_count_matches_site_pages",
+    "state_workflow_matches_run_status"
+  ]
+}

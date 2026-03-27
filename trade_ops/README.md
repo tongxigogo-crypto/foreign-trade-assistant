@@ -14,6 +14,11 @@ This worktree runs a multi-agent foreign-trade assistant with confirmation-gated
 - Preview (default): no output/state writes.
 - Confirm write: persist outputs and update `trade_ops/state.json`.
 
+## Harness Artifacts
+
+- `docs/harness/architecture_guardrails.json`: preflight contract check.
+- `docs/harness/closed_loop_verdict.json`: post-run evidence bundle.
+
 ## Example
 
 ```powershell

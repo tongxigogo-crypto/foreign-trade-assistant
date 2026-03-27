@@ -27,6 +27,9 @@ REQUIRED_AGENTS = [
 ]
 
 VALID_STATUSES = {"pending", "running", "blocked", "needs_confirmation", "done", "failed"}
+HARNESS_DIR = "docs/harness"
+ARCHITECTURE_GUARDRAILS_FILE = "architecture-guardrails.json"
+CLOSED_LOOP_VERDICT_FILE = "closed_loop_verdict.json"
 
 
 @dataclass
@@ -47,6 +50,14 @@ def save_json(path: Path, data: Dict[str, Any]) -> None:
     with path.open("w", encoding="utf-8", newline="\n") as fh:
         json.dump(data, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
+
+
+def path_within_root(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
 
 
 def read_csv_rows(path: Path) -> List[Dict[str, str]]:
@@ -99,6 +110,200 @@ def build_agent_result(
         "status": status,
         "payload": payload or {},
         "missing_data": missing_data or [],
+    }
+
+
+def load_architecture_guardrails(config_dir: Path) -> Dict[str, Any]:
+    return load_json(config_dir / ARCHITECTURE_GUARDRAILS_FILE)
+
+
+def build_architecture_guardrail_report(
+    root: Path,
+    guardrails: Dict[str, Any],
+    output_paths: Dict[str, Path],
+    harness_artifacts: Dict[str, Path],
+    state_path: Path,
+) -> Dict[str, Any]:
+    violations: List[str] = []
+    schema = load_json(root / "trade_ops" / "contracts" / "agent-status.schema.json")
+    schema_agents = schema.get("properties", {}).get("agent", {}).get("enum", [])
+    schema_statuses = schema.get("properties", {}).get("status", {}).get("enum", [])
+
+    required_agents = guardrails.get("required_agents", [])
+    if required_agents != REQUIRED_AGENTS:
+        violations.append(
+            "required_agents mismatch between code and architecture guardrails"
+        )
+    if schema_agents != required_agents:
+        violations.append("agent-status schema enum mismatch with required_agents")
+
+    allowed_statuses = guardrails.get("allowed_statuses", [])
+    if set(allowed_statuses) != VALID_STATUSES:
+        violations.append("allowed_statuses mismatch between code and architecture guardrails")
+    if set(schema_statuses) != set(allowed_statuses):
+        violations.append("agent-status schema enum mismatch with allowed_statuses")
+
+    output_root = root / guardrails.get("output_root", "trade_ops/output")
+    expected_state = root / guardrails.get("state_path", "trade_ops/state.json")
+    if expected_state.resolve() != state_path.resolve():
+        violations.append("state_path must point to trade_ops/state.json")
+
+    required_outputs = guardrails.get("required_outputs", [])
+    all_outputs = {**output_paths, **harness_artifacts}
+    missing_outputs = [key for key in required_outputs if key not in all_outputs]
+    if missing_outputs:
+        violations.append(f"missing required outputs: {', '.join(missing_outputs)}")
+
+    outside_output_root = [
+        f"{key} -> {path}"
+        for key, path in output_paths.items()
+        if not path_within_root(path, output_root)
+    ]
+    if outside_output_root:
+        violations.append(
+            "planned outputs outside output root: " + "; ".join(outside_output_root)
+        )
+
+    status = "ok" if not violations else "blocked"
+    return {
+        "status": status,
+        "updated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "root": str(root),
+        "contract": {
+            "required_agents": required_agents,
+            "allowed_statuses": allowed_statuses,
+            "output_root": guardrails.get("output_root", "trade_ops/output"),
+            "state_path": guardrails.get("state_path", "trade_ops/state.json"),
+            "required_outputs": required_outputs,
+        },
+        "violations": violations,
+    }
+
+
+def count_csv_rows(path: Path) -> int:
+    with path.open("r", encoding="utf-8-sig", newline="") as fh:
+        return sum(1 for _ in csv.DictReader(fh))
+
+
+def build_closed_loop_verdict(
+    run_date: str,
+    run_id: str,
+    mode: str,
+    state_path: Path,
+    business_output_paths: Dict[str, Path],
+    harness_artifacts: Dict[str, Path],
+    inquiries: List[Dict[str, str]],
+    quote_rows: List[Dict[str, Any]],
+    followups: List[Dict[str, Any]],
+    mic_daily: List[Dict[str, Any]],
+    site_updates: List[Dict[str, Any]],
+    expected_mic_count: int,
+    expected_site_update_count: int,
+    expected_workflow_status: str,
+    workflow_status: str,
+    confirm_writes: bool,
+) -> Dict[str, Any]:
+    checks: List[Dict[str, Any]] = []
+
+    def add_check(name: str, passed: bool, expected: Any, actual: Any, evidence: str) -> None:
+        checks.append(
+            {
+                "name": name,
+                "passed": passed,
+                "expected": expected,
+                "actual": actual,
+                "evidence": evidence,
+            }
+        )
+
+    if confirm_writes:
+        for key, path in business_output_paths.items():
+            add_check(
+                f"output_exists:{key}",
+                path.exists(),
+                True,
+                path.exists(),
+                str(path),
+            )
+            if path.exists() and path.suffix.lower() == ".csv":
+                if key == "inquiry_quote_pack":
+                    expected_rows = len(quote_rows)
+                elif key == "mic_daily_40":
+                    expected_rows = len(mic_daily)
+                elif key == "site_update_tasks":
+                    expected_rows = len(site_updates)
+                else:
+                    expected_rows = None
+                if expected_rows is not None:
+                    actual_rows = count_csv_rows(path)
+                    add_check(
+                        f"csv_row_count:{key}",
+                        actual_rows == expected_rows,
+                        expected_rows,
+                        actual_rows,
+                        str(path),
+                    )
+    else:
+        for key, path in business_output_paths.items():
+            add_check(
+                f"output_planned:{key}",
+                True,
+                "planned",
+                "planned",
+                str(path),
+            )
+
+    add_check(
+        "quote_count_matches_inquiry_count",
+        len(quote_rows) == len(inquiries),
+        len(inquiries),
+        len(quote_rows),
+        "quotes derived from inquiries",
+    )
+    add_check(
+        "followup_count_matches_quote_count",
+        len(followups) == len(quote_rows),
+        len(quote_rows),
+        len(followups),
+        "followups derived from quotes",
+    )
+    add_check(
+        "mic_batch_count_within_limit",
+        len(mic_daily) == expected_mic_count,
+        expected_mic_count,
+        len(mic_daily),
+        "MIC batch limit",
+    )
+    add_check(
+        "site_task_count_matches_site_pages",
+        len(site_updates) == expected_site_update_count,
+        expected_site_update_count,
+        len(site_updates),
+        "site pages count is preserved by generation",
+    )
+    add_check(
+        "state_workflow_matches_run_status",
+        workflow_status == expected_workflow_status,
+        expected_workflow_status,
+        workflow_status,
+        f"state saved at {state_path}",
+    )
+
+    passed = all(item["passed"] for item in checks)
+    status = "preview" if not confirm_writes else ("pass" if passed else "failed")
+    return {
+        "status": status,
+        "updated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "run_id": run_id,
+        "run_date": run_date,
+        "mode": mode,
+        "checks": checks,
+        "summary": f"{sum(1 for item in checks if item['passed'])}/{len(checks)} checks passed",
+        "evidence": {
+            "state_path": str(state_path),
+            "business_output_paths": {key: str(path) for key, path in business_output_paths.items()},
+            "harness_artifacts": {key: str(path) for key, path in harness_artifacts.items()},
+        },
     }
 
 
@@ -262,9 +467,77 @@ def run_orchestration(config: OrchestratorConfig) -> Dict[str, Any]:
     output_dir = root / "trade_ops" / "output"
     config_dir = root / "trade_ops" / "config"
     state_path = root / "trade_ops" / "state.json"
+    harness_dir = root / HARNESS_DIR
 
     state = ensure_state_shape(load_json(state_path))
     set_workflow_status(state, "running", config.run_id, config.run_date)
+
+    guardrails = load_architecture_guardrails(config_dir)
+
+    business_output_paths = {
+        "inquiry_quote_pack": output_dir / f"inquiry-quote-pack-{config.run_date}.csv",
+        "customer_analysis": output_dir / f"customer-analysis-{config.run_date}.md",
+        "mic_daily_40": output_dir / f"mic-daily-40-{config.run_date}.csv",
+        "site_update_tasks": output_dir / f"site-update-tasks-{config.run_date}.csv",
+        "run_summary": output_dir / f"run-summary-{config.run_date}.md",
+    }
+    harness_artifacts = {
+        "architecture_guardrails": harness_dir / "architecture_guardrails.json",
+        "closed_loop_verdict": harness_dir / CLOSED_LOOP_VERDICT_FILE,
+    }
+
+    guardrail_report = build_architecture_guardrail_report(
+        root,
+        guardrails,
+        business_output_paths,
+        harness_artifacts,
+        state_path,
+    )
+    save_json(harness_artifacts["architecture_guardrails"], guardrail_report)
+
+    run_report: Dict[str, Any] = {
+        "run_id": config.run_id,
+        "run_date": config.run_date,
+        "required_agents": REQUIRED_AGENTS,
+        "needs_confirmation": not config.confirm_writes,
+        "mode": "confirm_write" if config.confirm_writes else "preview",
+        "timestamp_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "planned_outputs": {k: str(v) for k, v in business_output_paths.items()},
+        "harness_artifacts": {k: str(v) for k, v in harness_artifacts.items()},
+        "architecture_guardrails": guardrail_report,
+    }
+
+    if guardrail_report["status"] != "ok":
+        set_workflow_status(state, "blocked", config.run_id, config.run_date)
+        run_report["status"] = "blocked"
+        run_report["missing_data"] = guardrail_report["violations"]
+        closed_loop = {
+            "status": "blocked",
+            "updated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "run_id": config.run_id,
+            "run_date": config.run_date,
+            "mode": run_report["mode"],
+            "checks": [],
+            "summary": "blocked by architecture guardrails",
+            "evidence": {
+                "guardrail_report": str(harness_artifacts["architecture_guardrails"]),
+            },
+        }
+        run_report["closed_loop"] = closed_loop
+        save_json(harness_artifacts["closed_loop_verdict"], closed_loop)
+        if config.confirm_writes:
+            state["runs"].append(
+                {
+                    "run_id": config.run_id,
+                    "run_date": config.run_date,
+                    "status": "blocked",
+                    "mode": "confirm_write",
+                    "architecture_guardrails": guardrail_report,
+                    "closed_loop": closed_loop,
+                }
+            )
+            save_json(state_path, state)
+        return run_report
 
     inquiries = read_csv_rows(input_dir / "inquiries.csv")
     mic_products = read_csv_rows(input_dir / "mic-products.csv")
@@ -280,21 +553,28 @@ def run_orchestration(config: OrchestratorConfig) -> Dict[str, Any]:
 
     blocked_agents = [x for x in agent_results if x["status"] in {"blocked", "failed"}]
 
-    run_report: Dict[str, Any] = {
-        "run_id": config.run_id,
-        "run_date": config.run_date,
-        "required_agents": REQUIRED_AGENTS,
-        "agent_results": agent_results,
-        "needs_confirmation": not config.confirm_writes,
-        "mode": "confirm_write" if config.confirm_writes else "preview",
-        "timestamp_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
-    }
+    run_report["agent_results"] = agent_results
 
     if blocked_agents:
         set_workflow_status(state, "blocked", config.run_id, config.run_date)
         run_report["status"] = "blocked"
         run_report["blocked_agents"] = [x["agent"] for x in blocked_agents]
         run_report["missing_data"] = [item for x in blocked_agents for item in x.get("missing_data", [])]
+        closed_loop = {
+            "status": "blocked",
+            "updated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "run_id": config.run_id,
+            "run_date": config.run_date,
+            "mode": run_report["mode"],
+            "checks": [],
+            "summary": "blocked by agent status",
+            "evidence": {
+                "blocked_agents": [x["agent"] for x in blocked_agents],
+                "guardrail_report": str(harness_artifacts["architecture_guardrails"]),
+            },
+        }
+        run_report["closed_loop"] = closed_loop
+        save_json(harness_artifacts["closed_loop_verdict"], closed_loop)
         if config.confirm_writes:
             state["runs"].append(
                 {
@@ -302,6 +582,8 @@ def run_orchestration(config: OrchestratorConfig) -> Dict[str, Any]:
                     "run_date": config.run_date,
                     "status": "blocked",
                     "mode": "confirm_write",
+                    "architecture_guardrails": guardrail_report,
+                    "closed_loop": closed_loop,
                 }
             )
             save_json(state_path, state)
@@ -310,25 +592,38 @@ def run_orchestration(config: OrchestratorConfig) -> Dict[str, Any]:
     quote_rows = agent_results[1]["payload"]["quotes"]
     crm_payload = agent_results[2]["payload"]
     research_payload = agent_results[4]["payload"]
+    followup_rows = agent_results[3]["payload"]["followups"]
 
-    output_paths = {
-        "inquiry_quote_pack": output_dir / f"inquiry-quote-pack-{config.run_date}.csv",
-        "customer_analysis": output_dir / f"customer-analysis-{config.run_date}.md",
-        "mic_daily_40": output_dir / f"mic-daily-40-{config.run_date}.csv",
-        "site_update_tasks": output_dir / f"site-update-tasks-{config.run_date}.csv",
-        "run_summary": output_dir / f"run-summary-{config.run_date}.md",
-    }
-    run_report["planned_outputs"] = {k: str(v) for k, v in output_paths.items()}
     run_report["next_mic_index"] = research_payload["next_mic_index"]
 
     if not config.confirm_writes:
         set_workflow_status(state, "needs_confirmation", config.run_id, config.run_date)
         run_report["status"] = "needs_confirmation"
         run_report["message"] = "Preview mode only. Re-run with --confirm-writes to persist outputs."
+        closed_loop = build_closed_loop_verdict(
+            config.run_date,
+            config.run_id,
+            run_report["mode"],
+            state_path,
+            business_output_paths,
+            harness_artifacts,
+            inquiries,
+            quote_rows,
+            followup_rows,
+            research_payload["mic_daily"],
+            research_payload["site_updates"],
+            len(research_payload["mic_daily"]),
+            len(site_pages),
+            "needs_confirmation",
+            "needs_confirmation",
+            False,
+        )
+        run_report["closed_loop"] = closed_loop
+        save_json(harness_artifacts["closed_loop_verdict"], closed_loop)
         return run_report
 
     write_csv_rows(
-        output_paths["inquiry_quote_pack"],
+        business_output_paths["inquiry_quote_pack"],
         [
             "inquiry_id",
             "company_name",
@@ -342,40 +637,69 @@ def run_orchestration(config: OrchestratorConfig) -> Dict[str, Any]:
         quote_rows,
     )
     write_markdown(
-        output_paths["customer_analysis"],
+        business_output_paths["customer_analysis"],
         build_customer_analysis_markdown(config.run_date, crm_payload),
     )
     write_csv_rows(
-        output_paths["mic_daily_40"],
+        business_output_paths["mic_daily_40"],
         ["product_id", "product_name", "mic_url", "target_market", "owner"],
         research_payload["mic_daily"],
     )
     write_csv_rows(
-        output_paths["site_update_tasks"],
+        business_output_paths["site_update_tasks"],
         ["page_slug", "page_url", "seo_keyword", "priority", "content_task", "image_task"],
         research_payload["site_updates"],
     )
     write_markdown(
-        output_paths["run_summary"],
-        build_run_summary_markdown(config.run_date, output_paths, research_payload["next_mic_index"]),
+        business_output_paths["run_summary"],
+        build_run_summary_markdown(config.run_date, business_output_paths, research_payload["next_mic_index"]),
     )
 
     state["mic_last_index"] = research_payload["next_mic_index"]
     set_workflow_status(state, "done", config.run_id, config.run_date)
+    closed_loop = build_closed_loop_verdict(
+        config.run_date,
+        config.run_id,
+        run_report["mode"],
+        state_path,
+        business_output_paths,
+        harness_artifacts,
+        inquiries,
+        quote_rows,
+        followup_rows,
+        research_payload["mic_daily"],
+        research_payload["site_updates"],
+        len(research_payload["mic_daily"]),
+        len(site_pages),
+        "done",
+        "done",
+        True,
+    )
+    run_report["closed_loop"] = closed_loop
+    save_json(harness_artifacts["closed_loop_verdict"], closed_loop)
+    if closed_loop["status"] == "pass":
+        final_status = "done"
+        run_report["status"] = "done"
+        run_report["message"] = "Outputs, state, and closed-loop evidence were persisted."
+    else:
+        final_status = "failed"
+        run_report["status"] = "failed"
+        run_report["message"] = "Outputs were persisted, but closed-loop validation failed."
+
+    set_workflow_status(state, final_status, config.run_id, config.run_date)
     state["runs"].append(
         {
             "run_id": config.run_id,
             "run_date": config.run_date,
-            "status": "done",
+            "status": final_status,
             "mode": "confirm_write",
-            "outputs": run_report["planned_outputs"],
+            "outputs": {**run_report["planned_outputs"], **run_report["harness_artifacts"]},
+            "architecture_guardrails": guardrail_report,
+            "closed_loop": closed_loop,
         }
     )
     state["runs"] = state["runs"][-20:]
     save_json(state_path, state)
-
-    run_report["status"] = "done"
-    run_report["message"] = "Outputs and state were persisted."
     return run_report
 
 

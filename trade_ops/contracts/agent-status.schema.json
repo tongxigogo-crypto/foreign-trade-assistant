@@ -12,10 +12,11 @@
   "properties": {
     "agent": {
       "type": "string",
-      "enum": [
-        "email_agent",
-        "quotation_agent",
-        "crm_agent",
+        "enum": [
+          "orchestrator",
+          "email_agent",
+          "quotation_agent",
+          "crm_agent",
         "followup_agent",
         "research_agent"
       ]

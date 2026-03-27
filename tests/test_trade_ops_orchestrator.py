@@ -29,6 +29,81 @@ class TradeOpsOrchestratorTests(unittest.TestCase):
             {"fallbackUnitPrice": 5.5, "defaultCurrency": "USD", "shippingPerOrder": 90},
         )
         _write_json(
+            self.root / "trade_ops" / "config" / "architecture-guardrails.json",
+            {
+                "required_agents": [
+                    "orchestrator",
+                    "email_agent",
+                    "quotation_agent",
+                    "crm_agent",
+                    "followup_agent",
+                    "research_agent",
+                ],
+                "allowed_statuses": [
+                    "pending",
+                    "running",
+                    "blocked",
+                    "needs_confirmation",
+                    "done",
+                    "failed",
+                ],
+                "output_root": "trade_ops/output",
+                "state_path": "trade_ops/state.json",
+                "required_outputs": [
+                    "inquiry_quote_pack",
+                    "customer_analysis",
+                    "mic_daily_40",
+                    "site_update_tasks",
+                    "run_summary",
+                    "closed_loop_verdict",
+                ],
+                "closed_loop_checks": [
+                    "quote_count_matches_inquiry_count",
+                    "followup_count_matches_quote_count",
+                    "mic_batch_count_within_limit",
+                    "site_task_count_matches_site_pages",
+                    "state_workflow_matches_run_status",
+                ],
+            },
+        )
+        _write_json(
+            self.root / "trade_ops" / "contracts" / "agent-status.schema.json",
+            {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "$id": "https://example.com/trade_ops/contracts/agent-status.schema.json",
+                "title": "AgentStatusEnvelope",
+                "type": "object",
+                "required": ["agent", "status", "payload", "missing_data"],
+                "properties": {
+                    "agent": {
+                        "type": "string",
+                        "enum": [
+                            "orchestrator",
+                            "email_agent",
+                            "quotation_agent",
+                            "crm_agent",
+                            "followup_agent",
+                            "research_agent",
+                        ],
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "running",
+                            "blocked",
+                            "needs_confirmation",
+                            "done",
+                            "failed",
+                        ],
+                    },
+                    "payload": {"type": "object"},
+                    "missing_data": {"type": "array", "items": {"type": "string"}},
+                },
+                "additionalProperties": False,
+            },
+        )
+        _write_json(
             self.root / "trade_ops" / "state.json",
             {"mic_last_index": 0},
         )
@@ -97,6 +172,11 @@ class TradeOpsOrchestratorTests(unittest.TestCase):
         )
         self.assertEqual(report["status"], "needs_confirmation")
         self.assertFalse((self.root / "trade_ops" / "output" / "run-summary-2026-03-18.md").exists())
+        self.assertEqual(report["architecture_guardrails"]["status"], "ok")
+        self.assertEqual(report["closed_loop"]["status"], "preview")
+        self.assertTrue(
+            (self.root / "docs" / "harness" / "closed_loop_verdict.json").exists(),
+        )
 
     def test_confirm_write_persists_outputs_and_state(self) -> None:
         report = run_orchestration(
@@ -109,6 +189,10 @@ class TradeOpsOrchestratorTests(unittest.TestCase):
         )
         self.assertEqual(report["status"], "done")
         self.assertTrue((self.root / "trade_ops" / "output" / "run-summary-2026-03-18.md").exists())
+        self.assertTrue((self.root / "docs" / "harness" / "architecture_guardrails.json").exists())
+        self.assertTrue((self.root / "docs" / "harness" / "closed_loop_verdict.json").exists())
+        self.assertEqual(report["closed_loop"]["status"], "pass")
+        self.assertTrue(all(item["passed"] for item in report["closed_loop"]["checks"]))
 
         state = json.loads((self.root / "trade_ops" / "state.json").read_text(encoding="utf-8"))
         self.assertEqual(state["workflow"]["status"], "done")
