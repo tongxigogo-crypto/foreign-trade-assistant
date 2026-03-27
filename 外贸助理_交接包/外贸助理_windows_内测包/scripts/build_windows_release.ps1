@@ -79,7 +79,7 @@ Run-Step "Assemble beta package" {
     }
     Copy-Item -Force "dist\InVault.exe" (Join-Path $stageDir "InVault.exe")
     Copy-Item -Recurse -Force "extension" (Join-Path $stageDir "extension")
-    Copy-Item -Force "新手指导_Windows_首次安装与使用.txt" (Join-Path $stageDir "新手指导.txt")
+    Copy-Item -Force "GUIDE_WINDOWS_FIRST_USE.txt" (Join-Path $stageDir "USER_GUIDE.txt")
     @'
 @echo off
 chcp 65001 >nul
