@@ -1,28 +1,26 @@
-﻿外贸助理 mac 版：新手必读（第一次使用）
+外贸助理 mac 版：新手必读（只用一个启动文件）
 
-一、你只需要双击这一个文件
-- Launch_InVault_Mac.command
+你只需要双击这个文件：
+Launch_InVault_Mac.command
 
-二、第一次安装与启动（约 1-2 分钟）
-1) 先解压整个压缩包，不要在压缩包里直接运行。
-2) 双击 Launch_InVault_Mac.command。
-3) 程序会自动执行：
-   - 去除隔离标记（quarantine）
-   - 自动安装依赖（首次）
-   - 启动桌面版
+首次使用（推荐顺序）：
+1. 先完整解压压缩包，不要在压缩包里直接运行。
+2. 在解压目录里，右键 Launch_InVault_Mac.command -> 打开。
+3. 如果系统拦截，去 系统设置 -> 隐私与安全性，点击 仍要打开。
+4. 再次右键打开 Launch_InVault_Mac.command。
+5. 程序会自动完成首次依赖准备并启动桌面版。
 
-三、如果系统仍提示“无法验证”
-在终端执行（复制粘贴即可）：
+若仍提示权限或不被信任，在终端执行：
 APP_DIR="你的解压目录"
 xattr -dr com.apple.quarantine "$APP_DIR"
-chmod +x "$APP_DIR"/*.command
+chmod +x "$APP_DIR/Launch_InVault_Mac.command"
 bash "$APP_DIR/Launch_InVault_Mac.command"
 
-四、进入软件后怎么用
-1) 点击“一键启动”
-2) 点击“打开网页看板”
-3) 在看板里处理任务和提醒
+进入桌面版后：
+1. 点击 一键启动
+2. 点击 打开网页看板
+3. 在网页看板处理客户/任务/提醒
 
-五、版本更新
-- 在桌面端点击“一键更新”即可。
-- 更新后仍优先双击 Launch_InVault_Mac.command 启动。
+版本更新：
+- 在桌面端点击 一键更新。
+- 更新后仍使用 Launch_InVault_Mac.command 启动。

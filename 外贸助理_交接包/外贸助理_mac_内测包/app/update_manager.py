@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import os
@@ -183,10 +183,13 @@ def extract_zip(zip_path: Path, target_dir: Path) -> Path:
 
 
 def find_launcher(extracted_dir: Path) -> Path | None:
+    app_candidates = sorted(extracted_dir.glob("*.app"))
+    if app_candidates:
+        return app_candidates[0]
     candidates = (
-        "启动外贸助理桌面版_windows.bat",
+        "鍚姩澶栬锤鍔╃悊妗岄潰鐗坃windows.bat",
         "Launch_InVault_Windows.bat",
-        "启动外贸助理桌面版_mac.command",
+        "鍚姩澶栬锤鍔╃悊妗岄潰鐗坃mac.command",
         "Launch_InVault_Mac.command",
     )
     for name in candidates:
@@ -237,4 +240,5 @@ def is_network_error(exc: Exception) -> bool:
 
 def is_http_not_found_error(exc: Exception) -> bool:
     return isinstance(exc, HTTPError) and int(getattr(exc, "code", 0) or 0) == 404
+
 

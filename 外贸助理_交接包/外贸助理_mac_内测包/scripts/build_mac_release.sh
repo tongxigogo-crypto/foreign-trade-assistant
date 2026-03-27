@@ -15,100 +15,73 @@ fi
 RELEASE_ROOT="$ROOT_DIR/release"
 STAGE_DIR="$RELEASE_ROOT/TA_Beta_${VERSION}_mac"
 ZIP_PATH="$RELEASE_ROOT/TA_Beta_${VERSION}_mac.zip"
+DMG_PATH="$RELEASE_ROOT/TA_Beta_${VERSION}_mac.dmg"
 BUILD_VENV="$ROOT_DIR/.venv-build"
+APP_NAME="TradeAssistant"
+APP_BUNDLE="$ROOT_DIR/dist/${APP_NAME}.app"
 
-# Beta default: do not package unsigned InVault binary to avoid Gatekeeper hard block.
-USE_PYINSTALLER="${USE_PYINSTALLER:-0}"
-
-BUILD_MODE="full"
-
-echo "==> Create build virtualenv"
+echo "==> Prepare build virtualenv"
 rm -rf "$BUILD_VENV"
-if python3 -m venv "$BUILD_VENV" >/dev/null 2>&1; then
-  source "$BUILD_VENV/bin/activate"
+python3 -m venv "$BUILD_VENV"
+source "$BUILD_VENV/bin/activate"
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt pyinstaller pystray pillow
 
-  echo "==> Install build dependencies"
-  python -m pip install --upgrade pip
-  python -m pip install -r requirements.txt pystray pillow
-  if [[ "$USE_PYINSTALLER" == "1" ]]; then
-    python -m pip install pyinstaller
-  fi
-
-  if [[ "$SKIP_TESTS" != "1" ]]; then
-    echo "==> Run tests"
-    python -m pytest -q
-  fi
-else
-  BUILD_MODE="source_only"
-  echo "WARN: python3 venv unavailable (missing ensurepip/python3-venv)." >&2
-  echo "WARN: fallback to source-only offline package; no local test/build virtualenv." >&2
+if [[ "$SKIP_TESTS" != "1" ]]; then
+  echo "==> Run tests"
+  python -m pytest -q
 fi
 
-echo "==> Assemble beta package"
+echo "==> Build .app with PyInstaller"
+rm -rf "$ROOT_DIR/build" "$ROOT_DIR/dist"
+python -m PyInstaller \
+  --noconfirm \
+  --clean \
+  --windowed \
+  --name "$APP_NAME" \
+  --add-data "app/dashboard_ui.html:app" \
+  --add-data "app/dashboard_layout_v2.json:app" \
+  "app/desktop_entry.py"
+
+if [[ ! -d "$APP_BUNDLE" ]]; then
+  echo "Build failed: app bundle not found: $APP_BUNDLE" >&2
+  exit 1
+fi
+
+echo "==> Assemble release folder"
 mkdir -p "$RELEASE_ROOT"
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR"
 
-cp -R "app" "$STAGE_DIR/app"
+cp -R "$APP_BUNDLE" "$STAGE_DIR/${APP_NAME}.app"
 cp -R "extension" "$STAGE_DIR/extension"
-[[ -d "config" ]] && cp -R "config" "$STAGE_DIR/config"
-[[ -d "docs" ]] && cp -R "docs" "$STAGE_DIR/docs"
-cp "README.md" "$STAGE_DIR/README.md"
-cp "requirements.txt" "$STAGE_DIR/requirements.txt"
 
-if [[ -f "Launch_InVault_Mac.command" ]]; then
-  cp "Launch_InVault_Mac.command" "$STAGE_DIR/Launch_InVault_Mac.command"
-fi
-if [[ -f "安装依赖_mac.command" ]]; then
-  cp "安装依赖_mac.command" "$STAGE_DIR/安装依赖_mac.command"
-fi
-if [[ -f "启动外贸助理桌面版_mac.command" ]]; then
-  cp "启动外贸助理桌面版_mac.command" "$STAGE_DIR/启动外贸助理桌面版_mac.command"
-fi
-if [[ -f "新手必读_首次安装与使用.txt" ]]; then
-  cp "新手必读_首次安装与使用.txt" "$STAGE_DIR/新手必读_首次安装与使用.txt"
-elif [[ -f "GUIDE_MAC_FIRST_USE.txt" ]]; then
-  cp "GUIDE_MAC_FIRST_USE.txt" "$STAGE_DIR/GUIDE_MAC_FIRST_USE.txt"
-fi
+cat > "$STAGE_DIR/FIRST_USE.txt" <<'TXT'
+Trade Assistant for macOS - First Use
 
-chmod +x "$STAGE_DIR"/*.command 2>/dev/null || true
+1) Open the downloaded DMG.
+2) Drag TradeAssistant.app to Applications.
+3) Open TradeAssistant.app.
+4) If blocked by Gatekeeper:
+   - Go to System Settings -> Privacy & Security
+   - Click "Open Anyway" for TradeAssistant
+   - Open again
 
-if [[ "$USE_PYINSTALLER" == "1" && "$BUILD_MODE" == "full" ]]; then
-  echo "==> Build InVault executable (optional)"
-  python -m PyInstaller --noconfirm --clean build/InVault.spec
-  if [[ -f "dist/InVault" ]]; then
-    cp "dist/InVault" "$STAGE_DIR/InVault"
-    chmod +x "$STAGE_DIR/InVault"
-  fi
-fi
+Inside app:
+1) Click "One-click Start"
+2) Click "Open Web Workbench"
+TXT
 
-echo "==> Create zip"
+echo "==> Build zip package"
 rm -f "$ZIP_PATH"
-if command -v zip >/dev/null 2>&1; then
-  (cd "$RELEASE_ROOT" && zip -r "$(basename "$ZIP_PATH")" "$(basename "$STAGE_DIR")")
-else
-  python3 - "$RELEASE_ROOT" "$(basename "$STAGE_DIR")" "$ZIP_PATH" <<'PY'
-import os
-import pathlib
-import sys
-import zipfile
+(cd "$RELEASE_ROOT" && zip -qr "$(basename "$ZIP_PATH")" "$(basename "$STAGE_DIR")")
 
-release_root = pathlib.Path(sys.argv[1])
-stage_name = sys.argv[2]
-zip_path = pathlib.Path(sys.argv[3])
-stage_dir = release_root / stage_name
-
-with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-    for root, _, files in os.walk(stage_dir):
-        for f in files:
-            p = pathlib.Path(root) / f
-            zf.write(p, p.relative_to(release_root))
-PY
-fi
+echo "==> Build dmg package"
+rm -f "$DMG_PATH"
+hdiutil create -volname "${APP_NAME}" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH" >/dev/null
 
 echo
 echo "Build completed."
 echo "Stage dir: $STAGE_DIR"
 echo "Zip file : $ZIP_PATH"
-echo "USE_PYINSTALLER=$USE_PYINSTALLER"
-echo "BUILD_MODE=$BUILD_MODE"
+echo "DMG file : $DMG_PATH"
