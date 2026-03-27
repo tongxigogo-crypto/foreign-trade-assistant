@@ -959,23 +959,25 @@ class DesktopWindow:
         if self.dashboard_process and self.dashboard_process.poll() is None:
             self.dashboard_process.terminate()
         self.bridge_process = subprocess.Popen(
-            [
-                sys.executable,
-                "-m",
-                "app.main",
+            self._runtime_cli_command(
                 "serve-bridge",
                 "--host",
                 "127.0.0.1",
                 "--port",
                 "8765",
                 "--allow-action-execute",
-            ],
+            ),
             **kwargs,
         )
         self.dashboard_process = subprocess.Popen(
-            [sys.executable, "-m", "app.main", "serve-dashboard", "--host", "127.0.0.1", "--port", "8787"],
+            self._runtime_cli_command("serve-dashboard", "--host", "127.0.0.1", "--port", "8787"),
             **kwargs,
         )
+
+    def _runtime_cli_command(self, *args: str) -> list[str]:
+        if getattr(sys, "frozen", False):
+            return [sys.executable, "cli", *args]
+        return [sys.executable, "-m", "app.main", *args]
 
     def _terminate_port_processes(self, ports: tuple[int, ...]) -> None:
         pids: set[int] = set()
