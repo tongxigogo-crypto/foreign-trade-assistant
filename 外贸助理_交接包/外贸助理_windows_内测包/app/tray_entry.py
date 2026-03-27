@@ -15,7 +15,9 @@ def run_tray_entry(argv: Sequence[str] | None = None) -> int:
     args = list(argv or [])
     if args and args[0] == "cli":
         return run_cli(args[1:])
-    return run_tray()
+    if args and args[0] == "tray":
+        return run_tray()
+    return run_cli(["desktop"])
 
 
 if __name__ == "__main__":
