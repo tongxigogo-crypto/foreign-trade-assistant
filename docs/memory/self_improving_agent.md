@@ -75,3 +75,11 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - Rule: For runtime placeholder localization, compare both raw value and .strip() value before deciding whether to replace defaults.
 - Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包
 - Action: Keep placeholder defaults as explicit zh/en constants and run a language-switch contract test that checks placeholder/body/status strings, not only button labels.
+
+## [2026-03-27] mac-distribution-must-be-native-for-nontechnical-users
+
+- Context: Script-based mac zip caused repeated Gatekeeper/permissions/support failures for nontechnical seed users.
+- Signal: If target users are nontechnical, Launch + pip/bootstrap flow is not acceptable as primary distribution.
+- Rule: Mac release pipeline should produce native .app and .dmg artifacts on macos-latest; script-based packages are fallback for internal technical testing only.
+- Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包
+- Action: Keep updater launcher detection compatible with .app bundles in update zips.
