@@ -25,7 +25,13 @@ rm -rf "$BUILD_VENV"
 python3 -m venv "$BUILD_VENV"
 source "$BUILD_VENV/bin/activate"
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pyinstaller pystray pillow
+PIP_REQ_ARGS=(-r requirements.txt)
+if [[ -f requirements-dev.txt ]]; then
+  PIP_REQ_ARGS+=(-r requirements-dev.txt)
+else
+  echo "[WARN] requirements-dev.txt missing; continuing without dev dependencies."
+fi
+python -m pip install "${PIP_REQ_ARGS[@]}" pyinstaller pystray pillow
 
 if [[ "$SKIP_TESTS" != "1" ]]; then
   echo "==> Run tests"
@@ -55,6 +61,20 @@ mkdir -p "$STAGE_DIR"
 
 cp -R "$APP_BUNDLE" "$STAGE_DIR/${APP_NAME}.app"
 cp -R "extension" "$STAGE_DIR/extension"
+if [[ -d "config" ]]; then
+  cp -R "config" "$STAGE_DIR/config"
+else
+  mkdir -p "$STAGE_DIR/config"
+  cat > "$STAGE_DIR/config/partner-policy.json" <<'JSON'
+{
+  "data_dir": "local_data",
+  "knowledge_file": "knowledge_base.json",
+  "output_dir": "artifacts",
+  "state_board_file": "state_board.json",
+  "user_settings_file": "user_settings.json"
+}
+JSON
+fi
 
 cat > "$STAGE_DIR/FIRST_USE.txt" <<'TXT'
 Trade Assistant for macOS - First Use

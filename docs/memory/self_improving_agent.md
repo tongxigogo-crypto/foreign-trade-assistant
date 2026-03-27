@@ -97,6 +97,14 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - Scope: E:\CodexWorkspace\Playground-pm / 外贸助理_交接包
 - Action: When changing importer logic, run office-import tests before packaging and release.
 
+## [2026-03-28] pytest-config-must-be-utf8-without-bom
+
+- Context: `pytest.ini` written with UTF-8 BOM caused `unexpected line: '\ufeff[pytest]'` and blocked all tests.
+- Signal: Pytest parser fails immediately on BOM-prefixed ini in this environment.
+- Rule: Write `pytest.ini` as UTF-8 without BOM, and after edits run `pytest --collect-only -q` to verify collection scope.
+- Scope: E:\CodexWorkspace\Playground-pm
+- Action: Keep both root `tests` and Windows package tests in `testpaths` to avoid silent regression gaps.
+
 
 ## [2026-03-27T18:51:54+08:00] updated self-improving memory
 

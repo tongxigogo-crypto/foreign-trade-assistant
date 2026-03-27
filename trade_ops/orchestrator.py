@@ -30,6 +30,26 @@ VALID_STATUSES = {"pending", "running", "blocked", "needs_confirmation", "done",
 HARNESS_DIR = "docs/harness"
 ARCHITECTURE_GUARDRAILS_FILE = "architecture-guardrails.json"
 CLOSED_LOOP_VERDICT_FILE = "closed_loop_verdict.json"
+DEFAULT_ARCHITECTURE_GUARDRAILS: Dict[str, Any] = {
+    "required_agents": REQUIRED_AGENTS,
+    "allowed_statuses": sorted(VALID_STATUSES),
+    "output_root": "trade_ops/output",
+    "state_path": "trade_ops/state.json",
+    "required_outputs": [
+        "inquiry_quote_pack",
+        "customer_analysis",
+        "mic_daily_40",
+        "site_update_tasks",
+        "run_summary",
+        "architecture_guardrails",
+        "closed_loop_verdict",
+    ],
+    "closed_loop_checks": [
+        "output_exists",
+        "csv_row_count",
+        "workflow_status_match",
+    ],
+}
 
 
 @dataclass
@@ -114,7 +134,27 @@ def build_agent_result(
 
 
 def load_architecture_guardrails(config_dir: Path) -> Dict[str, Any]:
-    return load_json(config_dir / ARCHITECTURE_GUARDRAILS_FILE)
+    path = config_dir / ARCHITECTURE_GUARDRAILS_FILE
+    guardrails = dict(DEFAULT_ARCHITECTURE_GUARDRAILS)
+    load_error = None
+    source = "default"
+    if path.exists():
+        try:
+            loaded = load_json(path)
+            for key in DEFAULT_ARCHITECTURE_GUARDRAILS:
+                if key in loaded:
+                    guardrails[key] = loaded[key]
+            source = "file"
+        except (OSError, json.JSONDecodeError) as exc:
+            load_error = f"{type(exc).__name__}: {exc}"
+    else:
+        load_error = "missing file"
+    guardrails["_meta"] = {
+        "source": source,
+        "path": str(path),
+        "load_error": load_error,
+    }
+    return guardrails
 
 
 def build_architecture_guardrail_report(
@@ -169,6 +209,7 @@ def build_architecture_guardrail_report(
         "status": status,
         "updated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "root": str(root),
+        "guardrails_source": guardrails.get("_meta", {}),
         "contract": {
             "required_agents": required_agents,
             "allowed_statuses": allowed_statuses,
