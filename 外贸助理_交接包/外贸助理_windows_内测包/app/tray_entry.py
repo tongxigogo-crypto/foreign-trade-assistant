@@ -3,8 +3,12 @@ from __future__ import annotations
 import sys
 from typing import Sequence
 
-from .main import run_cli
-from .tray_app import run_tray
+try:
+    from .main import run_cli
+    from .tray_app import run_tray
+except ImportError:  # frozen entrypoint fallback
+    from app.main import run_cli
+    from app.tray_app import run_tray
 
 
 def run_tray_entry(argv: Sequence[str] | None = None) -> int:
