@@ -1525,6 +1525,64 @@ class DesktopWindow:
 
         return "\n".join(view_lines), "\n".join(capsule_lines)
 
+    def _history_import_state_path(self) -> Path:
+        return self.config.data_dir / "history_import_state.json"
+
+    def _load_history_import_state(self) -> dict:
+        path = self._history_import_state_path()
+        if not path.exists():
+            return {"roots": {}}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {"roots": {}}
+        if not isinstance(data, dict):
+            return {"roots": {}}
+        roots = data.get("roots", {})
+        if not isinstance(roots, dict):
+            return {"roots": {}}
+        return {"roots": roots}
+
+    def _save_history_import_state(self, state: dict) -> None:
+        path = self._history_import_state_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _file_signature(self, path: Path) -> dict | None:
+        try:
+            stat = path.stat()
+        except OSError:
+            return None
+        return {"mtime_ns": int(stat.st_mtime_ns), "size": int(stat.st_size)}
+
+    def _filter_incremental_history_files(
+        self,
+        root_dir: Path,
+        files: list[Path],
+    ) -> tuple[list[Path], dict, dict[str, dict], int]:
+        state = self._load_history_import_state()
+        roots = state.setdefault("roots", {})
+        root_key = str(root_dir)
+        root_state = roots.get(root_key, {})
+        if not isinstance(root_state, dict):
+            root_state = {}
+        selected: list[Path] = []
+        signatures: dict[str, dict] = {}
+        unchanged = 0
+        for path in files:
+            sig = self._file_signature(path)
+            if sig is None:
+                selected.append(path)
+                continue
+            path_key = str(path)
+            signatures[path_key] = sig
+            if root_state.get(path_key) != sig:
+                selected.append(path)
+            else:
+                unchanged += 1
+        roots[root_key] = root_state
+        return selected, state, signatures, unchanged
+
     def run_radar_search(self) -> None:
         query = self.radar_query_var.get().strip()
         if not query:
@@ -1599,7 +1657,26 @@ class DesktopWindow:
             max_files = 1500
 
         def worker() -> None:
-            files = scan_history_files(root_dir, recursive=True, max_files=max_files)
+            scanned_files = scan_history_files(root_dir, recursive=True, max_files=max_files)
+            files = scanned_files
+            state: dict | None = None
+            signatures: dict[str, dict] = {}
+            unchanged_files = 0
+            if mode == "incremental":
+                files, state, signatures, unchanged_files = self._filter_incremental_history_files(root_dir, scanned_files)
+                if not files:
+                    result = {
+                        "scanned_files": len(scanned_files),
+                        "imported_files": 0,
+                        "skipped_files": 0,
+                        "extracted_facts": 0,
+                        "duplicate_skipped": 0,
+                        "failed_files": [],
+                        "no_change": True,
+                        "unchanged_files": unchanged_files,
+                    }
+                    self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
+                    return
             total = max(1, len(files))
             self.root.after(0, lambda: self.progress.configure(value=0, maximum=total))
 
@@ -1626,8 +1703,27 @@ class DesktopWindow:
                 progress_callback=on_progress,
                 source_files=files,
             )
+            if mode == "incremental" and state is not None:
+                roots = state.setdefault("roots", {})
+                root_key = str(root_dir)
+                root_state = roots.setdefault(root_key, {})
+                failed = {str(Path(p)) for p in (stats.failed_files or []) if p}
+                for path in files:
+                    path_key = str(path)
+                    if path_key in failed:
+                        continue
+                    sig = signatures.get(path_key)
+                    if sig:
+                        root_state[path_key] = sig
+                try:
+                    self._save_history_import_state(state)
+                except OSError:
+                    pass
             self.last_failed_files = [Path(p) for p in (stats.failed_files or []) if p]
-            self.root.after(0, lambda: self._finish_import(stats.to_dict(), mode=mode))
+            result = stats.to_dict()
+            if mode == "incremental":
+                result["unchanged_files"] = unchanged_files
+            self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -1809,6 +1905,25 @@ class DesktopWindow:
 
     def _finish_import(self, result: dict, retry: bool = False, mode: str = "full") -> None:
         self._set_import_buttons_busy(False)
+        if not retry and int(result.get("scanned_files", 0)) == 0:
+            self.import_status.set(
+                self._tr(
+                    "导入完成：未识别到可导入文件（支持 txt/md/json/csv/xlsx/docx/pdf/pptx）",
+                    "Import complete: no supported files found (txt/md/json/csv/xlsx/docx/pdf/pptx)",
+                )
+            )
+            self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+            return
+        if mode == "incremental" and not retry and bool(result.get("no_change")):
+            unchanged = int(result.get("unchanged_files", 0))
+            self.import_status.set(
+                self._tr(
+                    f"增量导入完成：未发现新增或变更文件（共检查 {unchanged} 个）",
+                    f"Incremental import complete: no new or changed files (checked {unchanged})",
+                )
+            )
+            self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+            return
 
         tag = self._tr("\u91cd\u8bd5\u5b8c\u6210", "Retry complete") if retry else self._tr("\u5bfc\u5165\u5b8c\u6210", "Import complete")
         self.import_status.set(
