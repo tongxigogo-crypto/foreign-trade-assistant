@@ -54,7 +54,7 @@ if (-not (Test-Path $python)) {
 
 Run-Step "Install build dependencies" {
     Invoke-Checked { & $python -m pip install --upgrade pip }
-    Invoke-Checked { & $python -m pip install -r requirements.txt pyinstaller pystray pillow }
+    Invoke-Checked { & $python -m pip install -r requirements.txt -r requirements-dev.txt pyinstaller pystray pillow }
 }
 
 if (-not $SkipTests) {
@@ -79,8 +79,7 @@ Run-Step "Assemble beta package" {
     }
     Copy-Item -Force "dist\InVault.exe" (Join-Path $stageDir "InVault.exe")
     Copy-Item -Recurse -Force "extension" (Join-Path $stageDir "extension")
-    Copy-Item -Force "GUIDE_WINDOWS_FIRST_USE.txt" (Join-Path $stageDir "GUIDE_WINDOWS_FIRST_USE.txt")
-    Copy-Item -Force "README.md" (Join-Path $stageDir "README.md")
+    Copy-Item -Force "新手指导_Windows_首次安装与使用.txt" (Join-Path $stageDir "新手指导.txt")
     @'
 @echo off
 chcp 65001 >nul

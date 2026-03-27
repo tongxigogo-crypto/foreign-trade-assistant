@@ -9,10 +9,14 @@ Build, maintain, and evolve a coordinated multi-agent system for international t
 For any new conversation in this worktree, read these sources first in this order:
 
 1. `AGENTS.md`
-2. `docs/memory/self_improving_agent.md`
-3. `trade_ops/config/foreign-trade-worktree.md`
-4. `trade_ops/config/pricing-rules.json`
-5. Latest outputs under `trade_ops/output/`
+2. `docs/harness/session_state.json`
+3. `docs/harness/current_session.md`
+4. `docs/harness/architecture_guardrails.json` if it exists
+5. `docs/harness/closed_loop_verdict.json` if it exists
+6. `docs/memory/self_improving_agent.md`
+7. `trade_ops/config/foreign-trade-worktree.md`
+8. `trade_ops/config/pricing-rules.json`
+9. Latest outputs under `trade_ops/output/`
 
 ## Required Agents
 
@@ -34,6 +38,8 @@ For any new conversation in this worktree, read these sources first in this orde
 - If the changes are a coherent same-theme set that looks functionally complete, prompt for a收口提交 instead of leaving it hanging.
 - If the changes are caches, build outputs, or other noise, prompt for cleanup and do not treat them as commit candidates.
 - If the tree contains mixed-purpose changes, classify them first and keep unrelated leftovers untouched unless the user explicitly includes them.
+- Packaging execution boundary: complete Windows package first and get user validation before touching Mac package changes, unless user explicitly requests parallel Win+Mac work.
+- Keep user-facing delivery simple: default release target is downloadable, double-click runnable package with no Python/pip steps.
 
 ## Source Of Truth
 
@@ -61,4 +67,12 @@ For any new conversation in this worktree, read these sources first in this orde
 - Any business-impacting action requires explicit user confirmation first.
 - Gmail and Google Drive access is read-only by default.
 - Writing files under `trade_ops/output/` or changing runtime state requires explicit confirmation first.
+
+## Harness Rule
+
+- Treat `docs/harness/session_state.json` as the recovery anchor after background compression.
+- Treat `docs/harness/architecture_guardrails.json` as the preflight contract check.
+- Treat `docs/harness/closed_loop_verdict.json` as the post-run evidence bundle.
+- Before substantial work, restore state from the harness files instead of re-deriving context from scratch.
+- After substantial work, checkpoint the current state into the harness files before reporting back.
 
