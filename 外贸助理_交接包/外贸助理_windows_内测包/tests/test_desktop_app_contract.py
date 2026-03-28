@@ -52,7 +52,7 @@ def test_desktop_switching_language_updates_core_labels(tmp_path: Path) -> None:
         assert window.pull_mail_button.cget("text") == "Mail Pull and Import"
         assert window.feedback_section_box.cget("text") == "7) Feedback"
         assert window.runtime_refresh_button.cget("text") == "Refresh"
-        assert window.runtime_open_workbench_button.cget("text") == "Open Web Workbench"
+        assert not hasattr(window, "runtime_open_workbench_button")
         assert window.action_execute_button.cget("text") == "Execute Action Tag"
         assert window.radar_search_button.cget("text") == "Search"
         assert window.radar_capsule_button.cget("text") == "Build Capsule"
@@ -62,6 +62,7 @@ def test_desktop_switching_language_updates_core_labels(tmp_path: Path) -> None:
         assert window.radar_hint_label.cget("text").startswith("Supports fuzzy and exact terms")
         assert window.import_hint_label.cget("text").startswith("Repeatable import + auto-dedup")
         assert window.email_thread_label.cget("text") == "Mail Threads:"
+        assert window.choose_import_source_button.cget("text") == "Choose History Files/Folder"
         assert window.api_status_var.get() == "Waiting for connection"
         assert window.import_status.get() == "Waiting for import"
         assert window.api_basis_text.get("1.0", "end").strip() == "No local context used yet."

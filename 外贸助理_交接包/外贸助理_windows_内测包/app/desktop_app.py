@@ -192,7 +192,6 @@ class DesktopWindow:
             self.import_hint_label.configure(text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002")
             self.email_thread_label.configure(text="\u90ae\u4ef6\u7ebf\u7a0b\uff1a")
             self.runtime_refresh_button.configure(text="\u5237\u65b0")
-            self.runtime_open_workbench_button.configure(text="\u6253\u5f00\u7f51\u9875\u770b\u677f")
             self.action_execute_button.configure(text="\u52a8\u4f5c\u6807\u7b7e\u6267\u884c")
             self.radar_search_button.configure(text="\u68c0\u7d22")
             self.radar_capsule_button.configure(text="\u751f\u6210\u80f6\u56ca")
@@ -212,8 +211,7 @@ class DesktopWindow:
             self.choose_output_dir_button.configure(text="\u9009\u62e9\u76ee\u5f55")
             self.save_output_dir_button.configure(text="\u4fdd\u5b58")
             self.import_section_box.configure(text="\u5386\u53f2\u5bfc\u5165")
-            self.choose_import_dir_button.configure(text="\u9009\u62e9\u5386\u53f2\u76ee\u5f55")
-            self.choose_import_files_button.configure(text="\u9009\u62e9\u6587\u4ef6")
+            self.choose_import_source_button.configure(text="\u9009\u62e9\u5386\u53f2\u6587\u4ef6/\u76ee\u5f55")
             self.clear_import_files_button.configure(text="\u6e05\u7a7a\u6587\u4ef6\u9009\u62e9")
             self.import_button.configure(text="\u9996\u6b21\u5168\u91cf\u5bfc\u5165")
             self.incremental_button.configure(text="\u5bfc\u5165\u65b0\u589e\u8d44\u6599")
@@ -264,7 +262,6 @@ class DesktopWindow:
             self.import_hint_label.configure(text="Repeatable import + auto-dedup. First full import, then incremental import.")
             self.email_thread_label.configure(text="Mail Threads:")
             self.runtime_refresh_button.configure(text="Refresh")
-            self.runtime_open_workbench_button.configure(text="Open Web Workbench")
             self.action_execute_button.configure(text="Execute Action Tag")
             self.radar_search_button.configure(text="Search")
             self.radar_capsule_button.configure(text="Build Capsule")
@@ -284,8 +281,7 @@ class DesktopWindow:
             self.choose_output_dir_button.configure(text="Choose Folder")
             self.save_output_dir_button.configure(text="Save")
             self.import_section_box.configure(text="History Import")
-            self.choose_import_dir_button.configure(text="Choose History Folder")
-            self.choose_import_files_button.configure(text="Choose Files")
+            self.choose_import_source_button.configure(text="Choose History Files/Folder")
             self.clear_import_files_button.configure(text="Clear File Selection")
             self.import_button.configure(text="First Full Import")
             self.incremental_button.configure(text="Incremental Import")
@@ -448,23 +444,8 @@ class DesktopWindow:
         top.pack(fill=tk.X, pady=(0, 6))
         self.sync_status_var = tk.StringVar(value="\u6700\u8fd1\u540c\u6b65\uff1a\u65e0")
         ttk.Label(top, textvariable=self.sync_status_var).pack(side=tk.LEFT)
-        self.runtime_open_workbench_button = tk.Button(
-            top,
-            text="\u6253\u5f00\u7f51\u9875\u770b\u677f",
-            command=self.open_dashboard_workbench,
-            bg="#0ea5e9",
-            fg="#ffffff",
-            activebackground="#0284c7",
-            activeforeground="#ffffff",
-            relief=tk.FLAT,
-            bd=0,
-            padx=10,
-            pady=2,
-            cursor="hand2",
-        )
-        self.runtime_open_workbench_button.pack(side=tk.RIGHT)
         self.runtime_refresh_button = ttk.Button(top, text="\u5237\u65b0", command=self.refresh_runtime_status)
-        self.runtime_refresh_button.pack(side=tk.RIGHT, padx=(0, 8))
+        self.runtime_refresh_button.pack(side=tk.RIGHT)
 
         metrics = ttk.Frame(box)
         metrics.pack(fill=tk.X, pady=(0, 8))
@@ -771,10 +752,8 @@ class DesktopWindow:
         top.pack(fill=tk.X)
         self.import_dir_var = tk.StringVar(value="")
         ttk.Entry(top, textvariable=self.import_dir_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.choose_import_dir_button = ttk.Button(top, text="\u9009\u62e9\u5386\u53f2\u76ee\u5f55", command=self.choose_import_dir)
-        self.choose_import_dir_button.pack(side=tk.LEFT, padx=8)
-        self.choose_import_files_button = ttk.Button(top, text="\u9009\u62e9\u6587\u4ef6", command=self.choose_import_files)
-        self.choose_import_files_button.pack(side=tk.LEFT, padx=(0, 8))
+        self.choose_import_source_button = ttk.Button(top, text="\u9009\u62e9\u5386\u53f2\u6587\u4ef6/\u76ee\u5f55", command=self.choose_import_source)
+        self.choose_import_source_button.pack(side=tk.LEFT, padx=8)
         self.clear_import_files_button = ttk.Button(top, text="\u6e05\u7a7a\u6587\u4ef6\u9009\u62e9", command=self.clear_import_files)
         self.clear_import_files_button.pack(side=tk.LEFT)
 
@@ -907,6 +886,21 @@ class DesktopWindow:
             self.selected_import_files = []
             self.import_status.set(self._tr("\u7b49\u5f85\u5bfc\u5165", "Waiting for import"))
 
+    def choose_import_source(self) -> None:
+        choice = messagebox.askyesnocancel(
+            self._tr("\u9009\u62e9\u5bfc\u5165\u65b9\u5f0f", "Choose import source"),
+            self._tr(
+                "\u70b9\u201c\u662f\u201d\u9009\u6587\u4ef6\u5939\uff0c\u70b9\u201c\u5426\u201d\u9009\u5355\u4e2a/\u591a\u4e2a\u6587\u4ef6\u3002",
+                "Click Yes for folder import, No for single/multi-file import.",
+            ),
+        )
+        if choice is None:
+            return
+        if choice:
+            self.choose_import_dir()
+            return
+        self.choose_import_files()
+
     def choose_import_files(self) -> None:
         selected = filedialog.askopenfilenames(
             title=self._tr("\u9009\u62e9\u8981\u5bfc\u5165\u7684\u6587\u4ef6\uff08\u53ef\u591a\u9009\uff09", "Choose files to import (multi-select)"),
@@ -949,8 +943,7 @@ class DesktopWindow:
         self.incremental_button.configure(state=state)
         self.email_import_button.configure(state=state)
         self.pull_mail_button.configure(state=state)
-        self.choose_import_dir_button.configure(state=state)
-        self.choose_import_files_button.configure(state=state)
+        self.choose_import_source_button.configure(state=state)
         self.clear_import_files_button.configure(state=state)
         if busy:
             self.retry_button.configure(state=tk.DISABLED)
