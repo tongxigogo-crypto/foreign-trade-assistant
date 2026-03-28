@@ -79,14 +79,18 @@ Run-Step "Assemble beta package" {
     }
     Copy-Item -Force "dist\InVault.exe" (Join-Path $stageDir "InVault.exe")
     Copy-Item -Recurse -Force "extension" (Join-Path $stageDir "extension")
+
     $guideCandidates = @(
         "GUIDE_WINDOWS_FIRST_USE.txt",
-        "USER_GUIDE.txt",
-        "新手指导_Windows_首次安装与使用.txt"
+        "USER_GUIDE.txt"
     )
     $guideFile = $guideCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
     if (-not $guideFile) {
-        $guideMatch = Get-ChildItem -File | Where-Object { $_.Name -like "*Windows*首次安装与使用*.txt" -or $_.Name -like "*Windows*First*Use*.txt" } | Select-Object -First 1
+        $guideMatch = Get-ChildItem -File | Where-Object {
+            ($_.Extension -eq ".txt") -and
+            ($_.Name -like "*Windows*" -or $_.Name -like "*windows*") -and
+            ($_.Name -notlike "requirements*.txt")
+        } | Select-Object -First 1
         if ($guideMatch) {
             $guideFile = $guideMatch.FullName
         }

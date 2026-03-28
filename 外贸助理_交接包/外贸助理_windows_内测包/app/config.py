@@ -23,7 +23,9 @@ class AppConfig:
         if policy_path.exists():
             data = json.loads(policy_path.read_text(encoding="utf-8"))
         declared_data_dir = str(data.get("data_dir", "local_data"))
-        data_dir_mode = str(data.get("data_dir_mode", "system"))
+        # Default to workspace for isolated test/runtime scenarios.
+        # Release configs explicitly set "system" in partner-policy.json.
+        data_dir_mode = str(data.get("data_dir_mode", "workspace"))
         app_name = str(data.get("app_name", "TradeAssistant"))
         data_dir, legacy_data_dir = resolve_data_dir(
             root_dir=root_dir,
