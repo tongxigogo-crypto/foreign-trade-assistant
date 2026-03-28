@@ -70,6 +70,61 @@ class RuntimePipelineTests(unittest.TestCase):
             self.assertTrue((root / "docs" / "harness" / "architecture_guardrails.json").exists())
             self.assertTrue((root / "docs" / "harness" / "closed_loop_verdict.json").exists())
 
+    def test_pipeline_executes_required_agents_without_sample_results_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "AGENTS.md").write_text("# test\n", encoding="utf-8")
+            (root / "docs" / "memory").mkdir(parents=True, exist_ok=True)
+            (root / "docs" / "memory" / "self_improving_agent.md").write_text("# memory\n", encoding="utf-8")
+
+            _write(
+                root / "agent_system" / "config" / "required-agents.json",
+                {
+                    "required_agents": [
+                        "orchestrator_agent",
+                        "rag_agent",
+                        "guardrails_agent",
+                        "self_improving_agent",
+                        "review_agent",
+                    ]
+                },
+            )
+            _write(
+                root / "agent_system" / "config" / "architecture-contract.json",
+                {
+                    "required_outputs": [
+                        "run_report",
+                        "retrieval_trace",
+                        "guardrail_report",
+                        "closed_loop_verdict",
+                    ],
+                    "rag_sources": [
+                        "AGENTS.md",
+                        "docs/memory/self_improving_agent.md",
+                        "agent_system/config/required-agents.json",
+                    ],
+                },
+            )
+
+            report = run_pipeline(
+                root=root,
+                run_id="unit-live-agent-run",
+                query="guardrails",
+                mode="confirm_write",
+            )
+
+            self.assertEqual(report["status"], "done")
+            self.assertCountEqual(
+                [item["agent"] for item in report["agent_results"]],
+                [
+                    "orchestrator_agent",
+                    "rag_agent",
+                    "guardrails_agent",
+                    "self_improving_agent",
+                    "review_agent",
+                ],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

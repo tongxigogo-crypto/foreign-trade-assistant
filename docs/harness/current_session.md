@@ -1,26 +1,23 @@
 # Current Session
 
 ## Active Task
-- windows desktop hotfix packaging and import/api stabilization
+- agent system runtime execution
 
 ## Current Goal
-- stabilize user-facing import + API send + mail pull guidance for non-technical users
+- run configured orchestrator/rag/guardrails/self-improving/review pipeline with objective evidence
 
 ## Progress
-- fixed `adaptive_profile` compatibility by adding schema field and safe-load filtering
-- fixed import thread freeze with global exception fallback
-- added file-based import entry (`Choose Files`) plus clear selection
-- fixed API send/test fallback to recover button state on unexpected errors
-- clarified mailbox flow as IMAP login with app-password guidance in UI
-- built `TA_Beta_v0.1.0-build12-winfix15_windows.zip`
+- preflight status=ok
+- retrieval hits=1
+- run status=needs_confirmation
 
 ## Blockers
 - None
 
 ## Next Actions
-- user retest on winfix15
-- commit hotfix batch
-- continue phase plan after confirmation
+- review run report
+- inspect closed-loop verdict
+- decide next architecture iteration
 
 ## Summary
-- This run focused on practical desktop reliability fixes and packable delivery quality for beginner users.
+- Runtime executed through single entry with checkpointed harness state and closed-loop evidence.

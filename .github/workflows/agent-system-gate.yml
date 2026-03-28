@@ -1,0 +1,49 @@
+name: agent-system-gate
+
+on:
+  pull_request:
+    paths:
+      - "agent_system/**"
+      - "docs/harness/**"
+      - "docs/memory/**"
+      - "scripts/agent_system_ci_gate.py"
+      - "tests/test_agent_system_*.py"
+      - ".github/workflows/agent-system-gate.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "agent_system/**"
+      - "docs/harness/**"
+      - "docs/memory/**"
+      - "scripts/agent_system_ci_gate.py"
+      - "tests/test_agent_system_*.py"
+      - ".github/workflows/agent-system-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Test Runner
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run Architecture Test Suite
+        run: |
+          python -m pytest -q \
+            tests/test_agent_system_runtime.py \
+            tests/test_agent_system_workflow_engine.py \
+            tests/test_agent_system_knowledge_index.py \
+            tests/test_agent_system_self_improving.py \
+            tests/test_agent_system_ci_gate.py
+
+      - name: Run Agent System Gate
+        run: python scripts/agent_system_ci_gate.py --root . --run-id "ci-${{ github.run_id }}"

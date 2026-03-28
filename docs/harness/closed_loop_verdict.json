@@ -1,7 +1,7 @@
 {
   "status": "preview",
-  "updated_at": "2026-03-28T09:56:23Z",
-  "summary": "3/3 checks passed",
+  "updated_at": "2026-03-28T12:20:42Z",
+  "summary": "12/12 checks passed",
   "checks": [
     {
       "name": "preflight_ok",
@@ -14,11 +14,48 @@
     {
       "name": "required_agents_defined",
       "passed": true
+    },
+    {
+      "name": "review_mode_forbidden_paths_enforced",
+      "passed": true
+    },
+    {
+      "name": "output_exists:run_report",
+      "passed": true
+    },
+    {
+      "name": "output_json_parse:run_report",
+      "passed": true
+    },
+    {
+      "name": "output_exists:retrieval_trace",
+      "passed": true
+    },
+    {
+      "name": "output_json_parse:retrieval_trace",
+      "passed": true
+    },
+    {
+      "name": "output_exists:guardrail_report",
+      "passed": true
+    },
+    {
+      "name": "output_json_parse:guardrail_report",
+      "passed": true
+    },
+    {
+      "name": "output_exists:closed_loop_verdict",
+      "passed": true
+    },
+    {
+      "name": "output_json_parse:closed_loop_verdict",
+      "passed": true
     }
   ],
   "evidence": {
     "guardrail_report": "E:\\CodexWorkspace\\Playground-pm\\docs\\harness\\architecture_guardrails.json",
     "retrieval_trace": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\retrieval-trace-refactor-v2-check.json",
+    "run_report": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\run-report-refactor-v2-check.json",
     "rag_db": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\data\\rag_index.sqlite"
   }
 }

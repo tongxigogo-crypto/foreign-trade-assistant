@@ -55,3 +55,12 @@ Keep entries short, testable, and architecture-focused.
 - rule: mailbox section must explicitly state current auth mode (`IMAP + app password`) in UI and failure dialogs.
 - scope: E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_windows_内测包\app
 - action: keep guidance near inputs and show targeted remediation on authentication errors.
+
+## [2026-03-28] runtime-report-assembly-order
+
+- status: active
+- context: runtime pipeline failed tests because run_report referenced verdict before assignment.
+- signal: repeated UnboundLocalError in runtime unit tests during CI gate.
+- rule: when composing structured reports, initialize dependent objects before first read, then overwrite only after secondary checks.
+- scope: E:\CodexWorkspace\Playground-pm\agent_system
+- action: keep report assembly order test-backed and run full tests/test_agent_system_*.py before completion.

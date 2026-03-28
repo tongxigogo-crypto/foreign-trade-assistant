@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
+from .executors import ExecutionContext, run_agent
 from .harness.workflow_engine import (
     HarnessPaths,
     build_closed_loop_verdict,
@@ -21,6 +23,12 @@ from .rag.knowledge_index import KnowledgeIndex
 def load_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8-sig") as fh:
         return json.load(fh)
+
+
+def load_json_optional(path: Path, default: dict[str, Any]) -> dict[str, Any]:
+    if not path.exists():
+        return dict(default)
+    return load_json(path)
 
 
 def gather_rag_documents(root: Path, rag_sources: list[str]) -> list[dict[str, Any]]:
@@ -41,6 +49,66 @@ def gather_rag_documents(root: Path, rag_sources: list[str]) -> list[dict[str, A
     return docs
 
 
+def build_preflight_agent_plan(required_agents: list[str]) -> list[dict[str, Any]]:
+    return [
+        {
+            "agent": agent_name,
+            "status": "pending",
+            "payload": {"planned": True},
+            "missing_data": [],
+        }
+        for agent_name in required_agents
+    ]
+
+
+def execute_required_agents(required_agents: list[str], *, ctx: ExecutionContext) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for agent_name in required_agents:
+        result = {"agent": agent_name}
+        result.update(run_agent(agent_name, ctx))
+        results.append(result)
+    return results
+
+
+def collect_git_status(root: Path) -> str:
+    try:
+        out = subprocess.check_output(
+            ["git", "status", "--short"],
+            cwd=root,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+        )
+        return out.strip() or "(clean)"
+    except Exception:
+        return "(git status unavailable)"
+
+
+def check_required_outputs(required_outputs: list[str], planned_outputs: dict[str, str]) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    for output_name in required_outputs:
+        target = planned_outputs.get(output_name, "")
+        exists = bool(target) and Path(target).exists()
+        checks.append({"name": f"output_exists:{output_name}", "passed": exists})
+        if exists and str(target).lower().endswith(".json"):
+            parse_ok = True
+            try:
+                json.loads(Path(target).read_text(encoding="utf-8-sig"))
+            except Exception:
+                parse_ok = False
+            checks.append({"name": f"output_json_parse:{output_name}", "passed": parse_ok})
+    return checks
+
+
+def check_review_mode_enforced(review_mode: dict[str, Any], agent_results: list[dict[str, Any]]) -> dict[str, Any]:
+    forbidden_paths = list(review_mode.get("code_edit_forbidden_paths", []))
+    review_result = next((x for x in agent_results if x.get("agent") == "review_agent"), {})
+    payload = dict(review_result.get("payload", {})) if isinstance(review_result.get("payload", {}), dict) else {}
+    payload_paths = payload.get("forbidden_paths", [])
+    passed = sorted(str(x) for x in payload_paths) == sorted(str(x) for x in forbidden_paths)
+    return {"name": "review_mode_forbidden_paths_enforced", "passed": passed}
+
+
 def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, Any]:
     harness_dir = root / "docs" / "harness"
     run_reports_dir = root / "agent_system" / "output"
@@ -56,10 +124,20 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
     required_agents_cfg = load_json(root / "agent_system" / "config" / "required-agents.json")
     required_agents = list(required_agents_cfg.get("required_agents", []))
     architecture_contract = load_json(root / "agent_system" / "config" / "architecture-contract.json")
+    runtime_policy = load_json_optional(
+        root / "agent_system" / "config" / "runtime-policy.json",
+        {
+            "active_task": "agent runtime",
+            "current_goal": "run configured agent pipeline with evidence",
+            "next_actions": ["review run report", "decide next implementation step"],
+            "summary": "Pipeline executed with checkpointed harness state.",
+        },
+    )
     required_outputs = list(architecture_contract.get("required_outputs", []))
     rag_sources = list(architecture_contract.get("rag_sources", []))
+    review_mode = dict(architecture_contract.get("review_mode", {}))
 
-    sample_agent_results = load_json(root / "agent_system" / "input" / "agent-results.sample.json").get("agent_results", [])
+    preflight_agent_plan = build_preflight_agent_plan(required_agents)
     planned_outputs = {
         "run_report": str(paths.run_reports_dir / f"run-report-{run_id}.json"),
         "retrieval_trace": str(paths.run_reports_dir / f"retrieval-trace-{run_id}.json"),
@@ -71,7 +149,7 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
         required_agents=required_agents,
         required_outputs=required_outputs,
         planned_outputs=planned_outputs,
-        agent_results=sample_agent_results,
+        agent_results=preflight_agent_plan,
     )
     write_json(paths.guardrail_report, preflight)
 
@@ -87,28 +165,42 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
         "hits": [item.to_dict() for item in hits],
     }
     write_json(paths.run_reports_dir / f"retrieval-trace-{run_id}.json", retrieval_trace)
+    exec_ctx = ExecutionContext(
+        root=root,
+        run_id=run_id,
+        mode=mode,
+        query=query,
+        preflight=preflight,
+        retrieval_trace=retrieval_trace,
+        memory_file=root / "docs" / "memory" / "self_improving_agent.md",
+        incidents_file=root / "agent_system" / "data" / "learning_incidents.json",
+        review_mode=review_mode,
+    )
+    agent_results = execute_required_agents(required_agents, ctx=exec_ctx)
 
     checks = [
         {"name": "preflight_ok", "passed": preflight["status"] == "ok"},
         {"name": "retrieval_non_empty", "passed": len(hits) > 0},
         {"name": "required_agents_defined", "passed": len(required_agents) > 0},
     ]
+    checks.append(check_review_mode_enforced(review_mode, agent_results))
     run_status = "blocked" if preflight["status"] != "ok" else "done"
     if run_status == "done" and not all(item["passed"] for item in checks):
         run_status = "failed"
     if mode == "preview":
         run_status = "needs_confirmation"
+    run_report_file = paths.run_reports_dir / f"run-report-{run_id}.json"
+
     verdict = build_closed_loop_verdict(
         run_status=run_status,
         checks=checks,
         evidence={
             "guardrail_report": str(paths.guardrail_report),
             "retrieval_trace": str(paths.run_reports_dir / f"retrieval-trace-{run_id}.json"),
+            "run_report": str(run_report_file),
             "rag_db": str(rag_db),
         },
     )
-    write_json(paths.closed_loop_verdict, verdict)
-
     run_report = {
         "run_id": run_id,
         "run_date": utc_now()[:10],
@@ -116,13 +208,33 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
         "mode": mode,
         "required_agents": required_agents,
         "required_outputs": required_outputs,
-        "agent_results": sample_agent_results,
+        "agent_results": agent_results,
         "architecture_guardrails": preflight,
         "closed_loop": verdict,
         "retrieval_trace_file": planned_outputs["retrieval_trace"],
         "timestamp_utc": utc_now(),
     }
-    write_json(paths.run_reports_dir / f"run-report-{run_id}.json", run_report)
+    write_json(run_report_file, run_report)
+    if not paths.closed_loop_verdict.exists():
+        write_json(paths.closed_loop_verdict, {"status": "pending", "updated_at": utc_now()})
+    output_checks = check_required_outputs(required_outputs, planned_outputs)
+    checks.extend(output_checks)
+    if run_status == "done" and not all(item["passed"] for item in checks):
+        run_status = "failed"
+    run_report["status"] = run_status
+    verdict = build_closed_loop_verdict(
+        run_status=run_status,
+        checks=checks,
+        evidence={
+            "guardrail_report": str(paths.guardrail_report),
+            "retrieval_trace": str(paths.run_reports_dir / f"retrieval-trace-{run_id}.json"),
+            "run_report": str(run_report_file),
+            "rag_db": str(rag_db),
+        },
+    )
+    run_report["closed_loop"] = verdict
+    write_json(run_report_file, run_report)
+    write_json(paths.closed_loop_verdict, verdict)
 
     ledger = SelfImprovingLedger(
         memory_file=root / "docs" / "memory" / "self_improving_agent.md",
@@ -133,20 +245,17 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
 
     checkpoint_session(
         paths,
-        active_task="agent architecture refactor runtime",
-        current_goal="stabilize RAG + Harness + self-improving pipeline",
+        active_task=str(runtime_policy.get("active_task", "agent runtime")),
+        current_goal=str(runtime_policy.get("current_goal", "run configured agent pipeline with evidence")),
         progress=[
             f"preflight status={preflight['status']}",
             f"retrieval hits={len(hits)}",
             f"run status={run_status}",
         ],
-        next_actions=[
-            "Replace sample agent results with live orchestration outputs",
-            "Hook run pipeline into CI gate",
-        ],
+        next_actions=list(runtime_policy.get("next_actions", [])),
         blockers=[],
-        summary="Architecture pipeline executed with persistent evidence and learning records.",
-        git_status="",
+        summary=str(runtime_policy.get("summary", "Pipeline executed with checkpointed harness state.")),
+        git_status=collect_git_status(root),
     )
 
     return run_report
