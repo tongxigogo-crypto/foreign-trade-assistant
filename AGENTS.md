@@ -41,6 +41,12 @@ For every new session, restore in this order:
 - `closed_loop`: produce objective checks and evidence bundle.
 - `checkpoint`: write harness state and memory updates.
 
+## RAG Freshness Rule
+
+- When a user instruction involves specific files, always prioritize RAG retrieval of the latest local file content.
+- Do not rely on stale code snippets from chat history when local files are available.
+- If retrieval and chat history conflict, local file content is source of truth.
+
 ## Scope Boundary
 
 - Allowed: `agent_system/*`, `docs/harness/*`, `docs/memory/*`, `scripts/*`, `tests/*` (architecture tests only).
