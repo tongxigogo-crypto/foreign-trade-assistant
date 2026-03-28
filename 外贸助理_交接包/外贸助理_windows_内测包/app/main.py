@@ -20,6 +20,7 @@ from .history_importer import ingest_history_directory
 from .local_store import LocalKnowledgeStore, extract_facts_from_text_file, slugify_id
 from .orchestrator import TradeAssistantOrchestrator
 from .state_board import StateBoard
+from .telemetry import capture_exception, init_error_reporting
 from .user_settings import UserSettingsStore
 from .version import APP_VERSION
 
@@ -138,6 +139,11 @@ def run_cli(argv: Sequence[str] | None = None) -> int:
     config = AppConfig.load(root)
     settings_store = UserSettingsStore(config.user_settings_file)
     runtime_settings = settings_store.load()
+    init_error_reporting(
+        enabled=bool(runtime_settings.error_reporting_enabled),
+        app_version=APP_VERSION,
+        surface="desktop_cli",
+    )
     effective_output_dir = Path(runtime_settings.output_dir).expanduser().resolve() if runtime_settings.output_dir else config.output_dir
     store = LocalKnowledgeStore(config.knowledge_file)
     capsule_builder = CapsuleBuilder(store=store)
@@ -557,4 +563,8 @@ def _safe_print(text: str) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(run_cli(sys.argv[1:]))
+    try:
+        raise SystemExit(run_cli(sys.argv[1:]))
+    except Exception as exc:  # pragma: no cover
+        capture_exception(exc, {"entry": "main"})
+        raise

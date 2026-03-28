@@ -34,6 +34,7 @@ from .email_remote_connector import MailPullConfig, pull_mail_threads_to_dir
 from .history_importer import ingest_history_directory, scan_history_files
 from .local_store import LocalKnowledgeStore
 from .state_board import StateBoard
+from .telemetry import capture_exception, init_error_reporting, set_error_reporting_enabled
 from .update_manager import check_and_prepare_update, is_http_not_found_error, is_network_error, open_path
 from .user_settings import UserSettings, UserSettingsStore
 from .version import APP_VERSION
@@ -66,12 +67,19 @@ class DesktopWindow:
         self.selected_import_files: list[Path] = []
         self.ui_lang: str = "zh"
         self.keep_alive_enabled = True
+        self.error_reporting_var: tk.BooleanVar | None = None
         self.api_basis_default_zh = "尚未使用本地上下文。"
         self.api_basis_default_en = "No local context used yet."
         self.radar_placeholder_zh = "输入关键词后点击检索。\n"
         self.radar_placeholder_en = "Enter keywords then click Search.\n"
         self.import_result_placeholder_zh = "导入结果会显示在这里。\n"
         self.import_result_placeholder_en = "Import results will appear here.\n"
+        init_error_reporting(
+            enabled=bool(self.settings.error_reporting_enabled),
+            app_version=APP_VERSION,
+            surface="desktop_window",
+        )
+        set_error_reporting_enabled(bool(self.settings.error_reporting_enabled))
 
         self._build_ui()
 
@@ -80,6 +88,7 @@ class DesktopWindow:
         self.root.title("\u5916\u8d38\u52a9\u7406\u684c\u9762\u7248")
         self.root.geometry("1320x860")
         self.root.minsize(980, 720)
+        self.root.report_callback_exception = self._report_callback_exception  # type: ignore[assignment]
         self.root.protocol("WM_DELETE_WINDOW", self._on_close_request)
         try:
             self.root.state("zoomed")
@@ -171,6 +180,7 @@ class DesktopWindow:
             self.health_check_button.configure(text="\u5065\u5eb7\u68c0\u67e5")
             self.export_diag_button.configure(text="\u5bfc\u51fa\u8bca\u65ad")
             self.feedback_inbox_button.configure(text="\u53cd\u9988\u6536\u4ef6\u7bb1")
+            self.error_reporting_check.configure(text="\u9519\u8bef\u4e0a\u62a5\uff08Sentry\uff09")
             self.runtime_section_box.configure(text="2) \u770b\u677f\u8f93\u51fa\uff08\u7f51\u9875\u770b\u677f\u5904\u7406\u4e1a\u52a1\uff09")
             self.runtime_hint_var.set("\u684c\u9762\u7aef\u5904\u7406\u542f\u52a8/\u5bfc\u5165/\u540c\u6b65\uff0c\u5176\u4ed6\u4e1a\u52a1\u7ee7\u7eed\u5728\u7f51\u9875\u770b\u677f\u5b8c\u6210\u3002")
             self.output_section_box.configure(text="\u8f93\u51fa\u76ee\u5f55")
@@ -242,6 +252,7 @@ class DesktopWindow:
             self.health_check_button.configure(text="Health Check")
             self.export_diag_button.configure(text="Export Diagnostics")
             self.feedback_inbox_button.configure(text="Feedback Inbox")
+            self.error_reporting_check.configure(text="Error Reporting (Sentry)")
             self.runtime_section_box.configure(text="2) Workbench Output (Web Workbench handles business)")
             self.runtime_hint_var.set("Desktop handles startup/import/sync. Continue operations in Web Workbench (tasks/customers/events).")
             self.output_section_box.configure(text="Output Directory")
@@ -405,6 +416,14 @@ class DesktopWindow:
         self.export_diag_button.pack(side=tk.LEFT, padx=8)
         self.feedback_inbox_button = ttk.Button(self.service_advanced_frame, text="\u53cd\u9988\u6536\u4ef6\u7bb1", command=self.open_feedback_inbox)
         self.feedback_inbox_button.pack(side=tk.LEFT, padx=8)
+        self.error_reporting_var = tk.BooleanVar(value=bool(self.settings.error_reporting_enabled))
+        self.error_reporting_check = ttk.Checkbutton(
+            self.service_advanced_frame,
+            text="\u9519\u8bef\u4e0a\u62a5\uff08Sentry\uff09",
+            variable=self.error_reporting_var,
+            command=self.toggle_error_reporting,
+        )
+        self.error_reporting_check.pack(side=tk.LEFT, padx=8)
         self.service_advanced_frame.pack_forget()
 
     def _build_runtime_section(self, parent: ttk.Frame) -> None:
@@ -565,6 +584,11 @@ class DesktopWindow:
         self.send_api_message()
         return "break"
 
+    def _report_callback_exception(self, _exc_type, exc_value, _exc_tb) -> None:
+        if isinstance(exc_value, BaseException):
+            capture_exception(exc_value, {"surface": "tk_callback"})
+        messagebox.showerror("Runtime Error", str(exc_value))
+
     def _set_api_result_split(self, ratio: float) -> None:
         try:
             total_height = self.api_result_pane.winfo_height()
@@ -590,6 +614,7 @@ class DesktopWindow:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="Connection Test"))
                 return
             except Exception as exc:  # pragma: no cover
+                capture_exception(exc, {"surface": "api_connection_test"})
                 self.root.after(
                     0,
                     lambda e=exc: (
@@ -643,6 +668,7 @@ class DesktopWindow:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="API Chat"))
                 return
             except Exception as exc:  # pragma: no cover
+                capture_exception(exc, {"surface": "api_chat_send"})
                 self.root.after(
                     0,
                     lambda e=exc: (
@@ -906,6 +932,12 @@ class DesktopWindow:
             return
         self.retry_button.configure(state=tk.NORMAL if self.last_failed_files else tk.DISABLED)
         self.email_retry_button.configure(state=tk.NORMAL if self.last_failed_email_files else tk.DISABLED)
+
+    def toggle_error_reporting(self) -> None:
+        enabled = bool(self.error_reporting_var.get()) if self.error_reporting_var is not None else True
+        self.settings.error_reporting_enabled = enabled
+        self.settings_store.save(self.settings)
+        set_error_reporting_enabled(enabled)
 
     def _save_mail_settings(self, *, remember_password: bool, password: str) -> None:
         self.settings.mail_provider = (self.mail_provider_var.get().strip().lower() or "gmail")
@@ -1817,6 +1849,7 @@ class DesktopWindow:
                     result["unchanged_files"] = unchanged_files
                 self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
             except Exception as exc:  # pragma: no cover
+                capture_exception(exc, {"surface": "history_import"})
                 self.root.after(0, lambda e=exc: self._finish_import_error(e))
 
         threading.Thread(target=worker, daemon=True).start()
@@ -1999,6 +2032,7 @@ class DesktopWindow:
                 self.last_failed_email_files = [Path(p) for p in (ingest_stats.failed_files or []) if p]
                 self.root.after(0, lambda: self._finish_mail_pull(pull_stats.to_dict(), ingest_stats.to_dict()))
             except Exception as exc:  # pragma: no cover
+                capture_exception(exc, {"surface": "mail_pull"})
                 self.root.after(0, lambda: self._finish_mail_pull({"error": str(exc)}, {}))
 
         threading.Thread(target=worker, daemon=True).start()

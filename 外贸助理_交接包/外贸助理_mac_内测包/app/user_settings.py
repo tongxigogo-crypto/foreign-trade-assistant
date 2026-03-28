@@ -23,6 +23,7 @@ class UserSettings:
     api_url: str = ""
     api_timeout_sec: int = 30
     api_use_local_context: bool = True
+    error_reporting_enabled: bool = True
     extra: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -45,6 +46,7 @@ class UserSettings:
                 "api_url": self.api_url,
                 "api_timeout_sec": int(self.api_timeout_sec),
                 "api_use_local_context": bool(self.api_use_local_context),
+                "error_reporting_enabled": bool(self.error_reporting_enabled),
             }
         )
         return payload
@@ -83,6 +85,7 @@ class UserSettings:
         except (TypeError, ValueError):
             api_timeout_sec = 30
         api_use_local_context = bool(data.get("api_use_local_context", True))
+        error_reporting_enabled = bool(data.get("error_reporting_enabled", True))
         extra = {
             key: value
             for key, value in data.items()
@@ -104,6 +107,7 @@ class UserSettings:
                 "api_url",
                 "api_timeout_sec",
                 "api_use_local_context",
+                "error_reporting_enabled",
             }
         }
         return cls(
@@ -123,6 +127,7 @@ class UserSettings:
             api_url=api_url,
             api_timeout_sec=max(5, min(api_timeout_sec, 180)),
             api_use_local_context=api_use_local_context,
+            error_reporting_enabled=error_reporting_enabled,
             extra=extra,
         )
 

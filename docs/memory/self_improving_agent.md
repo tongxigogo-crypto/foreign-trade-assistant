@@ -64,3 +64,12 @@ Keep entries short, testable, and architecture-focused.
 - rule: when composing structured reports, initialize dependent objects before first read, then overwrite only after secondary checks.
 - scope: E:\CodexWorkspace\Playground-pm\agent_system
 - action: keep report assembly order test-backed and run full tests/test_agent_system_*.py before completion.
+
+## [2026-03-28] telemetry-opt-in-default
+
+- status: active
+- context: desktop troubleshooting required crash evidence from real user machines without exposing business content.
+- signal: repeated field reports lacked reproducible stack traces.
+- rule: integrate Sentry as error-only telemetry with local opt-in toggle, no request/user payload capture, and safe no-op when DSN is absent.
+- scope: E:\CodexWorkspace\Playground-pm\外贸助理_交接包
+- action: keep telemetry behind settings + env DSN and never block runtime on telemetry failures.
