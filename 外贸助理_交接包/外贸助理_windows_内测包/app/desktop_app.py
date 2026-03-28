@@ -193,6 +193,8 @@ class DesktopWindow:
             self.alert_label.configure(text="\u5173\u952e\u98ce\u9669")
             self.tasks_label.configure(text="\u4efb\u52a1\u5217\u8868\uff08\u53ef\u7b5b\u9009\uff09")
             self.customers_label.configure(text="\u5ba2\u6237\u7ebf")
+            self.customer_detail_label.configure(text="\u5ba2\u6237\u8be6\u60c5\uff08\u6309\u540d\u79f0\u805a\u5408\uff09")
+            self.customer_picker_label.configure(text="\u5ba2\u6237\u540d\u79f0")
             self.events_label.configure(text="\u6700\u8fd1\u4e8b\u4ef6")
             self.panel_refresh_button.configure(text="\u5237\u65b0\u9762\u677f")
             self.task_in_progress_button.configure(text="\u6807\u8bb0\u4e3a\u8fdb\u884c\u4e2d")
@@ -283,6 +285,8 @@ class DesktopWindow:
             self.alert_label.configure(text="Critical Risks")
             self.tasks_label.configure(text="Task List (Filterable)")
             self.customers_label.configure(text="Customer Lines")
+            self.customer_detail_label.configure(text="Customer Details (Grouped by Name)")
+            self.customer_picker_label.configure(text="Customer Name")
             self.events_label.configure(text="Recent Events")
             self.panel_refresh_button.configure(text="Refresh Panel")
             self.task_in_progress_button.configure(text="Mark In Progress")
@@ -615,6 +619,32 @@ class DesktopWindow:
         self.customers_scroll = ttk.Scrollbar(customers_wrap, orient=tk.VERTICAL, command=self.customers_listbox.yview)
         self.customers_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.customers_listbox.config(yscrollcommand=self.customers_scroll.set)
+        self.customers_listbox.bind("<<ListboxSelect>>", self._on_customer_list_select)
+
+        self.customer_detail_label = ttk.Label(self.business_panel_box, text="\u5ba2\u6237\u8be6\u60c5\uff08\u6309\u540d\u79f0\u805a\u5408\uff09")
+        self.customer_detail_label.pack(anchor=tk.W, pady=(6, 0))
+        customer_pick_row = ttk.Frame(self.business_panel_box)
+        customer_pick_row.pack(fill=tk.X, pady=(0, 4))
+        self.customer_picker_label = ttk.Label(customer_pick_row, text="\u5ba2\u6237\u540d\u79f0")
+        self.customer_picker_label.pack(side=tk.LEFT)
+        self.customer_picker_var = tk.StringVar(value="")
+        self.customer_picker_box = ttk.Combobox(
+            customer_pick_row,
+            textvariable=self.customer_picker_var,
+            state="readonly",
+            width=32,
+            values=[],
+        )
+        self.customer_picker_box.pack(side=tk.LEFT, padx=(6, 0))
+        self.customer_picker_box.bind("<<ComboboxSelected>>", self._on_customer_picker_select)
+        customer_detail_wrap = ttk.Frame(self.business_panel_box)
+        customer_detail_wrap.pack(fill=tk.BOTH, expand=False)
+        self.customer_detail_text = tk.Text(customer_detail_wrap, height=10, wrap=tk.WORD)
+        self.customer_detail_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        customer_detail_scroll = ttk.Scrollbar(customer_detail_wrap, orient=tk.VERTICAL, command=self.customer_detail_text.yview)
+        customer_detail_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.customer_detail_text.config(yscrollcommand=customer_detail_scroll.set)
+        self.customer_detail_text.insert(tk.END, self._tr("\u8bf7\u9009\u62e9\u5ba2\u6237\u67e5\u770b\u805a\u5408\u8d44\u6599\u3002", "Select a customer to view grouped details."))
 
         self.events_label = ttk.Label(self.business_panel_box, text="\u6700\u8fd1\u4e8b\u4ef6")
         self.events_label.pack(anchor=tk.W, pady=(6, 0))
@@ -633,6 +663,7 @@ class DesktopWindow:
         self._customer_rows: list[dict] = []
         self._filtered_task_rows: list[dict] = []
         self._filtered_customer_rows: list[dict] = []
+        self._customer_display_map: list[dict] = []
         self._selected_kanban_column: str = ""
         self._selected_kanban_task_id: str = ""
 
@@ -1745,6 +1776,7 @@ class DesktopWindow:
         self.customers_listbox.delete(0, tk.END)
         self._filtered_task_rows = []
         self._filtered_customer_rows = []
+        self._customer_display_map = []
         self._selected_kanban_column = ""
         self._selected_kanban_task_id = ""
         for key, lb in self.kanban_lists.items():
@@ -1797,6 +1829,8 @@ class DesktopWindow:
             in_progress = int(row.get("in_progress_tasks", 0))
             overdue = int(row.get("overdue_tasks", 0))
             self.customers_listbox.insert(tk.END, f"{customer} | \u5f00\u653e {open_tasks} | \u8fdb\u884c {in_progress} | \u903e\u671f {overdue}")
+            self._customer_display_map.append({"name": customer, "raw": row})
+        self._refresh_customer_picker()
         self._refresh_kanban_titles()
 
     def _normalize_kanban_status(self, status: str) -> str:
@@ -1880,6 +1914,140 @@ class DesktopWindow:
             messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("\u98ce\u9669\u5ef6\u540e\u5931\u8d25\u3002", "Failed to snooze alert."))
             return
         self.refresh_runtime_status()
+
+    def _on_customer_list_select(self, _event: tk.Event | None = None) -> None:
+        idx = self.customers_listbox.curselection()
+        if not idx:
+            return
+        row_index = int(idx[0])
+        if row_index >= len(self._customer_display_map):
+            return
+        name = str(self._customer_display_map[row_index].get("name", "")).strip()
+        if not name:
+            return
+        self.customer_picker_var.set(name)
+        self._render_customer_detail(name)
+
+    def _on_customer_picker_select(self, _event: tk.Event | None = None) -> None:
+        name = self.customer_picker_var.get().strip()
+        if name:
+            self._render_customer_detail(name)
+
+    def _refresh_customer_picker(self) -> None:
+        names = []
+        for row in self._filtered_customer_rows:
+            name = str(row.get("customer_name", "")).strip()
+            if name and name not in names:
+                names.append(name)
+        self.customer_picker_box.configure(values=names)
+        if names:
+            current = self.customer_picker_var.get().strip()
+            if current not in names:
+                self.customer_picker_var.set(names[0])
+                self._render_customer_detail(names[0])
+        else:
+            self.customer_picker_var.set("")
+            self._set_text_content(
+                self.customer_detail_text,
+                self._tr("\u6682\u65e0\u5ba2\u6237\u53ef\u5c55\u793a\u3002", "No customer details available."),
+            )
+
+    def _render_customer_detail(self, customer_name: str) -> None:
+        payload = self._collect_customer_knowledge(customer_name)
+        lines: list[str] = []
+        lines.append(self._tr(f"\u5ba2\u6237\uff1a{customer_name}", f"Customer: {customer_name}"))
+        lines.append(self._tr("\u2014\u2014 \u90ae\u4ef6\u5f80\u6765 \u2014\u2014", "-- Email History --"))
+        lines.extend(payload["emails"][:20] or [self._tr("\u6682\u65e0", "None")])
+        lines.append("")
+        lines.append(self._tr("\u2014\u2014 \u5408\u540c\u5386\u53f2 \u2014\u2014", "-- Contract History --"))
+        lines.extend(payload["contracts"][:20] or [self._tr("\u6682\u65e0", "None")])
+        lines.append("")
+        lines.append(self._tr("\u2014\u2014 \u4ea7\u54c1\u4fe1\u606f \u2014\u2014", "-- Product Info --"))
+        lines.extend(payload["products"][:20] or [self._tr("\u6682\u65e0", "None")])
+        lines.append("")
+        lines.append(self._tr("\u2014\u2014 \u9500\u552e\u4ef7\u683c \u2014\u2014", "-- Sales Prices --"))
+        lines.extend(payload["prices"][:20] or [self._tr("\u6682\u65e0", "None")])
+        self._set_text_content(self.customer_detail_text, "\n".join(lines))
+
+    def _collect_customer_knowledge(self, customer_name: str) -> dict[str, list[str]]:
+        name_l = customer_name.lower()
+        kb = self.store.load()
+        emails: list[str] = []
+        contracts: list[str] = []
+        products: list[str] = []
+        prices: list[str] = []
+
+        for fact in reversed(kb.doc_facts):
+            text = str(fact).strip()
+            if not text:
+                continue
+            text_l = text.lower()
+            if name_l and name_l not in text_l:
+                continue
+            if any(k in text_l for k in ["mail", "email", "\u90ae\u4ef6", "reply", "inquiry"]):
+                emails.append(f"- {text}")
+            if any(k in text_l for k in ["contract", "agreement", "po", "\u5408\u540c", "\u8ba2\u5355"]):
+                contracts.append(f"- {text}")
+            if any(k in text_l for k in ["product", "sku", "model", "\u4ea7\u54c1", "\u578b\u53f7"]):
+                products.append(f"- {text}")
+            if any(k in text_l for k in ["price", "usd", "eur", "$", "\u62a5\u4ef7", "\u4ef7\u683c"]):
+                prices.append(f"- {text}")
+
+        events = list(reversed(self.state_board.latest(limit=400)))
+        for event in events:
+            customer = (self._extract_customer_from_event(event) or "").strip().lower()
+            if customer and name_l not in customer and customer not in name_l:
+                continue
+            action = str(event.get("action_name", "")).strip()
+            created = str(event.get("created_at_utc", "")).replace("T", " ")[:16]
+            product = self._extract_product_from_event(event)
+            price_text = self._extract_price_from_event(event)
+            if action in {"ingest_email_thread", "conversation_sync", "generate_followup_draft"}:
+                emails.append(f"- [{created}] {self._event_action_label(action)}")
+            if action in {"generate_quote_draft", "generate_followup_draft"} and product:
+                products.append(f"- [{created}] {product}")
+            if action == "generate_quote_draft" and price_text:
+                prices.append(f"- [{created}] {price_text}")
+
+        return {
+            "emails": self._dedup_keep_order(emails),
+            "contracts": self._dedup_keep_order(contracts),
+            "products": self._dedup_keep_order(products),
+            "prices": self._dedup_keep_order(prices),
+        }
+
+    def _extract_price_from_event(self, event: dict) -> str:
+        results = event.get("results", [])
+        if not isinstance(results, list):
+            return ""
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            ctx = item.get("context", {})
+            if isinstance(ctx, dict):
+                price = ctx.get("price")
+                currency = str(ctx.get("currency", "")).strip() or "USD"
+                if isinstance(price, (int, float)):
+                    return f"{price} {currency}"
+            message = str(item.get("message", "")).strip()
+            if message:
+                match = re.search(r"(\$?\d+(?:\.\d+)?)\s*(USD|EUR|CNY|RMB)?", message, flags=re.IGNORECASE)
+                if match:
+                    val = match.group(1)
+                    curr = (match.group(2) or "USD").upper()
+                    return f"{val} {curr}"
+        return ""
+
+    def _dedup_keep_order(self, items: list[str]) -> list[str]:
+        seen: set[str] = set()
+        out: list[str] = []
+        for x in items:
+            s = x.strip()
+            if not s or s in seen:
+                continue
+            seen.add(s)
+            out.append(s)
+        return out
 
     def _collect_radar_data(self, query: str) -> dict:
         kb = self.store.load()
