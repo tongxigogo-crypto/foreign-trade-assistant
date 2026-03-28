@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 
@@ -35,7 +35,6 @@ class CapsuleBuilder:
             facts.extend([f"Customer note: {note}" for note in customer.notes[:3]])
             facts.extend([f"Recent issue: {issue}" for issue in customer.last_issues[:3]])
         elif trigger_only and kb.customers:
-            # When user only types "@", prefer stable structured facts over noisy conversation snippets.
             ranked_customers = sorted(
                 kb.customers.values(),
                 key=lambda c: (len(c.notes), len(c.last_issues), len(c.tags)),
@@ -68,19 +67,21 @@ class CapsuleBuilder:
             constraints.extend([f"Pricing rule: {rule}" for rule in kb.preference.pricing_rules[:3]])
 
         facts.extend([f"Global fact: {item}" for item in kb.global_facts[:5]])
+
         greeting_only = self._is_greeting_only(req.user_input)
         doc_top_k = 0 if trigger_only or greeting_only else 8
-        structured_for_dedupe = set()
+        excludes: set[str] = set()
         for item in facts:
             normalized = self._normalize_fact_text(item)
             if normalized:
-                structured_for_dedupe.add(normalized)
+                excludes.add(normalized)
+
         facts.extend(
             self._select_relevant_doc_facts(
                 req.user_input,
                 kb.doc_facts,
                 top_k=doc_top_k,
-                exclude_normalized=structured_for_dedupe,
+                exclude_normalized=excludes,
             )
         )
 
@@ -100,6 +101,7 @@ class CapsuleBuilder:
             template_mode=req.template_mode,
             custom_instruction=req.custom_instruction,
         )
+
         return ContextCapsule(
             summary=summary,
             facts=trimmed_facts,
@@ -162,9 +164,11 @@ class CapsuleBuilder:
             return []
         excludes = exclude_normalized or set()
         tokens = self._tokenize(query)
+        summary_mode = self._is_summary_query(query)
         scored: list[tuple[float, int, str]] = []
         total = len(doc_facts)
         clean_query = query.strip()
+
         for idx, raw in enumerate(doc_facts):
             text = str(raw).strip()
             if not text:
@@ -179,6 +183,9 @@ class CapsuleBuilder:
             exact_bonus = 2 if clean_query and clean_query.lower() in text_l else 0
             business_bonus = 2 if self._is_business_fact(text) else 0
             recency = (idx + 1) / max(1, total)
+            relevance = overlap > 0 or exact_bonus > 0 or business_bonus > 0
+            if tokens and not relevance and not summary_mode:
+                continue
             score = float(overlap * 3 + exact_bonus + business_bonus) + recency
             if score <= 0:
                 continue
@@ -190,7 +197,6 @@ class CapsuleBuilder:
             return [f"Doc fact: {x}" for x in fallback]
 
         if not tokens:
-            # For trigger-only queries like "@", avoid generic/noisy facts and keep business-heavy items.
             scored = [item for item in scored if self._is_business_fact(item[2])]
             if not scored:
                 fallback = [x for x in reversed(doc_facts) if self._is_business_fact(str(x)) and not self._is_noise_fact(str(x))]
@@ -207,17 +213,30 @@ class CapsuleBuilder:
         parts = re.findall(r"[a-z0-9_@.-]+|[\u4e00-\u9fff]{1,6}", q)
         return [p for p in parts if len(p) >= 2]
 
+    def _is_summary_query(self, query: str) -> bool:
+        q = query.strip().lower()
+        if not q:
+            return False
+        keywords = ["总结", "汇总", "摘要", "概览", "总览", "summary", "summarize", "overview", "recap"]
+        return any(k in q for k in keywords)
+
     def _is_noise_fact(self, text: str) -> bool:
         low = text.lower().strip()
-        if low in {"[doubao-web] user request: @", "user request: @", "追问", "复制", "快速"}:
+        if low in {"[doubao-web] user request: @", "user request: @", "追问", "复制", "快问"}:
             return True
         noisy_tokens = [
             "user request:",
             "用户请求:",
             "key facts",
-            "最终注入 prompt",
+            "最终注入prompt",
             "追问",
             "复制",
+            "状态看板",
+            "最近事件",
+            "风险提醒",
+            "客户线",
+            "open =",
+            "进行中 + 逾期",
         ]
         if any(token in low for token in noisy_tokens):
             return True
@@ -225,11 +244,7 @@ class CapsuleBuilder:
             return True
         if re.search(r"\b20\d{2}-\d{2}-\d{2}t\d{2}:\d{2}:\d{2}", low):
             return True
-        if re.fullmatch(r"\[.*?回复\]\s*20\d{2}-\d{2}-\d{2}.*", text.strip()):
-            return True
         if len(text) > 200 and not self._is_business_fact(text):
-            return True
-        if "少壮不努力" in text or ("春天" in text and "秋天" in text):
             return True
         return False
 
@@ -242,31 +257,9 @@ class CapsuleBuilder:
         if self._looks_like_question(text):
             return False
         hints = [
-            "customer",
-            "client",
-            "quote",
-            "price",
-            "product",
-            "sku",
-            "currency",
-            "email",
-            "phone",
-            "follow-up",
-            "payment",
-            "onboarding",
-            "trade",
-            "fob",
-            "cif",
-            "port",
-            "客户",
-            "报价",
-            "产品",
-            "付款",
-            "跟进",
-            "币种",
-            "邮箱",
-            "电话",
-            "港口",
+            "customer", "client", "quote", "price", "product", "sku", "currency", "email", "phone",
+            "follow-up", "payment", "onboarding", "trade", "fob", "cif", "port",
+            "客户", "报价", "产品", "付款", "跟进", "币种", "邮箱", "电话", "港口",
         ]
         if any(h in low for h in hints):
             return True
@@ -322,81 +315,37 @@ class CapsuleBuilder:
             lines.extend([f"- {self._localize_constraint(item, use_zh)}" for item in constraints])
 
         if mode == "custom" and custom_instruction.strip():
-            if use_zh:
-                lines.extend(
-                    [
-                        "自定义指令:",
-                        custom_instruction.strip(),
-                        "- 如需执行动作，只追加一个动作标签:",
-                        '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
-                        "[LOCAL_CONTEXT_END]",
-                        "",
-                        f"用户请求: {user_input}",
-                    ]
-                )
-            else:
-                lines.extend(
-                    [
-                        "Custom instruction:",
-                        custom_instruction.strip(),
-                        "- If an action is needed, append a single action tag:",
-                        '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
-                        "[LOCAL_CONTEXT_END]",
-                        "",
-                        f"User request: {user_input}",
-                    ]
-                )
+            lines.extend([
+                "自定义指令:" if use_zh else "Custom instruction:",
+                custom_instruction.strip(),
+                "- 如需执行动作，只追加一个动作标签:" if use_zh else "- If an action is needed, append a single action tag:",
+                '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
+                "[LOCAL_CONTEXT_END]",
+                "",
+                f"用户请求: {user_input}" if use_zh else f"User request: {user_input}",
+            ])
             return "\n".join(lines)
 
         if mode == "compact":
-            if use_zh:
-                lines.extend(
-                    [
-                        "指令：直接给出最短可执行答复，避免解释。",
-                        "- 如需执行动作，只追加一个动作标签:",
-                        '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
-                        "[LOCAL_CONTEXT_END]",
-                        "",
-                        f"用户请求: {user_input}",
-                    ]
-                )
-            else:
-                lines.extend(
-                    [
-                        "Instruction: Give the shortest executable answer with minimal explanation.",
-                        "- If an action is needed, append a single action tag:",
-                        '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
-                        "[LOCAL_CONTEXT_END]",
-                        "",
-                        f"User request: {user_input}",
-                    ]
-                )
+            lines.extend([
+                "指令：直接给出最短可执行答复，避免解释。" if use_zh else "Instruction: Give the shortest executable answer with minimal explanation.",
+                "- 如需执行动作，只追加一个动作标签:" if use_zh else "- If an action is needed, append a single action tag:",
+                '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
+                "[LOCAL_CONTEXT_END]",
+                "",
+                f"用户请求: {user_input}" if use_zh else f"User request: {user_input}",
+            ])
             return "\n".join(lines)
 
-        if use_zh:
-            lines.extend(
-                [
-                    "指令:",
-                    "- 请基于以上上下文输出最终答复。",
-                    "- 如需执行动作，只追加一个动作标签:",
-                    '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
-                    "[LOCAL_CONTEXT_END]",
-                    "",
-                    f"用户请求: {user_input}",
-                ]
-            )
-        else:
-            lines.extend(
-                [
-                    "Instruction:",
-                    "- Draft the response using the context above.",
-                    "- If an action is needed, append a single action tag:",
-                    '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
-                    "[LOCAL_CONTEXT_END]",
-                    "",
-                    f"User request: {user_input}",
-                ]
-            )
+        lines.extend([
+            "指令:" if use_zh else "Instruction:",
+            "- 请基于以上上下文输出最终答复。" if use_zh else "- Draft the response using the context above.",
+            "- 如需执行动作，只追加一个动作标签:" if use_zh else "- If an action is needed, append a single action tag:",
+            '<action>generate_quote_draft:{"client":"...","product":"...","price":0,"currency":"USD"}</action>',
+            "[LOCAL_CONTEXT_END]",
+            "",
+            f"用户请求: {user_input}" if use_zh else f"User request: {user_input}",
+        ])
         return "\n".join(lines)
 
     def _localize_fact(self, text: str, use_zh: bool) -> str:

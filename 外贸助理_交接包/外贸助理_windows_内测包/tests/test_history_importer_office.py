@@ -15,6 +15,9 @@ def test_scan_history_files_includes_office_suffixes(tmp_path: Path) -> None:
     (tmp_path / "sample.docx").write_text("", encoding="utf-8")
     (tmp_path / "sample.pptx").write_text("", encoding="utf-8")
     (tmp_path / "sample.pdf").write_text("", encoding="utf-8")
+    (tmp_path / "sample.doc").write_text("", encoding="utf-8")
+    (tmp_path / "sample.ppt").write_text("", encoding="utf-8")
+    (tmp_path / "sample.xls").write_text("", encoding="utf-8")
     (tmp_path / "ignore.bin").write_text("", encoding="utf-8")
 
     files = scan_history_files(tmp_path, recursive=False, max_files=50)
@@ -24,6 +27,9 @@ def test_scan_history_files_includes_office_suffixes(tmp_path: Path) -> None:
     assert "sample.docx" in names
     assert "sample.pptx" in names
     assert "sample.pdf" in names
+    assert "sample.doc" in names
+    assert "sample.ppt" in names
+    assert "sample.xls" in names
     assert "ignore.bin" not in names
 
 
@@ -78,3 +84,11 @@ def test_extract_facts_from_pdf_handles_file(tmp_path: Path) -> None:
 
     facts = extract_facts_from_history_file(path, max_lines=20, max_chars_per_fact=200)
     assert isinstance(facts, list)
+
+
+def test_extract_facts_from_legacy_doc_fallback(tmp_path: Path) -> None:
+    path = tmp_path / "legacy.doc"
+    path.write_bytes(b"\xd0\xcf\x11\xe0\x00\x00legacy-doc")
+    facts = extract_facts_from_history_file(path, max_lines=20, max_chars_per_fact=200)
+    assert facts
+    assert "Legacy Office file detected" in facts[0]

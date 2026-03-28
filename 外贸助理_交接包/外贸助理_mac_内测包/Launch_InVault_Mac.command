@@ -41,12 +41,16 @@ if [ ! -d "$SCRIPT_DIR/.venv" ]; then
   }
 fi
 
-echo "[TradeAssistant] installing/updating dependencies..."
-"$SCRIPT_DIR/.venv/bin/python" -m pip install --upgrade pip >/dev/null
-"$SCRIPT_DIR/.venv/bin/python" -m pip install -r "$SCRIPT_DIR/requirements.txt" || {
-  show_error "Dependency install failed. Please check network and retry."
-  exit 1
-}
+REQ_FILE="$SCRIPT_DIR/requirements.txt"
+if [ -f "$REQ_FILE" ] && grep -qE '^[[:space:]]*[^#[:space:]]' "$REQ_FILE"; then
+  echo "[TradeAssistant] installing runtime dependencies..."
+  "$SCRIPT_DIR/.venv/bin/python" -m pip install -r "$REQ_FILE" || {
+    show_error "Runtime dependency install failed. Please check network and retry."
+    exit 1
+  }
+else
+  echo "[TradeAssistant] no runtime dependencies, skip pip install."
+fi
 
 "$SCRIPT_DIR/.venv/bin/python" -m app.main init >/dev/null 2>&1 || true
 

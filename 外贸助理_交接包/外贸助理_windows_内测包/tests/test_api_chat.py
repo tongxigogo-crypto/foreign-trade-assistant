@@ -34,8 +34,9 @@ def test_build_local_context_uses_knowledge_base(tmp_path: Path) -> None:
         model_name="meta/llama-3.1-70b-instruct",
     )
 
-    assert "[LOCAL_CONTEXT_BEGIN]" in context.prompt
+    assert "[LOCAL_CONTEXT_BEGIN]" not in context.prompt
     assert "Preferred term is FOB Shanghai." in context.prompt
+    assert "用户问题" in context.prompt
     assert "Local facts" in context.answer_basis
 
 

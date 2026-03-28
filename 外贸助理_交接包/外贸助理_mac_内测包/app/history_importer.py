@@ -6,9 +6,26 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
+from docx import Document
+from openpyxl import load_workbook
+from pypdf import PdfReader
+from pptx import Presentation
+
 from .local_store import LocalKnowledgeStore
 
-SUPPORTED_SUFFIXES = {".txt", ".md", ".markdown", ".json", ".log", ".csv"}
+SUPPORTED_SUFFIXES = {
+    ".txt",
+    ".md",
+    ".markdown",
+    ".json",
+    ".log",
+    ".csv",
+    ".xlsx",
+    ".xlsm",
+    ".docx",
+    ".pdf",
+    ".pptx",
+}
 TEXT_KEYS = {
     "text",
     "content",
@@ -147,8 +164,17 @@ def detect_history_source(path: Path) -> str:
 
 
 def extract_facts_from_history_file(path: Path, *, max_lines: int, max_chars_per_fact: int) -> list[str]:
-    if path.suffix.lower() == ".json":
+    suffix = path.suffix.lower()
+    if suffix == ".json":
         return _extract_from_json(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix in {".xlsx", ".xlsm"}:
+        return _extract_from_excel(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".docx":
+        return _extract_from_docx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".pdf":
+        return _extract_from_pdf(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".pptx":
+        return _extract_from_pptx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
     return _extract_from_plain_text(path, max_lines=max_lines, max_chars=max_chars_per_fact)
 
 
@@ -171,6 +197,80 @@ def _extract_from_json(path: Path, *, max_lines: int, max_chars: int) -> list[st
             collected.append(line)
         if len(collected) >= max_lines:
             break
+    return collected
+
+
+def _extract_from_excel(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    try:
+        wb = load_workbook(filename=path, data_only=True, read_only=True)
+    except Exception:
+        return []
+    collected: list[str] = []
+    try:
+        for ws in wb.worksheets:
+            for row in ws.iter_rows(values_only=True):
+                cells = [str(cell).strip() for cell in row if cell is not None and str(cell).strip()]
+                if not cells:
+                    continue
+                line = _clean_line(" | ".join(cells), max_chars=max_chars)
+                if line:
+                    collected.append(line)
+                if len(collected) >= max_lines:
+                    return collected
+    finally:
+        wb.close()
+    return collected
+
+
+def _extract_from_docx(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    try:
+        doc = Document(path)
+    except Exception:
+        return []
+    collected: list[str] = []
+    for paragraph in doc.paragraphs:
+        line = _clean_line(paragraph.text, max_chars=max_chars)
+        if not line:
+            continue
+        collected.append(line)
+        if len(collected) >= max_lines:
+            break
+    return collected
+
+
+def _extract_from_pdf(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    try:
+        reader = PdfReader(str(path))
+    except Exception:
+        return []
+    collected: list[str] = []
+    for page in reader.pages:
+        text = page.extract_text() or ""
+        for raw_line in text.splitlines():
+            line = _clean_line(raw_line, max_chars=max_chars)
+            if not line:
+                continue
+            collected.append(line)
+            if len(collected) >= max_lines:
+                return collected
+    return collected
+
+
+def _extract_from_pptx(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    try:
+        prs = Presentation(str(path))
+    except Exception:
+        return []
+    collected: list[str] = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            text = getattr(shape, "text", "")
+            line = _clean_line(text, max_chars=max_chars)
+            if not line:
+                continue
+            collected.append(line)
+            if len(collected) >= max_lines:
+                return collected
     return collected
 
 

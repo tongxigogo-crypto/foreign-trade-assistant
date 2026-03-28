@@ -1908,8 +1908,8 @@ class DesktopWindow:
         if not retry and int(result.get("scanned_files", 0)) == 0:
             self.import_status.set(
                 self._tr(
-                    "导入完成：未识别到可导入文件（支持 txt/md/json/csv/xlsx/docx/pdf/pptx）",
-                    "Import complete: no supported files found (txt/md/json/csv/xlsx/docx/pdf/pptx)",
+                    "导入完成：未识别到可导入文件（支持 txt/md/json/csv/xlsx/xls/docx/doc/pdf/pptx/ppt）",
+                    "Import complete: no supported files found (txt/md/json/csv/xlsx/xls/docx/doc/pdf/pptx/ppt)",
                 )
             )
             self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")

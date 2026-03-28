@@ -10,6 +10,7 @@ from docx import Document
 from openpyxl import load_workbook
 from pypdf import PdfReader
 from pptx import Presentation
+import xlrd
 
 from .local_store import LocalKnowledgeStore
 
@@ -22,9 +23,16 @@ SUPPORTED_SUFFIXES = {
     ".csv",
     ".xlsx",
     ".xlsm",
+    ".xls",
+    ".xlsb",
     ".docx",
+    ".docm",
+    ".doc",
     ".pdf",
     ".pptx",
+    ".pptm",
+    ".ppt",
+    ".rtf",
 }
 TEXT_KEYS = {
     "text",
@@ -169,12 +177,24 @@ def extract_facts_from_history_file(path: Path, *, max_lines: int, max_chars_per
         return _extract_from_json(path, max_lines=max_lines, max_chars=max_chars_per_fact)
     if suffix in {".xlsx", ".xlsm"}:
         return _extract_from_excel(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".xls":
+        return _extract_from_xls(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".xlsb":
+        return _legacy_office_fallback(path)
     if suffix == ".docx":
         return _extract_from_docx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix in {".docm"}:
+        return _extract_from_docx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".doc":
+        return _legacy_office_fallback(path)
     if suffix == ".pdf":
         return _extract_from_pdf(path, max_lines=max_lines, max_chars=max_chars_per_fact)
     if suffix == ".pptx":
         return _extract_from_pptx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix in {".pptm"}:
+        return _extract_from_pptx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".ppt":
+        return _legacy_office_fallback(path)
     return _extract_from_plain_text(path, max_lines=max_lines, max_chars=max_chars_per_fact)
 
 
@@ -219,6 +239,26 @@ def _extract_from_excel(path: Path, *, max_lines: int, max_chars: int) -> list[s
                     return collected
     finally:
         wb.close()
+    return collected
+
+
+def _extract_from_xls(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    try:
+        wb = xlrd.open_workbook(path)
+    except Exception:
+        return _legacy_office_fallback(path)
+    collected: list[str] = []
+    for sheet in wb.sheets():
+        for r in range(sheet.nrows):
+            row = sheet.row_values(r)
+            cells = [str(cell).strip() for cell in row if str(cell).strip()]
+            if not cells:
+                continue
+            line = _clean_line(" | ".join(cells), max_chars=max_chars)
+            if line:
+                collected.append(line)
+            if len(collected) >= max_lines:
+                return collected
     return collected
 
 
@@ -272,6 +312,12 @@ def _extract_from_pptx(path: Path, *, max_lines: int, max_chars: int) -> list[st
             if len(collected) >= max_lines:
                 return collected
     return collected
+
+
+def _legacy_office_fallback(path: Path) -> list[str]:
+    return [
+        f"Legacy Office file detected: {path.name}. Please convert to .docx/.xlsx/.pptx for full text extraction."
+    ]
 
 
 def _walk_json_strings(value: object) -> Iterable[str]:

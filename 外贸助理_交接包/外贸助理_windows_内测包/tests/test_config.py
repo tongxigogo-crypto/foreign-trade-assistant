@@ -6,23 +6,26 @@ from pathlib import Path
 from app.config import AppConfig
 
 
-def test_load_without_partner_policy_uses_defaults(tmp_path: Path) -> None:
+def test_load_without_partner_policy_uses_defaults(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TRADE_ASSISTANT_DATA_DIR", str(tmp_path / "runtime_data"))
     cfg = AppConfig.load(tmp_path)
     assert cfg.root_dir == tmp_path
-    assert cfg.data_dir == tmp_path / "local_data"
+    assert cfg.data_dir == tmp_path / "runtime_data"
     assert cfg.knowledge_file == cfg.data_dir / "knowledge_base.json"
     assert cfg.output_dir == cfg.data_dir / "artifacts"
     assert cfg.state_board_file == cfg.data_dir / "state_board.json"
     assert cfg.user_settings_file == cfg.data_dir / "user_settings.json"
 
 
-def test_load_with_partner_policy_uses_overrides(tmp_path: Path) -> None:
+def test_load_with_partner_policy_uses_overrides(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("TRADE_ASSISTANT_DATA_DIR", raising=False)
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     policy_path = config_dir / "partner-policy.json"
     policy_path.write_text(
         json.dumps(
             {
+                "data_dir_mode": "workspace",
                 "data_dir": "data_custom",
                 "knowledge_file": "kb.json",
                 "output_dir": "outbox",

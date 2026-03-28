@@ -1,0 +1,7 @@
+{
+  "data_dir": "local_data",
+  "knowledge_file": "knowledge_base.json",
+  "output_dir": "artifacts",
+  "state_board_file": "state_board.json",
+  "user_settings_file": "user_settings.json"
+}
