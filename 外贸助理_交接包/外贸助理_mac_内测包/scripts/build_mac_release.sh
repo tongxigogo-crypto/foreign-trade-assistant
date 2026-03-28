@@ -17,7 +17,7 @@ STAGE_DIR="$RELEASE_ROOT/TA_Beta_${VERSION}_mac"
 ZIP_PATH="$RELEASE_ROOT/TA_Beta_${VERSION}_mac.zip"
 DMG_PATH="$RELEASE_ROOT/TA_Beta_${VERSION}_mac.dmg"
 BUILD_VENV="$ROOT_DIR/.venv-build"
-APP_NAME="TradeAssistant"
+APP_NAME="InVault"
 APP_BUNDLE="$ROOT_DIR/dist/${APP_NAME}.app"
 
 echo "==> Prepare build virtualenv"
@@ -77,14 +77,14 @@ JSON
 fi
 
 cat > "$STAGE_DIR/FIRST_USE.txt" <<'TXT'
-Trade Assistant for macOS - First Use
+InVault for macOS - First Use
 
 1) Open the downloaded DMG.
-2) Drag TradeAssistant.app to Applications.
-3) Open TradeAssistant.app.
+2) Drag InVault.app to Applications.
+3) Open InVault.app.
 4) If blocked by Gatekeeper:
    - Go to System Settings -> Privacy & Security
-   - Click "Open Anyway" for TradeAssistant
+   - Click "Open Anyway" for InVault
    - Open again
 
 Inside app:

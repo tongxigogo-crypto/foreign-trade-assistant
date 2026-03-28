@@ -1,12 +1,12 @@
-name: Build Trade Assistant Releases
+name: Build InVault Releases
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (example: v1.0.0)"
+        description: "Release version (example: v0.1.1-beta1-build14)"
         required: true
-        default: "v0.1.0"
+        default: "v0.1.1-beta1-build14"
   push:
     tags:
       - "v*"
@@ -60,7 +60,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: trade-assistant-${{ runner.os }}-${{ steps.version.outputs.value }}
+          name: invault-${{ runner.os }}-${{ steps.version.outputs.value }}
           path: |
             ${{ matrix.pkg_dir }}/release/*.zip
             ${{ matrix.pkg_dir }}/release/*.dmg
