@@ -31,7 +31,7 @@ from .config import AppConfig
 from .contracts import CapsuleRequest
 from .email_batch_importer import ingest_email_thread_directory, scan_email_thread_files
 from .email_remote_connector import MailPullConfig, pull_mail_threads_to_dir
-from .history_importer import ingest_history_directory, scan_history_files
+from .history_importer import extract_facts_from_history_file, ingest_history_directory, scan_history_files
 from .local_store import LocalKnowledgeStore
 from .state_board import StateBoard
 from .telemetry import capture_exception, init_error_reporting, set_error_reporting_enabled
@@ -195,6 +195,14 @@ class DesktopWindow:
             self.customers_label.configure(text="\u5ba2\u6237\u7ebf")
             self.customer_detail_label.configure(text="\u5ba2\u6237\u8be6\u60c5\uff08\u6309\u540d\u79f0\u805a\u5408\uff09")
             self.customer_picker_label.configure(text="\u5ba2\u6237\u540d\u79f0")
+            self.customer_detail_search_label.configure(text="\u641c\u7d22")
+            self.customer_detail_sort_label.configure(text="\u6392\u5e8f")
+            self.customer_detail_sort_box.configure(values=["\u65f6\u95f4\u5012\u5e8f", "\u65f6\u95f4\u6b63\u5e8f"])
+            self.customer_detail_quote_button.configure(text="\u65b0\u5efa\u62a5\u4ef7\u8349\u7a3f")
+            self.customer_tabs.tab(self.customer_tab_frames["emails"], text="\u90ae\u4ef6")
+            self.customer_tabs.tab(self.customer_tab_frames["contracts"], text="\u5408\u540c")
+            self.customer_tabs.tab(self.customer_tab_frames["products"], text="\u4ea7\u54c1")
+            self.customer_tabs.tab(self.customer_tab_frames["prices"], text="\u62a5\u4ef7")
             self.events_label.configure(text="\u6700\u8fd1\u4e8b\u4ef6")
             self.panel_refresh_button.configure(text="\u5237\u65b0\u9762\u677f")
             self.task_in_progress_button.configure(text="\u6807\u8bb0\u4e3a\u8fdb\u884c\u4e2d")
@@ -287,6 +295,14 @@ class DesktopWindow:
             self.customers_label.configure(text="Customer Lines")
             self.customer_detail_label.configure(text="Customer Details (Grouped by Name)")
             self.customer_picker_label.configure(text="Customer Name")
+            self.customer_detail_search_label.configure(text="Search")
+            self.customer_detail_sort_label.configure(text="Sort")
+            self.customer_detail_sort_box.configure(values=["Time Desc", "Time Asc"])
+            self.customer_detail_quote_button.configure(text="New Quote Draft")
+            self.customer_tabs.tab(self.customer_tab_frames["emails"], text="Emails")
+            self.customer_tabs.tab(self.customer_tab_frames["contracts"], text="Contracts")
+            self.customer_tabs.tab(self.customer_tab_frames["products"], text="Products")
+            self.customer_tabs.tab(self.customer_tab_frames["prices"], text="Quotes")
             self.events_label.configure(text="Recent Events")
             self.panel_refresh_button.configure(text="Refresh Panel")
             self.task_in_progress_button.configure(text="Mark In Progress")
@@ -576,6 +592,8 @@ class DesktopWindow:
             lb = tk.Listbox(col, height=6)
             lb.pack(fill=tk.BOTH, expand=True)
             lb.bind("<<ListboxSelect>>", lambda _e, c=col_key: self._on_kanban_select(c))
+            lb.bind("<ButtonPress-1>", lambda _e, c=col_key: self._on_kanban_drag_start(c))
+            lb.bind("<ButtonRelease-1>", lambda _e, c=col_key: self._on_kanban_drag_release(c))
             self.kanban_frames[col_key] = col
             self.kanban_lists[col_key] = lb
             self.kanban_maps[col_key] = []
@@ -637,14 +655,61 @@ class DesktopWindow:
         )
         self.customer_picker_box.pack(side=tk.LEFT, padx=(6, 0))
         self.customer_picker_box.bind("<<ComboboxSelected>>", self._on_customer_picker_select)
+        self.customer_detail_search_label = ttk.Label(customer_pick_row, text="\u641c\u7d22")
+        self.customer_detail_search_label.pack(side=tk.LEFT, padx=(10, 2))
+        self.customer_detail_search_var = tk.StringVar(value="")
+        self.customer_detail_search_entry = ttk.Entry(customer_pick_row, textvariable=self.customer_detail_search_var, width=18)
+        self.customer_detail_search_entry.pack(side=tk.LEFT)
+        self.customer_detail_search_entry.bind("<KeyRelease>", lambda _e: self._apply_customer_detail_filters())
+        self.customer_detail_sort_label = ttk.Label(customer_pick_row, text="\u6392\u5e8f")
+        self.customer_detail_sort_label.pack(side=tk.LEFT, padx=(10, 2))
+        self.customer_detail_sort_var = tk.StringVar(value="\u65f6\u95f4\u5012\u5e8f")
+        self.customer_detail_sort_box = ttk.Combobox(
+            customer_pick_row,
+            textvariable=self.customer_detail_sort_var,
+            width=12,
+            state="readonly",
+            values=["\u65f6\u95f4\u5012\u5e8f", "\u65f6\u95f4\u6b63\u5e8f"],
+        )
+        self.customer_detail_sort_box.pack(side=tk.LEFT)
+        self.customer_detail_sort_box.bind("<<ComboboxSelected>>", lambda _e: self._apply_customer_detail_filters())
+        self.customer_detail_quote_button = ttk.Button(customer_pick_row, text="\u65b0\u5efa\u62a5\u4ef7\u8349\u7a3f", command=self._create_quote_from_customer)
+        self.customer_detail_quote_button.pack(side=tk.RIGHT)
+
         customer_detail_wrap = ttk.Frame(self.business_panel_box)
         customer_detail_wrap.pack(fill=tk.BOTH, expand=False)
-        self.customer_detail_text = tk.Text(customer_detail_wrap, height=10, wrap=tk.WORD)
-        self.customer_detail_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        customer_detail_scroll = ttk.Scrollbar(customer_detail_wrap, orient=tk.VERTICAL, command=self.customer_detail_text.yview)
-        customer_detail_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.customer_detail_text.config(yscrollcommand=customer_detail_scroll.set)
-        self.customer_detail_text.insert(tk.END, self._tr("\u8bf7\u9009\u62e9\u5ba2\u6237\u67e5\u770b\u805a\u5408\u8d44\u6599\u3002", "Select a customer to view grouped details."))
+        self.customer_tabs = ttk.Notebook(customer_detail_wrap)
+        self.customer_tabs.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.customer_tab_frames: dict[str, ttk.Frame] = {}
+        self.customer_detail_lists: dict[str, tk.Listbox] = {}
+        self._customer_detail_rows: dict[str, list[dict[str, str]]] = {
+            "emails": [],
+            "contracts": [],
+            "products": [],
+            "prices": [],
+        }
+        self._customer_detail_filtered_rows: dict[str, list[dict[str, str]]] = {
+            "emails": [],
+            "contracts": [],
+            "products": [],
+            "prices": [],
+        }
+        for key, title in [
+            ("emails", "\u90ae\u4ef6"),
+            ("contracts", "\u5408\u540c"),
+            ("products", "\u4ea7\u54c1"),
+            ("prices", "\u62a5\u4ef7"),
+        ]:
+            tab = ttk.Frame(self.customer_tabs)
+            self.customer_tabs.add(tab, text=title)
+            self.customer_tab_frames[key] = tab
+            lb = tk.Listbox(tab, height=9)
+            lb.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            sc = ttk.Scrollbar(tab, orient=tk.VERTICAL, command=lb.yview)
+            sc.pack(side=tk.RIGHT, fill=tk.Y)
+            lb.config(yscrollcommand=sc.set)
+            lb.bind("<Double-Button-1>", lambda _e, section=key: self._open_selected_customer_detail_item(section))
+            self.customer_detail_lists[key] = lb
 
         self.events_label = ttk.Label(self.business_panel_box, text="\u6700\u8fd1\u4e8b\u4ef6")
         self.events_label.pack(anchor=tk.W, pady=(6, 0))
@@ -664,8 +729,11 @@ class DesktopWindow:
         self._filtered_task_rows: list[dict] = []
         self._filtered_customer_rows: list[dict] = []
         self._customer_display_map: list[dict] = []
+        self._last_import_customer_sources: dict[str, list[str]] = {}
         self._selected_kanban_column: str = ""
         self._selected_kanban_task_id: str = ""
+        self._drag_kanban_column: str = ""
+        self._drag_kanban_task_id: str = ""
 
         action_row = ttk.Frame(box)
         action_row.pack(fill=tk.X, pady=(8, 0))
@@ -1909,6 +1977,55 @@ class DesktopWindow:
         self.tasks_listbox.selection_clear(0, tk.END)
         self.focus_listbox.selection_clear(0, tk.END)
 
+    def _on_kanban_drag_start(self, col_key: str) -> None:
+        lb = self.kanban_lists.get(col_key)
+        rows = self.kanban_maps.get(col_key, [])
+        if lb is None:
+            return
+        idx = lb.curselection()
+        if not idx:
+            self._drag_kanban_column = ""
+            self._drag_kanban_task_id = ""
+            return
+        i = int(idx[0])
+        if i >= len(rows):
+            self._drag_kanban_column = ""
+            self._drag_kanban_task_id = ""
+            return
+        self._drag_kanban_column = col_key
+        self._drag_kanban_task_id = str(rows[i].get("task_id", "")).strip()
+
+    def _on_kanban_drag_release(self, source_col: str) -> None:
+        task_id = self._drag_kanban_task_id.strip()
+        if not task_id:
+            return
+        try:
+            widget = self.root.winfo_containing(self.root.winfo_pointerx(), self.root.winfo_pointery())
+        except tk.TclError:
+            self._drag_kanban_column = ""
+            self._drag_kanban_task_id = ""
+            return
+        target_col = ""
+        for key, lb in self.kanban_lists.items():
+            if widget is lb:
+                target_col = key
+                break
+        if not target_col:
+            self._drag_kanban_column = ""
+            self._drag_kanban_task_id = ""
+            return
+        self._drag_kanban_column = ""
+        self._drag_kanban_task_id = ""
+        if target_col == source_col:
+            return
+        status = target_col
+        if status == "overdue":
+            status = "waiting_reply"
+        note = self._tr("看板拖拽更新状态", "Updated from kanban drag-drop")
+        updated = self.state_board.update_task_status(task_id=task_id, status=status, note=note)
+        if updated is not None:
+            self.refresh_runtime_status()
+
     def _clear_business_filters(self) -> None:
         self.task_filter_status_var.set("all")
         self.task_filter_keyword_var.set("")
@@ -1986,44 +2103,155 @@ class DesktopWindow:
             current = self.customer_picker_var.get().strip()
             if current not in names:
                 self.customer_picker_var.set(names[0])
-                self._render_customer_detail(names[0])
+            self._render_customer_detail(self.customer_picker_var.get().strip() or names[0])
         else:
             self.customer_picker_var.set("")
-            self._set_text_content(
-                self.customer_detail_text,
-                self._tr("\u6682\u65e0\u5ba2\u6237\u53ef\u5c55\u793a\u3002", "No customer details available."),
-            )
+            self._clear_customer_detail_lists(self._tr("\u6682\u65e0\u5ba2\u6237\u53ef\u5c55\u793a", "No customer details available"))
 
     def _render_customer_detail(self, customer_name: str) -> None:
         payload = self._collect_customer_knowledge(customer_name)
-        self.customer_detail_text.configure(state=tk.NORMAL)
-        self.customer_detail_text.delete("1.0", tk.END)
-        self.customer_detail_text.insert(tk.END, self._tr(f"\u5ba2\u6237\uff1a{customer_name}\n", f"Customer: {customer_name}\n"))
-        self._render_customer_detail_section(self._tr("\u2014\u2014 \u90ae\u4ef6\u5f80\u6765 \u2014\u2014", "-- Email History --"), payload["emails"])
-        self._render_customer_detail_section(self._tr("\u2014\u2014 \u5408\u540c\u5386\u53f2 \u2014\u2014", "-- Contract History --"), payload["contracts"])
-        self._render_customer_detail_section(self._tr("\u2014\u2014 \u4ea7\u54c1\u4fe1\u606f \u2014\u2014", "-- Product Info --"), payload["products"])
-        self._render_customer_detail_section(self._tr("\u2014\u2014 \u9500\u552e\u4ef7\u683c \u2014\u2014", "-- Sales Prices --"), payload["prices"])
-        self.customer_detail_text.configure(state=tk.DISABLED)
+        self._customer_detail_rows = payload
+        self._apply_customer_detail_filters()
 
-    def _render_customer_detail_section(self, title: str, items: list[dict[str, str]]) -> None:
-        self.customer_detail_text.insert(tk.END, f"\n{title}\n")
-        if not items:
-            self.customer_detail_text.insert(tk.END, f"{self._tr('\u6682\u65e0', 'None')}\n")
-            return
-        for idx, item in enumerate(items[:20], start=1):
-            text = item.get("text", "").strip()
-            path = item.get("path", "").strip()
-            if not text:
-                continue
-            if path:
-                tag = f"customer_link_{title}_{idx}_{abs(hash(path))}"
-                self.customer_detail_text.insert(tk.END, f"{text}\n", (tag,))
-                self.customer_detail_text.tag_configure(tag, foreground="#1d4ed8", underline=1)
-                self.customer_detail_text.tag_bind(tag, "<Button-1>", lambda _e, p=path: self._open_customer_detail_file(p))
-                self.customer_detail_text.tag_bind(tag, "<Enter>", lambda _e: self.customer_detail_text.config(cursor="hand2"))
-                self.customer_detail_text.tag_bind(tag, "<Leave>", lambda _e: self.customer_detail_text.config(cursor="xterm"))
+    def _clear_customer_detail_lists(self, hint: str) -> None:
+        for key, lb in self.customer_detail_lists.items():
+            self._customer_detail_filtered_rows[key] = []
+            lb.delete(0, tk.END)
+            lb.insert(tk.END, hint)
+
+    def _apply_customer_detail_filters(self) -> None:
+        keyword = self.customer_detail_search_var.get().strip().lower()
+        order = self.customer_detail_sort_var.get().strip()
+        for key, rows in self._customer_detail_rows.items():
+            filtered = []
+            for row in rows:
+                text = str(row.get("text", "")).strip()
+                if not text:
+                    continue
+                if keyword and keyword not in text.lower():
+                    continue
+                filtered.append(row)
+            reverse = order != self._tr("\u65f6\u95f4\u6b63\u5e8f", "Time Asc")
+            filtered = sorted(filtered, key=lambda x: self._parse_row_time(x.get("time", "")), reverse=reverse)
+            self._customer_detail_filtered_rows[key] = filtered
+            lb = self.customer_detail_lists[key]
+            lb.delete(0, tk.END)
+            if not filtered:
+                lb.insert(tk.END, self._tr("\u6682\u65e0", "None"))
             else:
-                self.customer_detail_text.insert(tk.END, f"{text}\n")
+                for row in filtered[:200]:
+                    lb.insert(tk.END, row.get("text", ""))
+
+    def _parse_row_time(self, time_text: str) -> datetime:
+        text = str(time_text).strip()
+        if not text:
+            return datetime.min.replace(tzinfo=UTC)
+        try:
+            if "T" in text:
+                dt = datetime.fromisoformat(text)
+            else:
+                dt = datetime.fromisoformat(text.replace(" ", "T"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=UTC)
+            return dt
+        except ValueError:
+            return datetime.min.replace(tzinfo=UTC)
+
+    def _open_selected_customer_detail_item(self, section: str) -> None:
+        lb = self.customer_detail_lists.get(section)
+        if lb is None:
+            return
+        idx = lb.curselection()
+        if not idx:
+            return
+        row_i = int(idx[0])
+        rows = self._customer_detail_filtered_rows.get(section, [])
+        if row_i >= len(rows):
+            return
+        path_text = str(rows[row_i].get("path", "")).strip()
+        if not path_text:
+            return
+        self._open_customer_detail_file(path_text)
+
+    def _create_quote_from_customer(self) -> None:
+        customer_name = self.customer_picker_var.get().strip()
+        if not customer_name:
+            messagebox.showinfo(self._tr("\u63d0\u793a", "Notice"), self._tr("\u8bf7\u5148\u9009\u62e9\u5ba2\u6237\u3002", "Please select a customer first."))
+            return
+        if not self._ensure_services_ready(require_dashboard=False):
+            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("Bridge \u670d\u52a1\u4e0d\u53ef\u7528\u3002", "Bridge service unavailable."))
+            return
+
+        products = self._customer_detail_rows.get("products", [])
+        prices = self._customer_detail_rows.get("prices", [])
+        product_name = self._guess_product_from_rows(products)
+        price_hint = self._parse_price_range(prices)
+        price_value = price_hint["avg"] if price_hint["avg"] > 0 else 0
+        currency = price_hint["currency"] or "USD"
+
+        action_text = (
+            '<action>generate_quote_draft:{"client":"'
+            + customer_name.replace('"', "")
+            + '","product":"'
+            + product_name.replace('"', "")
+            + '","price":'
+            + str(price_value)
+            + ',"currency":"'
+            + currency
+            + '"}</action>'
+        )
+        try:
+            payload = self._post_json("http://127.0.0.1:8765/actions/execute", {"model_output": action_text})
+        except (OSError, URLError, ValueError):
+            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("Bridge \u670d\u52a1\u4e0d\u53ef\u7528\u3002", "Bridge service unavailable."))
+            return
+        results = payload.get("results", []) if isinstance(payload.get("results", []), list) else []
+        if not results:
+            messagebox.showwarning(self._tr("\u63d0\u793a", "Notice"), self._tr("\u672a\u751f\u6210\u62a5\u4ef7\u8349\u7a3f\u3002", "Quote draft not generated."))
+            return
+        artifacts: list[str] = []
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            for a in (item.get("artifacts", []) if isinstance(item.get("artifacts", []), list) else []):
+                artifacts.append(str(a))
+        msg = self._tr("\u62a5\u4ef7\u8349\u7a3f\u5df2\u751f\u6210\u3002", "Quote draft generated.")
+        if artifacts:
+            msg += "\n" + "\n".join(artifacts[:3])
+        messagebox.showinfo(self._tr("\u5df2\u751f\u6210", "Generated"), msg)
+        self._append_result("\n[Customer Quote Draft]\n" + action_text + "\n")
+        self.refresh_runtime_status()
+
+    def _guess_product_from_rows(self, rows: list[dict[str, str]]) -> str:
+        for row in rows:
+            text = str(row.get("text", ""))
+            match = re.search(r"\]\s+([A-Za-z0-9_.-]{2,})", text)
+            if match:
+                return match.group(1)
+        return "A100"
+
+    def _parse_price_range(self, rows: list[dict[str, str]]) -> dict[str, float | str]:
+        vals: list[float] = []
+        currency = ""
+        for row in rows:
+            text = str(row.get("text", ""))
+            match = re.search(r"(\d+(?:\.\d+)?)\s*(USD|EUR|CNY|RMB)?", text, flags=re.IGNORECASE)
+            if not match:
+                continue
+            try:
+                vals.append(float(match.group(1)))
+            except ValueError:
+                continue
+            if not currency:
+                currency = (match.group(2) or "").upper()
+        if not vals:
+            return {"min": 0.0, "max": 0.0, "avg": 0.0, "currency": currency}
+        return {
+            "min": min(vals),
+            "max": max(vals),
+            "avg": round(sum(vals) / len(vals), 4),
+            "currency": currency or "USD",
+        }
 
     def _open_customer_detail_file(self, path_text: str) -> None:
         path = Path(path_text)
@@ -2051,13 +2279,13 @@ class DesktopWindow:
             if name_l and name_l not in text_l:
                 continue
             if any(k in text_l for k in ["mail", "email", "\u90ae\u4ef6", "reply", "inquiry"]):
-                emails.append({"text": f"- {text}", "path": ""})
+                emails.append({"text": f"- {text}", "path": "", "time": ""})
             if any(k in text_l for k in ["contract", "agreement", "po", "\u5408\u540c", "\u8ba2\u5355"]):
-                contracts.append({"text": f"- {text}", "path": ""})
+                contracts.append({"text": f"- {text}", "path": "", "time": ""})
             if any(k in text_l for k in ["product", "sku", "model", "\u4ea7\u54c1", "\u578b\u53f7"]):
-                products.append({"text": f"- {text}", "path": ""})
+                products.append({"text": f"- {text}", "path": "", "time": ""})
             if any(k in text_l for k in ["price", "usd", "eur", "$", "\u62a5\u4ef7", "\u4ef7\u683c"]):
-                prices.append({"text": f"- {text}", "path": ""})
+                prices.append({"text": f"- {text}", "path": "", "time": ""})
 
         events = list(reversed(self.state_board.latest(limit=400)))
         for event in events:
@@ -2069,7 +2297,7 @@ class DesktopWindow:
             # Only treat real inbound/outbound email traces as "email history".
             if action in {"ingest_email_thread", "generate_followup_draft"}:
                 source_file = self._extract_source_file_from_event(event)
-                emails.append({"text": f"- [{created}] {self._event_action_label(action)}", "path": source_file})
+                emails.append({"text": f"- [{created}] {self._event_action_label(action)}", "path": source_file, "time": created})
 
             for result in (event.get("results", []) if isinstance(event.get("results", []), list) else []):
                 if not isinstance(result, dict):
@@ -2080,19 +2308,25 @@ class DesktopWindow:
                     if not info:
                         continue
                     if info.get("contract"):
-                        contracts.append({"text": f"- [{created}] {info['contract']}", "path": info.get("path", "")})
+                        contracts.append({"text": f"- [{created}] {info['contract']}", "path": info.get("path", ""), "time": created})
                     if info.get("product"):
-                        products.append({"text": f"- [{created}] {info['product']}", "path": info.get("path", "")})
+                        products.append({"text": f"- [{created}] {info['product']}", "path": info.get("path", ""), "time": created})
                     if info.get("price"):
-                        prices.append({"text": f"- [{created}] {info['price']}", "path": info.get("path", "")})
+                        prices.append({"text": f"- [{created}] {info['price']}", "path": info.get("path", ""), "time": created})
 
             # Fallback extraction from event message/context when artifact text is not available.
             product = self._extract_product_from_event(event)
             price_text = self._extract_price_from_event(event)
             if action in {"generate_quote_draft", "generate_followup_draft"} and product:
-                products.append({"text": f"- [{created}] {product}", "path": ""})
+                products.append({"text": f"- [{created}] {product}", "path": "", "time": created})
             if action == "generate_quote_draft" and price_text:
-                prices.append({"text": f"- [{created}] {price_text}", "path": ""})
+                prices.append({"text": f"- [{created}] {price_text}", "path": "", "time": created})
+
+        contributed = self._last_import_customer_sources.get(customer_name, [])
+        for file_path in contributed[:50]:
+            p = Path(file_path)
+            label = f"- {self._tr('来源文件', 'Source file')}: {p.name}"
+            emails.append({"text": label, "path": str(p), "time": ""})
 
         return {
             "emails": self._dedup_keep_order_entries(emails),
@@ -2174,7 +2408,7 @@ class DesktopWindow:
             if not text or key in seen:
                 continue
             seen.add(key)
-            out.append({"text": text, "path": path})
+            out.append({"text": text, "path": path, "time": str(item.get("time", "")).strip()})
         return out
 
     def _extract_source_file_from_event(self, event: dict) -> str:
@@ -2554,6 +2788,11 @@ class DesktopWindow:
                         pass
                 self.last_failed_files = [Path(p) for p in (stats.failed_files or []) if p]
                 result = stats.to_dict()
+                result["processed_files"] = [str(p) for p in files]
+                result["selected_files"] = [str(p) for p in selected_files]
+                failed_set = {str(p) for p in self.last_failed_files}
+                successful_files = [p for p in files if str(p) not in failed_set]
+                self._last_import_customer_sources = self._build_customer_source_map(successful_files)
                 if mode == "incremental":
                     result["unchanged_files"] = unchanged_files
                 self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
@@ -2642,7 +2881,12 @@ class DesktopWindow:
                 source_files=files,
             )
             self.last_failed_email_files = [Path(p) for p in (stats.failed_files or []) if p]
-            self.root.after(0, lambda: self._finish_email_import(stats.to_dict(), retry=False))
+            r = stats.to_dict()
+            r["processed_files"] = [str(p) for p in files]
+            failed_set = {str(p) for p in self.last_failed_email_files}
+            successful_files = [p for p in files if str(p) not in failed_set]
+            self._last_import_customer_sources = self._build_customer_source_map(successful_files)
+            self.root.after(0, lambda x=r: self._finish_email_import(x, retry=False))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -2670,7 +2914,9 @@ class DesktopWindow:
                 source_files=self.last_failed_email_files,
             )
             self.last_failed_email_files = [Path(p) for p in (stats.failed_files or []) if p]
-            self.root.after(0, lambda: self._finish_email_import(stats.to_dict(), retry=True))
+            r = stats.to_dict()
+            r["processed_files"] = [str(p) for p in self.last_failed_email_files]
+            self.root.after(0, lambda x=r: self._finish_email_import(x, retry=True))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -2785,6 +3031,7 @@ class DesktopWindow:
                     f"\u5931\u8d25\u6587\u4ef6 {len(result.get('failed_files', []))} \u4e2a"
                 ),
             )
+        self._append_import_visibility(result, mode=mode)
         self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
 
     def _finish_email_import(self, result: dict, retry: bool = False) -> None:
@@ -2807,6 +3054,7 @@ class DesktopWindow:
                     f"\u5931\u8d25\u6587\u4ef6 {len(result.get('failed_files', []))} \u4e2a"
                 ),
             )
+        self._append_import_visibility(result, mode="mail")
         self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
 
     def _finish_mail_pull(self, pull_result: dict, ingest_result: dict) -> None:
@@ -2854,6 +3102,55 @@ class DesktopWindow:
         self.result_text.insert(tk.END, text)
         self.result_text.see(tk.END)
         self.result_text.configure(state=tk.DISABLED)
+
+    def _append_import_visibility(self, result: dict, *, mode: str) -> None:
+        processed = [str(x) for x in result.get("processed_files", []) if str(x).strip()]
+        failed = [str(x) for x in result.get("failed_files", []) if str(x).strip()]
+        failed_set = set(failed)
+        shown_success = [x for x in processed if x not in failed_set]
+        lines: list[str] = []
+        lines.append(self._tr("\n[导入可见性]", "\n[Import Visibility]"))
+        lines.append(self._tr(f"模式: {mode}", f"Mode: {mode}"))
+        lines.append(self._tr(f"成功文件数: {len(shown_success)}", f"Successful files: {len(shown_success)}"))
+        for p in shown_success[:30]:
+            lines.append(f"  + {p}")
+        if len(shown_success) > 30:
+            lines.append(self._tr(f"  ... 其余 {len(shown_success)-30} 个省略", f"  ... {len(shown_success)-30} more omitted"))
+        lines.append(self._tr(f"失败文件数: {len(failed)}", f"Failed files: {len(failed)}"))
+        for p in failed[:30]:
+            lines.append(f"  - {p}")
+        if len(failed) > 30:
+            lines.append(self._tr(f"  ... 其余 {len(failed)-30} 个省略", f"  ... {len(failed)-30} more omitted"))
+        if int(result.get("skipped_files", 0)) > 0 or int(result.get("duplicate_skipped", 0)) > 0:
+            lines.append(
+                self._tr(
+                    f"跳过原因: 空内容/不可提取/重复数据（跳过 {result.get('skipped_files', 0)}，重复 {result.get('duplicate_skipped', 0)}）",
+                    f"Skip reasons: empty/unextractable/duplicate (skipped {result.get('skipped_files', 0)}, duplicates {result.get('duplicate_skipped', 0)})",
+                )
+            )
+        self._append_result("\n".join(lines) + "\n")
+
+    def _build_customer_source_map(self, files: list[Path]) -> dict[str, list[str]]:
+        kb = self.store.load()
+        names = [c.name.strip() for c in kb.customers.values() if c.name.strip()]
+        source_map: dict[str, list[str]] = {}
+        for path in files:
+            if not path.exists() or not path.is_file():
+                continue
+            try:
+                facts = extract_facts_from_history_file(path, max_lines=60, max_chars_per_fact=260)
+            except Exception:
+                facts = []
+            if not facts:
+                continue
+            blob = "\n".join(facts).lower()
+            for name in names:
+                if name.lower() in blob:
+                    source_map.setdefault(name, [])
+                    sp = str(path)
+                    if sp not in source_map[name]:
+                        source_map[name].append(sp)
+        return source_map
 
     def open_extension_folder(self) -> None:
         candidate_paths = [
