@@ -182,11 +182,19 @@ class DesktopWindow:
             self.feedback_inbox_button.configure(text="\u53cd\u9988\u6536\u4ef6\u7bb1")
             self.error_reporting_check.configure(text="\u9519\u8bef\u4e0a\u62a5\uff08Sentry\uff09")
             self.runtime_section_box.configure(text="2) \u770b\u677f\u8f93\u51fa\uff08\u7f51\u9875\u770b\u677f\u5904\u7406\u4e1a\u52a1\uff09")
-            self.runtime_hint_var.set("\u684c\u9762\u7aef\u5904\u7406\u542f\u52a8/\u5bfc\u5165/\u540c\u6b65\uff0c\u5176\u4ed6\u4e1a\u52a1\u7ee7\u7eed\u5728\u7f51\u9875\u770b\u677f\u5b8c\u6210\u3002")
+            self.runtime_hint_var.set(self._runtime_mode_hint())
             self.output_section_box.configure(text="\u8f93\u51fa\u76ee\u5f55")
             self.import_section_box.configure(text="\u5386\u53f2\u5bfc\u5165")
             self.guide_section_box.configure(text="\u6269\u5c55\u5b89\u88c5\u5411\u5bfc")
             self.feedback_section_box.configure(text="7) \u53cd\u9988")
+            self.business_panel_box.configure(text="3) \u4e1a\u52a1\u9762\u677f\uff08\u684c\u9762\u4e3b\u5de5\u4f5c\u53f0\uff09")
+            self.focus_label.configure(text="\u91cd\u70b9\u4efb\u52a1")
+            self.alert_label.configure(text="\u5173\u952e\u98ce\u9669")
+            self.events_label.configure(text="\u6700\u8fd1\u4e8b\u4ef6")
+            self.panel_refresh_button.configure(text="\u5237\u65b0\u9762\u677f")
+            self.task_in_progress_button.configure(text="\u6807\u8bb0\u4e3a\u8fdb\u884c\u4e2d")
+            self.task_complete_button.configure(text="\u6807\u8bb0\u4e3a\u5df2\u5b8c\u6210")
+            self.alert_snooze_button.configure(text="\u98ce\u9669\u5ef6\u540e24\u5c0f\u65f6")
             self.radar_section_box.configure(text="\u96f7\u8fbe\u68c0\u7d22")
             self.radar_hint_label.configure(text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002")
             self.import_hint_label.configure(text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002")
@@ -252,11 +260,19 @@ class DesktopWindow:
             self.feedback_inbox_button.configure(text="Feedback Inbox")
             self.error_reporting_check.configure(text="Error Reporting (Sentry)")
             self.runtime_section_box.configure(text="2) Workbench Output (Web Workbench handles business)")
-            self.runtime_hint_var.set("Desktop handles startup/import/sync. Continue operations in Web Workbench (tasks/customers/events).")
+            self.runtime_hint_var.set(self._runtime_mode_hint())
             self.output_section_box.configure(text="Output Directory")
             self.import_section_box.configure(text="History Import")
             self.guide_section_box.configure(text="Extension Setup Guide")
             self.feedback_section_box.configure(text="7) Feedback")
+            self.business_panel_box.configure(text="3) Business Panel (Desktop Primary Workspace)")
+            self.focus_label.configure(text="Focus Tasks")
+            self.alert_label.configure(text="Critical Risks")
+            self.events_label.configure(text="Recent Events")
+            self.panel_refresh_button.configure(text="Refresh Panel")
+            self.task_in_progress_button.configure(text="Mark In Progress")
+            self.task_complete_button.configure(text="Mark Completed")
+            self.alert_snooze_button.configure(text="Snooze 24h")
             self.radar_section_box.configure(text="Radar Search")
             self.radar_hint_label.configure(text="Supports fuzzy and exact terms: customer/email/phone/product/SKU/series.")
             self.import_hint_label.configure(text="Repeatable import + auto-dedup. First full import, then incremental import.")
@@ -467,6 +483,54 @@ class DesktopWindow:
             justify=tk.LEFT,
         ).pack(fill=tk.X, pady=(2, 2))
 
+        self.business_panel_box = ttk.LabelFrame(box, text="3) \u4e1a\u52a1\u9762\u677f\uff08\u684c\u9762\u4e3b\u5de5\u4f5c\u53f0\uff09", padding=8)
+        self.business_panel_box.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
+
+        panel_actions = ttk.Frame(self.business_panel_box)
+        panel_actions.pack(fill=tk.X, pady=(0, 6))
+        self.panel_refresh_button = ttk.Button(panel_actions, text="\u5237\u65b0\u9762\u677f", command=self.refresh_runtime_status)
+        self.panel_refresh_button.pack(side=tk.LEFT)
+        self.task_in_progress_button = ttk.Button(panel_actions, text="\u6807\u8bb0\u4e3a\u8fdb\u884c\u4e2d", command=lambda: self._update_selected_task_status("in_progress"))
+        self.task_in_progress_button.pack(side=tk.LEFT, padx=6)
+        self.task_complete_button = ttk.Button(panel_actions, text="\u6807\u8bb0\u4e3a\u5df2\u5b8c\u6210", command=lambda: self._update_selected_task_status("completed"))
+        self.task_complete_button.pack(side=tk.LEFT, padx=6)
+        self.alert_snooze_button = ttk.Button(panel_actions, text="\u98ce\u9669\u5ef6\u540e24\u5c0f\u65f6", command=self._snooze_selected_alert)
+        self.alert_snooze_button.pack(side=tk.LEFT, padx=6)
+
+        self.focus_label = ttk.Label(self.business_panel_box, text="\u91cd\u70b9\u4efb\u52a1")
+        self.focus_label.pack(anchor=tk.W)
+        focus_wrap = ttk.Frame(self.business_panel_box)
+        focus_wrap.pack(fill=tk.BOTH, expand=False)
+        self.focus_listbox = tk.Listbox(focus_wrap, height=5)
+        self.focus_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.focus_scroll = ttk.Scrollbar(focus_wrap, orient=tk.VERTICAL, command=self.focus_listbox.yview)
+        self.focus_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.focus_listbox.config(yscrollcommand=self.focus_scroll.set)
+
+        self.alert_label = ttk.Label(self.business_panel_box, text="\u5173\u952e\u98ce\u9669")
+        self.alert_label.pack(anchor=tk.W, pady=(6, 0))
+        alert_wrap = ttk.Frame(self.business_panel_box)
+        alert_wrap.pack(fill=tk.BOTH, expand=False)
+        self.alert_listbox = tk.Listbox(alert_wrap, height=4)
+        self.alert_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.alert_scroll = ttk.Scrollbar(alert_wrap, orient=tk.VERTICAL, command=self.alert_listbox.yview)
+        self.alert_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.alert_listbox.config(yscrollcommand=self.alert_scroll.set)
+
+        self.events_label = ttk.Label(self.business_panel_box, text="\u6700\u8fd1\u4e8b\u4ef6")
+        self.events_label.pack(anchor=tk.W, pady=(6, 0))
+        events_wrap = ttk.Frame(self.business_panel_box)
+        events_wrap.pack(fill=tk.BOTH, expand=True)
+        self.events_listbox = tk.Listbox(events_wrap, height=5)
+        self.events_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.events_scroll = ttk.Scrollbar(events_wrap, orient=tk.VERTICAL, command=self.events_listbox.yview)
+        self.events_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.events_listbox.config(yscrollcommand=self.events_scroll.set)
+
+        self._focus_rows: list[dict] = []
+        self._alert_rows: list[dict] = []
+        self._event_rows: list[dict] = []
+
         action_row = ttk.Frame(box)
         action_row.pack(fill=tk.X, pady=(8, 0))
         self.action_input_var = tk.StringVar(value="")
@@ -578,6 +642,7 @@ class DesktopWindow:
         self.settings.api_use_local_context = bool(self.api_use_local_context_var.get())
         self.settings_store.save(self.settings)
         self.api_status_var.set(self._tr("\u5df2\u4fdd\u5b58", "Saved"))
+        self.runtime_hint_var.set(self._runtime_mode_hint())
 
     def _handle_api_error(self, exc: ApiChatError, *, title: str) -> None:
         self.api_send_button.configure(state=tk.NORMAL)
@@ -1339,13 +1404,6 @@ class DesktopWindow:
         self._append_result("\n" + "\n".join(lines) + "\n")
         self.action_input_var.set("")
 
-        self.open_dashboard_workbench(
-            tour=False,
-            task_status="open",
-            customer_id=self.last_action_customer_id,
-            customer_name=self.last_action_customer_name,
-            task_id=self.last_action_task_id,
-        )
         self.refresh_runtime_status()
 
     def run_health_check(self) -> None:
@@ -1475,21 +1533,19 @@ class DesktopWindow:
 
     def refresh_runtime_status(self) -> None:
         try:
-            events_data = self._post_json("http://127.0.0.1:8765/state/latest", {"limit": 10})
-            focus_data = self._post_json("http://127.0.0.1:8765/state/focus", {"limit": 10})
-            alerts_data = self._post_json("http://127.0.0.1:8765/state/alerts", {"limit": 10})
-        except (OSError, URLError, ValueError):
-            self.sync_status_var.set("Last sync: unavailable (service disconnected)")
+            events = list(reversed(self.state_board.latest(limit=20)))
+            rows = self.state_board.focus(limit=10)
+            alerts = self.state_board.alerts(limit=10)
+        except Exception:
+            self.sync_status_var.set("Last sync: unavailable")
             self.metric_events.set("Events: 0")
             self.metric_focus.set("Focus tasks: 0")
             self.metric_alerts.set("Critical alerts: 0")
-            self.runtime_hint_var.set("Service unavailable. Click 'Start Work' to recover.")
+            self.runtime_hint_var.set(self._runtime_mode_hint(service_ok=False))
+            self._render_business_panel([], [], [])
             self.root.after(5000, self.refresh_runtime_status)
             return
 
-        events = list(reversed(events_data.get("events", [])))
-        rows = focus_data.get("rows", [])
-        alerts = alerts_data.get("rows", [])
         self.metric_events.set(f"Events: {len(events)}")
         self.metric_focus.set(f"Focus tasks: {len(rows)}")
         self.metric_alerts.set(f"Critical alerts: {len(alerts)}")
@@ -1498,10 +1554,95 @@ class DesktopWindow:
         self.sync_status_var.set(
             f"Last sync: {latest_sync.get('created_at_utc', '')}" if latest_sync else "Last sync: none"
         )
-        self.runtime_hint_var.set(
-            "Desktop handles startup/import/sync. Continue operations in Web Workbench (tasks/customers/events)."
-        )
+        self.runtime_hint_var.set(self._runtime_mode_hint(service_ok=True))
+        self._render_business_panel(rows, alerts, events)
         self.root.after(5000, self.refresh_runtime_status)
+
+    def _runtime_mode_hint(self, service_ok: bool = True) -> str:
+        has_api = bool((self.api_key_var.get().strip() if hasattr(self, "api_key_var") else self.settings.api_key).strip())
+        if not service_ok:
+            return self._tr(
+                "\u670d\u52a1\u5f02\u5e38\uff0c\u8bf7\u70b9\u51fb\u300c\u4e00\u952e\u542f\u52a8\u300d\u6062\u590d\u3002",
+                "Service unavailable. Click 'Start Work' to recover.",
+            )
+        if has_api:
+            return self._tr(
+                "\u5df2\u914d\u7f6e API\uff1a\u684c\u9762\u7aef\u4e3a\u4e3b\u6d41\u7a0b\uff08\u542f\u52a8/\u5bfc\u5165/\u68c0\u7d22/\u5bf9\u8bdd/\u4efb\u52a1/\u53cd\u9988\uff09\uff0c\u7f51\u9875\u7aef\u4ec5\u4f5c\u517c\u5bb9\u5165\u53e3\u3002",
+                "API configured: desktop is primary workflow (start/import/search/chat/tasks/feedback); web is compatibility entry only.",
+            )
+        return self._tr(
+            "\u672a\u914d\u7f6e API\uff1a\u5efa\u8bae\u4f7f\u7528\u7f51\u9875\u517c\u5bb9\u6a21\u5f0f\uff1b\u684c\u9762\u7aef\u4ecd\u53ef\u5b8c\u6210\u542f\u52a8/\u5bfc\u5165/\u68c0\u7d22/\u589e\u957f\u53cd\u9988\u3002",
+            "No API configured: use web compatibility mode; desktop still supports start/import/search/growth feedback.",
+        )
+
+    def _render_business_panel(self, focus_rows: list[dict], alert_rows: list[dict], event_rows: list[dict]) -> None:
+        self._focus_rows = focus_rows
+        self._alert_rows = alert_rows
+        self._event_rows = event_rows
+
+        self.focus_listbox.delete(0, tk.END)
+        self.alert_listbox.delete(0, tk.END)
+        self.events_listbox.delete(0, tk.END)
+
+        if not focus_rows:
+            self.focus_listbox.insert(tk.END, self._tr("\u6682\u65e0\u91cd\u70b9\u4efb\u52a1", "No focus tasks"))
+        for item in focus_rows:
+            customer = str(item.get("customer_name", "")).strip() or "-"
+            title = str(item.get("title", "")).strip() or "-"
+            status = str(item.get("computed_status", "")).strip() or "-"
+            due = str(item.get("due_at_utc", "")).replace("T", " ")[:16]
+            self.focus_listbox.insert(tk.END, f"{customer} | {status} | {due} | {title}")
+
+        if not alert_rows:
+            self.alert_listbox.insert(tk.END, self._tr("\u6682\u65e0\u98ce\u9669\u63d0\u9192", "No critical risks"))
+        for item in alert_rows:
+            alert_type = str(item.get("alert_type", "")).strip() or "-"
+            customer = str(item.get("customer_name", "")).strip() or "-"
+            msg = str(item.get("alert_message", "")).strip() or "-"
+            self.alert_listbox.insert(tk.END, f"{alert_type} | {customer} | {msg}")
+
+        if not event_rows:
+            self.events_listbox.insert(tk.END, self._tr("\u6682\u65e0\u6700\u65b0\u4e8b\u4ef6", "No recent events"))
+        for item in event_rows[:20]:
+            at = str(item.get("created_at_utc", "")).replace("T", " ")[:16]
+            action = str(item.get("action_name", "")).strip() or "-"
+            customer = self._extract_customer_from_event(item) or "-"
+            self.events_listbox.insert(tk.END, f"{at} | {action} | {customer}")
+
+    def _update_selected_task_status(self, status: str) -> None:
+        idx = self.focus_listbox.curselection()
+        if not idx:
+            messagebox.showinfo(self._tr("\u63d0\u793a", "Notice"), self._tr("\u8bf7\u5148\u9009\u4e2d\u4e00\u6761\u4efb\u52a1\u3002", "Select one task first."))
+            return
+        row_index = int(idx[0])
+        if row_index >= len(self._focus_rows):
+            return
+        task_id = str(self._focus_rows[row_index].get("task_id", "")).strip()
+        if not task_id:
+            return
+        note = self._tr("\u684c\u9762\u9762\u677f\u624b\u52a8\u66f4\u65b0", "Updated from desktop panel")
+        updated = self.state_board.update_task_status(task_id=task_id, status=status, note=note)
+        if updated is None:
+            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("\u4efb\u52a1\u66f4\u65b0\u5931\u8d25\u3002", "Failed to update task."))
+            return
+        self.refresh_runtime_status()
+
+    def _snooze_selected_alert(self) -> None:
+        idx = self.alert_listbox.curselection()
+        if not idx:
+            messagebox.showinfo(self._tr("\u63d0\u793a", "Notice"), self._tr("\u8bf7\u5148\u9009\u4e2d\u4e00\u6761\u98ce\u9669\u3002", "Select one alert first."))
+            return
+        row_index = int(idx[0])
+        if row_index >= len(self._alert_rows):
+            return
+        task_id = str(self._alert_rows[row_index].get("task_id", "")).strip()
+        if not task_id:
+            return
+        ack = self.state_board.ack_alert(task_id=task_id, snooze_hours=24)
+        if ack is None:
+            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("\u98ce\u9669\u5ef6\u540e\u5931\u8d25\u3002", "Failed to snooze alert."))
+            return
+        self.refresh_runtime_status()
 
     def _collect_radar_data(self, query: str) -> dict:
         kb = self.store.load()
