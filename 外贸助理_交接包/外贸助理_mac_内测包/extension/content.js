@@ -9,12 +9,16 @@
     templateLang: "zh",
     templateMode: "standard",
     customInstruction: "",
+    launcherHidden: false,
+    launcherPos: null,
   };
 
   let activeEditable = null;
   let hintChip = null;
   let actionPanel = null;
+  let launcherWrap = null;
   let launcherBtn = null;
+  let launcherRestoreBtn = null;
   let actionScanTimer = null;
   let conversationSyncTimer = null;
   let actionExecuting = false;
@@ -23,6 +27,7 @@
   let lastSyncedHash = "";
   let lastSyncedAt = 0;
   let lastSyncStatus = "未同步";
+
   const processedActionCounts = new Map();
   const pendingActions = [];
 
@@ -33,16 +38,40 @@
     return Boolean(el.isContentEditable);
   };
 
+  const isLikelyChatComposer = (el) => {
+    if (!isEditable(el)) return false;
+    const text = [
+      el.getAttribute?.("placeholder") || "",
+      el.getAttribute?.("aria-label") || "",
+      el.getAttribute?.("data-placeholder") || "",
+      el.id || "",
+      el.name || "",
+      el.className || "",
+    ].join(" ").toLowerCase();
+    const include = ["message", "chat", "prompt", "ask", "输入", "提问", "对话", "发送"];
+    const exclude = ["search", "model", "mode", "filter", "setting", "设置", "模型", "模式", "筛选"];
+    const includeHit = include.some((k) => text.includes(k));
+    const excludeHit = exclude.some((k) => text.includes(k));
+    if (includeHit && !excludeHit) return true;
+    const rect = el.getBoundingClientRect?.();
+    return Boolean(rect && rect.width >= 280 && rect.bottom >= window.innerHeight * 0.55);
+  };
+
   const getEditable = (node) => {
     if (!node) return null;
     const start = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!start) return null;
-    if (isEditable(start)) return start;
-    return start.closest?.('textarea,input,[contenteditable="true"],[contenteditable=""],[contenteditable]') || null;
+    if (isLikelyChatComposer(start)) return start;
+    const found = start.closest?.('textarea,input,[contenteditable="true"],[contenteditable=""],[contenteditable]') || null;
+    return isLikelyChatComposer(found) ? found : null;
   };
 
-  const findAnyEditable = () =>
-    document.querySelector('textarea,input[type="text"],input[type="search"],[contenteditable="true"],[contenteditable=""],[contenteditable]');
+  const findAnyEditable = () => {
+    const nodes = Array.from(
+      document.querySelectorAll('textarea,input[type="text"],input[type="search"],[contenteditable="true"],[contenteditable=""],[contenteditable]')
+    );
+    return nodes.find((n) => isLikelyChatComposer(n)) || null;
+  };
 
   const getValue = (el) => (el?.tagName === "TEXTAREA" || el?.tagName === "INPUT" ? el.value || "" : el?.innerText || "");
   const setValue = (el, value) => {
@@ -133,7 +162,10 @@
     });
     mask.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (btn.getAttribute("data-action") === "confirm") setValue(activeEditable, capsule.injected_prompt || getValue(activeEditable));
+        if (btn.getAttribute("data-action") === "confirm") {
+          if (!activeEditable || !isLikelyChatComposer(activeEditable)) activeEditable = findAnyEditable();
+          if (activeEditable) setValue(activeEditable, capsule.injected_prompt || getValue(activeEditable));
+        }
         mask.remove();
       });
     });
@@ -141,7 +173,11 @@
   };
 
   const buildAndPreviewCapsule = async () => {
-    if (!activeEditable) return;
+    if (!activeEditable || !isLikelyChatComposer(activeEditable)) activeEditable = findAnyEditable();
+    if (!activeEditable) {
+      window.alert("未找到聊天输入框，请先点击对话输入区域。");
+      return;
+    }
     try {
       const payload = {
         user_input: getValue(activeEditable),
@@ -194,34 +230,7 @@
     actionPanel.innerHTML = `
       <h4>检测到可执行动作（${pendingActions.length}）</h4>
       <ol class="ta-action-list">${listHtml}</ol>
-      <div class="ta-setting-row"><label><input id="ta-setting-auto-sync" type="checkbox" ${runtimeSettings.autoSyncConversation ? "checked" : ""}/> 自动同步大模型回复到 APP 记忆</label></div>
-      <div class="ta-setting-row">
-        <label>注入模板语言：
-          <select id="ta-setting-template-lang">
-            <option value="zh" ${runtimeSettings.templateLang === "zh" ? "selected" : ""}>中文</option>
-            <option value="en" ${runtimeSettings.templateLang === "en" ? "selected" : ""}>English</option>
-          </select>
-        </label>
-      </div>
-      <div class="ta-setting-row">
-        <label>注入模板模式：
-          <select id="ta-setting-template-mode">
-            <option value="standard" ${runtimeSettings.templateMode === "standard" ? "selected" : ""}>标准</option>
-            <option value="compact" ${runtimeSettings.templateMode === "compact" ? "selected" : ""}>简洁</option>
-            <option value="custom" ${runtimeSettings.templateMode === "custom" ? "selected" : ""}>自定义</option>
-          </select>
-        </label>
-      </div>
-      <div class="ta-setting-row" id="ta-custom-instruction-wrap" style="${runtimeSettings.templateMode === "custom" ? "" : "display:none;"}">
-        <label>自定义指令：</label>
-        <textarea id="ta-setting-custom-instruction" rows="3" style="width:100%;">${(runtimeSettings.customInstruction || "").replaceAll("<", "&lt;")}</textarea>
-      </div>
       <div class="ta-setting-row">同步状态：<span id="ta-sync-status">${lastSyncStatus}</span></div>
-      <details class="ta-setting-row">
-        <summary>高级设置</summary>
-        <label><input id="ta-setting-append" type="checkbox" ${runtimeSettings.appendResultToInput ? "checked" : ""}/> 执行结果回填输入框</label><br/>
-        <label><input id="ta-setting-open-dashboard" type="checkbox" ${runtimeSettings.openDashboardAfterExecute ? "checked" : ""}/> 执行后打开 APP 网页看板</label>
-      </details>
       <div class="ta-actions"><button class="ta-primary" data-action="execute">执行并同步</button><button data-action="clear">忽略</button></div>`;
 
     actionPanel.querySelectorAll("button").forEach((btn) => btn.addEventListener("click", async () => {
@@ -233,19 +242,6 @@
       }
       if (act === "execute") await executePendingActions();
     }));
-
-    actionPanel.querySelector("#ta-setting-append")?.addEventListener("change", async (e) => saveSettings({ appendResultToInput: Boolean(e.target.checked) }));
-    actionPanel.querySelector("#ta-setting-open-dashboard")?.addEventListener("change", async (e) => saveSettings({ openDashboardAfterExecute: Boolean(e.target.checked) }));
-    actionPanel.querySelector("#ta-setting-auto-sync")?.addEventListener("change", async (e) => saveSettings({ autoSyncConversation: Boolean(e.target.checked) }));
-    actionPanel.querySelector("#ta-setting-template-lang")?.addEventListener("change", async (e) => saveSettings({ templateLang: String(e.target.value || "zh") }));
-    actionPanel.querySelector("#ta-setting-template-mode")?.addEventListener("change", async (e) => {
-      const mode = String(e.target.value || "standard");
-      await saveSettings({ templateMode: mode });
-      renderActionPanel();
-    });
-    actionPanel.querySelector("#ta-setting-custom-instruction")?.addEventListener("change", async (e) => {
-      await saveSettings({ customInstruction: String(e.target.value || "").trim() });
-    });
   };
 
   const executePendingActions = async () => {
@@ -258,12 +254,9 @@
       pendingActions.length = 0;
       renderActionPanel();
       const eventId = data?.state_event?.event_id || "";
-      if (runtimeSettings.appendResultToInput && activeEditable) {
+      if (runtimeSettings.appendResultToInput && activeEditable && isLikelyChatComposer(activeEditable)) {
         const lines = ["[Trade Assistant Action Results]"];
-        (data?.results || []).forEach((r, i) => {
-          lines.push(`${i + 1}. ${r.status}: ${r.message}`);
-          (r.artifacts || []).forEach((a) => lines.push(`- artifact: ${a}`));
-        });
+        (data?.results || []).forEach((r, i) => lines.push(`${i + 1}. ${r.status}: ${r.message}`));
         if (eventId) lines.push(`Event ID: ${eventId}`);
         setValue(activeEditable, `${getValue(activeEditable)}\n\n${lines.join("\n")}`.trim());
       } else {
@@ -346,18 +339,77 @@
   };
 
   const ensureLauncher = () => {
-    if (launcherBtn) return;
-    launcherBtn = document.createElement("button");
-    launcherBtn.type = "button";
-    launcherBtn.className = "ta-launcher-btn";
-    launcherBtn.textContent = "@胶囊";
-    launcherBtn.title = "打开本地胶囊（Alt + C）";
-    launcherBtn.addEventListener("click", async () => {
-      if (!activeEditable || !isEditable(activeEditable)) activeEditable = findAnyEditable();
-      if (!activeEditable) return window.alert("未找到可输入区域，请先点击输入框。");
+    if (launcherWrap) return;
+    launcherWrap = document.createElement("div");
+    launcherWrap.className = "ta-launcher-wrap";
+    launcherWrap.innerHTML = `
+      <button type="button" class="ta-launcher-btn" title="Alt + C">@胶囊</button>
+      <button type="button" class="ta-launcher-mini" title="隐藏">×</button>
+    `;
+    launcherBtn = launcherWrap.querySelector(".ta-launcher-btn");
+    const hideBtn = launcherWrap.querySelector(".ta-launcher-mini");
+
+    const savedPos = runtimeSettings.launcherPos;
+    if (savedPos && Number.isFinite(savedPos.left) && Number.isFinite(savedPos.top)) {
+      launcherWrap.style.left = `${Math.max(8, savedPos.left)}px`;
+      launcherWrap.style.top = `${Math.max(8, savedPos.top)}px`;
+      launcherWrap.style.bottom = "auto";
+    }
+
+    launcherBtn?.addEventListener("click", async () => {
+      if (!activeEditable || !isLikelyChatComposer(activeEditable)) activeEditable = findAnyEditable();
+      if (!activeEditable) return window.alert("未找到聊天输入框，请先点击对话输入区域。");
       await buildAndPreviewCapsule();
     });
-    document.body.appendChild(launcherBtn);
+
+    hideBtn?.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      launcherWrap.style.display = "none";
+      await saveSettings({ launcherHidden: true });
+      if (!launcherRestoreBtn) {
+        launcherRestoreBtn = document.createElement("button");
+        launcherRestoreBtn.type = "button";
+        launcherRestoreBtn.className = "ta-launcher-restore";
+        launcherRestoreBtn.textContent = "@";
+        launcherRestoreBtn.title = "显示胶囊入口";
+        launcherRestoreBtn.addEventListener("click", async () => {
+          launcherWrap.style.display = "";
+          launcherRestoreBtn.remove();
+          launcherRestoreBtn = null;
+          await saveSettings({ launcherHidden: false });
+        });
+      }
+      document.body.appendChild(launcherRestoreBtn);
+    });
+
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    launcherWrap.addEventListener("pointerdown", (e) => {
+      if (!(e.target instanceof Element) || e.target.classList.contains("ta-launcher-mini")) return;
+      dragging = true;
+      const rect = launcherWrap.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      launcherWrap.setPointerCapture?.(e.pointerId);
+    });
+    launcherWrap.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const left = Math.max(8, Math.min(window.innerWidth - 120, e.clientX - offsetX));
+      const top = Math.max(8, Math.min(window.innerHeight - 48, e.clientY - offsetY));
+      launcherWrap.style.left = `${left}px`;
+      launcherWrap.style.top = `${top}px`;
+      launcherWrap.style.bottom = "auto";
+    });
+    launcherWrap.addEventListener("pointerup", async () => {
+      if (!dragging) return;
+      dragging = false;
+      const rect = launcherWrap.getBoundingClientRect();
+      await saveSettings({ launcherPos: { left: Math.round(rect.left), top: Math.round(rect.top) } });
+    });
+
+    document.body.appendChild(launcherWrap);
+    if (runtimeSettings.launcherHidden) hideBtn?.click();
   };
 
   const maybeShowOnboarding = () => {
@@ -365,7 +417,7 @@
       if (res?.[ONBOARDING_KEY]) return;
       const toast = document.createElement("div");
       toast.className = "ta-onboarding-toast";
-      toast.innerHTML = `<span>提示：输入 @，或点击左下角“@胶囊”；快捷键 Alt + C。</span><button>知道了</button>`;
+      toast.innerHTML = `<span>提示：输入 @，或点击胶囊按钮；快捷键 Alt + C。</span><button>知道了</button>`;
       toast.querySelector("button")?.addEventListener("click", () => {
         toast.remove();
         chrome.storage.local.set({ [ONBOARDING_KEY]: true });
@@ -387,7 +439,7 @@
   document.addEventListener("keydown", (e) => {
     const el = getEditable(e.target);
     if (el) activeEditable = el;
-    if (!activeEditable || !isEditable(activeEditable)) return;
+    if (!activeEditable || !isLikelyChatComposer(activeEditable)) return;
     if (e.key === "@" || (e.shiftKey && e.code === "Digit2")) return setTimeout(showHintChip, 0);
     if (e.altKey && (e.key === "c" || e.key === "C")) {
       e.preventDefault();

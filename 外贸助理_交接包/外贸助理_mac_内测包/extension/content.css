@@ -140,11 +140,17 @@
   vertical-align: middle;
 }
 
-.ta-launcher-btn {
+.ta-launcher-wrap {
   position: fixed;
   left: 14px;
   bottom: 14px;
   z-index: 2147483645;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ta-launcher-btn {
   border: 1px solid #1d4ed8;
   background: #1d4ed8;
   color: #ffffff;
@@ -158,6 +164,34 @@
 
 .ta-launcher-btn:hover {
   background: #1e40af;
+}
+
+.ta-launcher-mini {
+  border: 1px solid #94a3b8;
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 999px;
+  width: 24px;
+  height: 24px;
+  line-height: 20px;
+  text-align: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ta-launcher-restore {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2147483645;
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.28);
 }
 
 .ta-onboarding-toast {

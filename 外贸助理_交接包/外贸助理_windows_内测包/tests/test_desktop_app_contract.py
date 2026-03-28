@@ -6,8 +6,12 @@ import sys
 from app.config import AppConfig
 from app.desktop_app import DesktopWindow
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DESKTOP_APP_FILE = PROJECT_ROOT / "app" / "desktop_app.py"
+
+
 def test_desktop_has_three_pane_layout_and_global_scroll() -> None:
-    src = Path("app/desktop_app.py").read_text(encoding="utf-8", errors="ignore")
+    src = DESKTOP_APP_FILE.read_text(encoding="utf-8", errors="ignore")
     assert "ttk.Panedwindow(" in src
     assert "_configure_canvas_scrollregion" in src
     assert "self.api_input_text.bind(\"<Return>\"" in src
@@ -18,13 +22,13 @@ def test_desktop_has_three_pane_layout_and_global_scroll() -> None:
 
 
 def test_desktop_keeps_mail_import_and_pull_controls() -> None:
-    src = Path("app/desktop_app.py").read_text(encoding="utf-8", errors="ignore")
+    src = DESKTOP_APP_FILE.read_text(encoding="utf-8", errors="ignore")
     assert "批量导入邮件线程" in src
     assert "邮箱一键拉取" in src
 
 
 def test_desktop_has_language_toggle_controls() -> None:
-    src = Path("app/desktop_app.py").read_text(encoding="utf-8", errors="ignore")
+    src = DESKTOP_APP_FILE.read_text(encoding="utf-8", errors="ignore")
     assert "self.ui_lang" in src
     assert "中文" in src
     assert "EN" in src
