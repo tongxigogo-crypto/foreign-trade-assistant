@@ -38,6 +38,7 @@ class UserPreference:
     forbidden_terms: list[str] = field(default_factory=list)
     must_include: list[str] = field(default_factory=list)
     pricing_rules: list[str] = field(default_factory=list)
+    adaptive_profile: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

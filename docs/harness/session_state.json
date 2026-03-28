@@ -1,17 +1,22 @@
 {
-  "updated_at": "2026-03-28T09:56:23Z",
-  "active_task": "agent architecture refactor runtime",
-  "current_goal": "stabilize RAG + Harness + self-improving pipeline",
+  "updated_at": "2026-03-28T11:32:14Z",
+  "active_task": "windows desktop hotfix packaging and import/api stabilization",
+  "current_goal": "stabilize user-facing import + API send + mail pull guidance for non-technical users",
   "progress": [
-    "preflight status=ok",
-    "retrieval hits=1",
-    "run status=needs_confirmation"
+    "adaptive_profile schema compatibility fixed in contracts/local_store",
+    "import flow now supports folder scan and multi-file selection with fallback error handling",
+    "api send/test worker paths include generic exception recovery",
+    "mail pull UI now explicitly states IMAP + app password requirement",
+    "winfix15 package built and ready for user retest"
   ],
-  "open_questions": [],
+  "open_questions": [
+    "whether to add OAuth login flow for Gmail/Outlook in next phase"
+  ],
   "blockers": [],
   "next_actions": [
-    "Replace sample agent results with live orchestration outputs",
-    "Hook run pipeline into CI gate"
+    "user retest winfix15 for import and API send",
+    "commit current hotfix batch after confirmation",
+    "continue planned development from clean checkpoint"
   ],
-  "last_git_status": ""
+  "last_git_status": "4 modified files under windows package app/scripts"
 }

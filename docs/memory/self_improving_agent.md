@@ -37,3 +37,21 @@ Keep entries short, testable, and architecture-focused.
 - rule: restore from `docs/harness/session_state.json` and `docs/harness/current_session.md` before substantial work, then checkpoint after runs.
 - scope: E:\CodexWorkspace\Playground-pm
 - action: keep `architecture_guardrails.json` and `closed_loop_verdict.json` as objective pre/post evidence.
+
+## [2026-03-28] schema-forward-compatible-load
+
+- status: active
+- context: user data file may include newly introduced preference fields across versions.
+- signal: runtime crash `UserPreference.__init__() got an unexpected keyword argument 'adaptive_profile'`.
+- rule: add new dataclass fields explicitly and filter unknown keys during JSON-to-model loading.
+- scope: E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_windows_内测包\app
+- action: keep loaders tolerant to extra fields to avoid breaking upgrades and local memory continuity.
+
+## [2026-03-28] mailbox-imap-ux-disclosure
+
+- status: active
+- context: non-technical users interpreted mailbox pull as OAuth login and used normal mailbox passwords.
+- signal: repeated pull failures despite valid account due to missing app-password understanding.
+- rule: mailbox section must explicitly state current auth mode (`IMAP + app password`) in UI and failure dialogs.
+- scope: E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_windows_内测包\app
+- action: keep guidance near inputs and show targeted remediation on authentication errors.

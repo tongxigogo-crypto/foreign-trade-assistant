@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from dataclasses import fields
 from pathlib import Path
 
 from .contracts import CustomerProfile, KnowledgeBase, ProductRecord, UserPreference
@@ -75,13 +76,23 @@ class LocalKnowledgeStore:
             self.knowledge_file.replace(backup_path)
             self.save(KnowledgeBase())
             data = json.loads(self.knowledge_file.read_text(encoding="utf-8"))
-        customers = {
-            key: CustomerProfile(**value) for key, value in data.get("customers", {}).items()
-        }
-        products = {
-            key: ProductRecord(**value) for key, value in data.get("products", {}).items()
-        }
-        preference = UserPreference(**data.get("preference", {}))
+        customer_keys = {f.name for f in fields(CustomerProfile)}
+        product_keys = {f.name for f in fields(ProductRecord)}
+        preference_keys = {f.name for f in fields(UserPreference)}
+
+        customers = {}
+        for key, value in data.get("customers", {}).items():
+            safe = {k: v for k, v in (value or {}).items() if k in customer_keys}
+            customers[key] = CustomerProfile(**safe)
+
+        products = {}
+        for key, value in data.get("products", {}).items():
+            safe = {k: v for k, v in (value or {}).items() if k in product_keys}
+            products[key] = ProductRecord(**safe)
+
+        pref_raw = data.get("preference", {}) or {}
+        safe_pref = {k: v for k, v in pref_raw.items() if k in preference_keys}
+        preference = UserPreference(**safe_pref)
         return KnowledgeBase(
             customers=customers,
             products=products,

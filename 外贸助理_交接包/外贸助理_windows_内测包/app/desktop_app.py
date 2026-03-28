@@ -63,6 +63,7 @@ class DesktopWindow:
         self.last_action_customer_id: str = ""
         self.last_action_customer_name: str = ""
         self.last_action_task_id: str = ""
+        self.selected_import_files: list[Path] = []
         self.ui_lang: str = "zh"
         self.keep_alive_enabled = True
         self.api_basis_default_zh = "尚未使用本地上下文。"
@@ -202,12 +203,17 @@ class DesktopWindow:
             self.save_output_dir_button.configure(text="\u4fdd\u5b58")
             self.import_section_box.configure(text="\u5386\u53f2\u5bfc\u5165")
             self.choose_import_dir_button.configure(text="\u9009\u62e9\u5386\u53f2\u76ee\u5f55")
+            self.choose_import_files_button.configure(text="\u9009\u62e9\u6587\u4ef6")
+            self.clear_import_files_button.configure(text="\u6e05\u7a7a\u6587\u4ef6\u9009\u62e9")
             self.import_button.configure(text="\u9996\u6b21\u5168\u91cf\u5bfc\u5165")
             self.incremental_button.configure(text="\u5bfc\u5165\u65b0\u589e\u8d44\u6599")
             self.retry_button.configure(text="\u91cd\u8bd5\u5931\u8d25\u6587\u4ef6")
             self.email_import_button.configure(text="\u6279\u91cf\u5bfc\u5165\u90ae\u4ef6\u7ebf\u7a0b")
             self.email_retry_button.configure(text="\u91cd\u8bd5\u5931\u8d25\u90ae\u4ef6\u6587\u4ef6")
             self.mail_provider_label.configure(text="\u90ae\u7bb1\u4e00\u952e\u62c9\u53d6\uff1a")
+            self.mail_login_hint_label.configure(
+                text="IMAP 登录：请填写邮箱账号 + 应用专用密码（不是邮箱登录密码）。"
+            )
             self.mail_days_suffix_label.configure(text="\u5929")
             self.mail_limit_suffix_label.configure(text="\u4e0a\u9650")
             self.remember_mail_password_check.configure(text="\u8bb0\u4f4f\u5bc6\u7801")
@@ -268,12 +274,17 @@ class DesktopWindow:
             self.save_output_dir_button.configure(text="Save")
             self.import_section_box.configure(text="History Import")
             self.choose_import_dir_button.configure(text="Choose History Folder")
+            self.choose_import_files_button.configure(text="Choose Files")
+            self.clear_import_files_button.configure(text="Clear File Selection")
             self.import_button.configure(text="First Full Import")
             self.incremental_button.configure(text="Incremental Import")
             self.retry_button.configure(text="Retry Failed Files")
             self.email_import_button.configure(text="Batch Import Mail Threads")
             self.email_retry_button.configure(text="Retry Failed Mail Files")
             self.mail_provider_label.configure(text="Mailbox pull:")
+            self.mail_login_hint_label.configure(
+                text="IMAP login: use mailbox account + app password (not your normal mailbox password)."
+            )
             self.mail_days_suffix_label.configure(text="Days")
             self.mail_limit_suffix_label.configure(text="Limit")
             self.remember_mail_password_check.configure(text="Remember Password")
@@ -578,6 +589,16 @@ class DesktopWindow:
             except ApiChatError as exc:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="Connection Test"))
                 return
+            except Exception as exc:  # pragma: no cover
+                self.root.after(
+                    0,
+                    lambda e=exc: (
+                        self.api_send_button.configure(state=tk.NORMAL),
+                        self.api_status_var.set(self._tr("\u5931\u8d25", "Failed")),
+                        messagebox.showerror("Connection Test", str(e)),
+                    ),
+                )
+                return
             self.root.after(
                 0,
                 lambda r=reply: (
@@ -620,6 +641,17 @@ class DesktopWindow:
                 reply = send_chat_request(settings, prompt)
             except ApiChatError as exc:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="API Chat"))
+                return
+            except Exception as exc:  # pragma: no cover
+                self.root.after(
+                    0,
+                    lambda e=exc: (
+                        self.api_send_button.configure(state=tk.NORMAL),
+                        self.api_status_var.set(self._tr("\u5931\u8d25", "Failed")),
+                        self._append_text_content(self.api_reply_text, f"\n[ERROR] {e}\n"),
+                        messagebox.showerror("API Chat", str(e)),
+                    ),
+                )
                 return
             self.root.after(
                 0,
@@ -689,6 +721,10 @@ class DesktopWindow:
         ttk.Entry(top, textvariable=self.import_dir_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.choose_import_dir_button = ttk.Button(top, text="\u9009\u62e9\u5386\u53f2\u76ee\u5f55", command=self.choose_import_dir)
         self.choose_import_dir_button.pack(side=tk.LEFT, padx=8)
+        self.choose_import_files_button = ttk.Button(top, text="\u9009\u62e9\u6587\u4ef6", command=self.choose_import_files)
+        self.choose_import_files_button.pack(side=tk.LEFT, padx=(0, 8))
+        self.clear_import_files_button = ttk.Button(top, text="\u6e05\u7a7a\u6587\u4ef6\u9009\u62e9", command=self.clear_import_files)
+        self.clear_import_files_button.pack(side=tk.LEFT)
 
         self.import_hint_label = ttk.Label(
             box,
@@ -744,6 +780,13 @@ class DesktopWindow:
         self.remember_mail_password_check.pack(side=tk.LEFT, padx=(0, 8))
         self.pull_mail_button = ttk.Button(connector, text="\u4e00\u952e\u62c9\u53d6\u5e76\u5bfc\u5165", command=self.start_mail_pull)
         self.pull_mail_button.pack(side=tk.LEFT)
+        self.mail_login_hint_label = ttk.Label(
+            box,
+            text="IMAP 登录：请填写邮箱账号 + 应用专用密码（不是邮箱登录密码）。",
+            foreground="#555",
+            justify=tk.LEFT,
+        )
+        self.mail_login_hint_label.pack(fill=tk.X, pady=(2, 6))
 
         self.progress = ttk.Progressbar(box, orient="horizontal", mode="determinate")
         self.progress.pack(fill=tk.X)
@@ -809,6 +852,44 @@ class DesktopWindow:
         selected = filedialog.askdirectory(title="\u9009\u62e9\u5386\u53f2\u6587\u4ef6\u5939\uff08\u53ea\u8bfb\u626b\u63cf\uff09")
         if selected:
             self.import_dir_var.set(selected)
+            self.selected_import_files = []
+            self.import_status.set(self._tr("\u7b49\u5f85\u5bfc\u5165", "Waiting for import"))
+
+    def choose_import_files(self) -> None:
+        selected = filedialog.askopenfilenames(
+            title=self._tr("\u9009\u62e9\u8981\u5bfc\u5165\u7684\u6587\u4ef6\uff08\u53ef\u591a\u9009\uff09", "Choose files to import (multi-select)"),
+            multiple=True,
+            filetypes=[
+                (
+                    self._tr("\u652f\u6301\u7684\u6587\u4ef6", "Supported files"),
+                    "*.txt *.md *.json *.csv *.xlsx *.xls *.docx *.doc *.pdf *.pptx *.ppt",
+                ),
+                ("All files", "*.*"),
+            ],
+        )
+        if not selected:
+            return
+        files = [Path(p).expanduser().resolve() for p in selected]
+        files = [p for p in files if p.exists() and p.is_file()]
+        if not files:
+            messagebox.showwarning(self._tr("\u63d0\u793a", "Notice"), self._tr("\u672a\u9009\u4e2d\u6709\u6548\u6587\u4ef6\u3002", "No valid files were selected."))
+            return
+        self.selected_import_files = files
+        self.import_dir_var.set(str(files[0].parent))
+        self.import_status.set(
+            self._tr(
+                f"\u5df2\u9009\u6587\u4ef6 {len(files)} \u4e2a\uff0c\u53ef\u76f4\u63a5\u70b9\u51fb\u5bfc\u5165",
+                f"Selected {len(files)} files. Ready to import.",
+            )
+        )
+        preview = "\n".join(str(p) for p in files[:20])
+        if len(files) > 20:
+            preview += self._tr(f"\n... \u5171 {len(files)} \u4e2a\u6587\u4ef6", f"\n... total {len(files)} files")
+        self._append_result(self._tr("\n[文件选择]\n", "\n[Selected files]\n") + preview + "\n")
+
+    def clear_import_files(self) -> None:
+        self.selected_import_files = []
+        self.import_status.set(self._tr("\u5df2\u6e05\u7a7a\u6587\u4ef6\u9009\u62e9\uff0c\u53ef\u7ee7\u7eed\u9009\u62e9\u76ee\u5f55\u626b\u63cf", "File selection cleared. You can scan a folder now."))
 
     def _set_import_buttons_busy(self, busy: bool) -> None:
         state = tk.DISABLED if busy else tk.NORMAL
@@ -816,6 +897,9 @@ class DesktopWindow:
         self.incremental_button.configure(state=state)
         self.email_import_button.configure(state=state)
         self.pull_mail_button.configure(state=state)
+        self.choose_import_dir_button.configure(state=state)
+        self.choose_import_files_button.configure(state=state)
+        self.clear_import_files_button.configure(state=state)
         if busy:
             self.retry_button.configure(state=tk.DISABLED)
             self.email_retry_button.configure(state=tk.DISABLED)
@@ -1637,11 +1721,12 @@ class DesktopWindow:
 
     def start_import(self, mode: str = "full") -> None:
         source = self.import_dir_var.get().strip()
-        if not source:
+        selected_files = [p for p in self.selected_import_files if p.exists() and p.is_file()]
+        if not source and not selected_files:
             messagebox.showwarning("\u63d0\u793a", "\u8bf7\u5148\u9009\u62e9\u5386\u53f2\u6587\u4ef6\u5939\u3002")
             return
-        root_dir = Path(source).expanduser().resolve()
-        if not root_dir.exists() or not root_dir.is_dir():
+        root_dir = Path(source).expanduser().resolve() if source else selected_files[0].parent
+        if not selected_files and (not root_dir.exists() or not root_dir.is_dir()):
             messagebox.showerror("\u9519\u8bef", "\u5386\u53f2\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
             return
 
@@ -1649,83 +1734,98 @@ class DesktopWindow:
         self.progress.configure(value=0, maximum=1)
         if mode == "incremental":
             self.import_status.set(self._tr("\u6b63\u5728\u5bfc\u5165\u65b0\u589e\u8d44\u6599...", "Importing incremental files..."))
-            self._append_result(f"\n\u5f00\u59cb\u589e\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
+            if selected_files:
+                self._append_result(self._tr(f"\n开始增量导入（已选文件 {len(selected_files)} 个）\n", f"\nStart incremental import (selected files: {len(selected_files)})\n"))
+            else:
+                self._append_result(f"\n\u5f00\u59cb\u589e\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
             max_files = 600
         else:
             self.import_status.set(self._tr("\u6b63\u5728\u5168\u91cf\u626b\u63cf...", "Running full scan..."))
-            self._append_result(f"\n\u5f00\u59cb\u5168\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
+            if selected_files:
+                self._append_result(self._tr(f"\n开始全量导入（已选文件 {len(selected_files)} 个）\n", f"\nStart full import (selected files: {len(selected_files)})\n"))
+            else:
+                self._append_result(f"\n\u5f00\u59cb\u5168\u91cf\u5bfc\u5165\uff1a{root_dir}\n")
             max_files = 1500
 
         def worker() -> None:
-            scanned_files = scan_history_files(root_dir, recursive=True, max_files=max_files)
-            files = scanned_files
-            state: dict | None = None
-            signatures: dict[str, dict] = {}
-            unchanged_files = 0
-            if mode == "incremental":
-                files, state, signatures, unchanged_files = self._filter_incremental_history_files(root_dir, scanned_files)
-                if not files:
-                    result = {
-                        "scanned_files": len(scanned_files),
-                        "imported_files": 0,
-                        "skipped_files": 0,
-                        "extracted_facts": 0,
-                        "duplicate_skipped": 0,
-                        "failed_files": [],
-                        "no_change": True,
-                        "unchanged_files": unchanged_files,
-                    }
-                    self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
-                    return
-            total = max(1, len(files))
-            self.root.after(0, lambda: self.progress.configure(value=0, maximum=total))
+            try:
+                scanned_files = selected_files if selected_files else scan_history_files(root_dir, recursive=True, max_files=max_files)
+                files = scanned_files
+                state: dict | None = None
+                signatures: dict[str, dict] = {}
+                unchanged_files = 0
+                if mode == "incremental":
+                    files, state, signatures, unchanged_files = self._filter_incremental_history_files(root_dir, scanned_files)
+                    if not files:
+                        result = {
+                            "scanned_files": len(scanned_files),
+                            "imported_files": 0,
+                            "skipped_files": 0,
+                            "extracted_facts": 0,
+                            "duplicate_skipped": 0,
+                            "failed_files": [],
+                            "no_change": True,
+                            "unchanged_files": unchanged_files,
+                        }
+                        self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
+                        return
+                total = max(1, len(files))
+                self.root.after(0, lambda: self.progress.configure(value=0, maximum=total))
 
-            def on_progress(event: dict) -> None:
-                self.root.after(
-                    0,
-                    lambda: (
-                        self.progress.configure(value=event.get("current", 0)),
-                        self.import_status.set(
-                            self._tr(
-                                f"\u5904\u7406\u4e2d {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f\u6587\u4ef6 {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}",
-                                f"Processing {event.get('current', 0)}/{event.get('total', 0)} | Imported files {event.get('imported_files', 0)} | Facts {event.get('facts', 0)} | Failed {event.get('failed_files', 0)}",
-                            )
+                def on_progress(event: dict) -> None:
+                    self.root.after(
+                        0,
+                        lambda: (
+                            self.progress.configure(value=event.get("current", 0)),
+                            self.import_status.set(
+                                self._tr(
+                                    f"\u5904\u7406\u4e2d {event.get('current', 0)}/{event.get('total', 0)} | \u6210\u529f\u6587\u4ef6 {event.get('imported_files', 0)} | \u8bb0\u5fc6 {event.get('facts', 0)} | \u5931\u8d25 {event.get('failed_files', 0)}",
+                                    f"Processing {event.get('current', 0)}/{event.get('total', 0)} | Imported files {event.get('imported_files', 0)} | Facts {event.get('facts', 0)} | Failed {event.get('failed_files', 0)}",
+                                )
+                            ),
                         ),
-                    ),
-                )
+                    )
 
-            stats = ingest_history_directory(
-                store=self.store,
-                directory=root_dir,
-                recursive=True,
-                max_files=max_files,
-                max_lines_per_file=80,
-                progress_callback=on_progress,
-                source_files=files,
-            )
-            if mode == "incremental" and state is not None:
-                roots = state.setdefault("roots", {})
-                root_key = str(root_dir)
-                root_state = roots.setdefault(root_key, {})
-                failed = {str(Path(p)) for p in (stats.failed_files or []) if p}
-                for path in files:
-                    path_key = str(path)
-                    if path_key in failed:
-                        continue
-                    sig = signatures.get(path_key)
-                    if sig:
-                        root_state[path_key] = sig
-                try:
-                    self._save_history_import_state(state)
-                except OSError:
-                    pass
-            self.last_failed_files = [Path(p) for p in (stats.failed_files or []) if p]
-            result = stats.to_dict()
-            if mode == "incremental":
-                result["unchanged_files"] = unchanged_files
-            self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
+                stats = ingest_history_directory(
+                    store=self.store,
+                    directory=root_dir,
+                    recursive=True,
+                    max_files=max_files,
+                    max_lines_per_file=80,
+                    progress_callback=on_progress,
+                    source_files=files,
+                )
+                if mode == "incremental" and state is not None:
+                    roots = state.setdefault("roots", {})
+                    root_key = str(root_dir)
+                    root_state = roots.setdefault(root_key, {})
+                    failed = {str(Path(p)) for p in (stats.failed_files or []) if p}
+                    for path in files:
+                        path_key = str(path)
+                        if path_key in failed:
+                            continue
+                        sig = signatures.get(path_key)
+                        if sig:
+                            root_state[path_key] = sig
+                    try:
+                        self._save_history_import_state(state)
+                    except OSError:
+                        pass
+                self.last_failed_files = [Path(p) for p in (stats.failed_files or []) if p]
+                result = stats.to_dict()
+                if mode == "incremental":
+                    result["unchanged_files"] = unchanged_files
+                self.root.after(0, lambda r=result: self._finish_import(r, mode=mode))
+            except Exception as exc:  # pragma: no cover
+                self.root.after(0, lambda e=exc: self._finish_import_error(e))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _finish_import_error(self, exc: Exception) -> None:
+        self._set_import_buttons_busy(False)
+        self.import_status.set(self._tr("\u5bfc\u5165\u5931\u8d25", "Import failed"))
+        self._append_result(self._tr("\n[错误] ", "\n[Error] ") + str(exc) + "\n")
+        messagebox.showerror(self._tr("\u5bfc\u5165\u5931\u8d25", "Import failed"), str(exc))
 
     def retry_failed(self) -> None:
         if not self.last_failed_files:
@@ -1969,8 +2069,12 @@ class DesktopWindow:
     def _finish_mail_pull(self, pull_result: dict, ingest_result: dict) -> None:
         self._set_import_buttons_busy(False)
         if pull_result.get("error"):
-            self.import_status.set(self._tr(f"\u90ae\u7bb1\u62c9\u53d6\u5931\u8d25\uff1a{pull_result.get('error')}", f"Mailbox pull failed: {pull_result.get('error')}"))
-            messagebox.showerror("\u62c9\u53d6\u5931\u8d25", str(pull_result.get("error")))
+            raw_error = str(pull_result.get("error"))
+            self.import_status.set(self._tr(f"\u90ae\u7bb1\u62c9\u53d6\u5931\u8d25\uff1a{raw_error}", f"Mailbox pull failed: {raw_error}"))
+            messagebox.showerror(
+                "\u62c9\u53d6\u5931\u8d25",
+                self._mail_login_help(raw_error),
+            )
             return
         self.import_status.set(
             self._tr(
@@ -1990,6 +2094,17 @@ class DesktopWindow:
         self._append_result(
             json.dumps({"pull": pull_result, "ingest": ingest_result}, ensure_ascii=False, indent=2) + "\n"
         )
+
+    def _mail_login_help(self, raw_error: str) -> str:
+        low = raw_error.lower()
+        if any(k in low for k in ["authentication", "login failed", "invalid credentials", "auth", "username and password not accepted"]):
+            return self._tr(
+                "邮箱登录失败。\n当前为 IMAP 登录，不会弹网页登录。\n请填写：邮箱账号 + 应用专用密码（不是邮箱登录密码）。\n\n原始错误："
+                + raw_error,
+                "Mailbox login failed.\nThis app uses IMAP login (no web OAuth popup).\nPlease use mailbox account + app password (not your normal mailbox password).\n\nRaw error: "
+                + raw_error,
+            )
+        return raw_error
 
     def _append_result(self, text: str) -> None:
         self.result_text.configure(state=tk.NORMAL)
