@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agent_system.runtime import run_pipeline
+from agent_system.runtime import resolve_audit_level, run_pipeline
 
 
 def _write(path: Path, payload: dict) -> None:
@@ -124,6 +124,16 @@ class RuntimePipelineTests(unittest.TestCase):
                     "review_agent",
                 ],
             )
+
+    def test_resolve_audit_level_auto_quick_for_small_non_core_changes(self) -> None:
+        policy = {"quick_audit_max_files": 4, "full_audit_keywords": ["agent_system/runtime.py"]}
+        level = resolve_audit_level("auto", ["docs/readme.md", "docs/memory/self_improving_agent.md"], policy)
+        self.assertEqual(level, "quick")
+
+    def test_resolve_audit_level_auto_full_for_core_change(self) -> None:
+        policy = {"quick_audit_max_files": 4, "full_audit_keywords": ["agent_system/runtime.py"]}
+        level = resolve_audit_level("auto", ["agent_system/runtime.py"], policy)
+        self.assertEqual(level, "full")
 
 
 if __name__ == "__main__":

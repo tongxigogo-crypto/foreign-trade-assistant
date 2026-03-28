@@ -7,6 +7,21 @@
     "inspect closed-loop verdict",
     "decide next architecture iteration"
   ],
-  "summary": "Runtime executed through single entry with checkpointed harness state and closed-loop evidence."
+  "summary": "Runtime executed through single entry with checkpointed harness state and closed-loop evidence.",
+  "quick_audit_max_files": 4,
+  "quick_rag_sources": [
+    "AGENTS.md",
+    "docs/harness/current_session.md",
+    "docs/memory/self_improving_agent.md"
+  ],
+  "full_audit_keywords": [
+    "agent_system/runtime.py",
+    "agent_system/executors",
+    "agent_system/harness",
+    "agent_system/learning",
+    "agent_system/rag",
+    "agent_system/config/architecture-contract.json",
+    "agent_system/config/required-agents.json"
+  ]
 }
 

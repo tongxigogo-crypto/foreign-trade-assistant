@@ -85,6 +85,15 @@ class RuntimeGuardrailsTests(unittest.TestCase):
             self.assertEqual(report["status"], "done")
             self.assertEqual(report["closed_loop"]["status"], "pass")
 
+    def test_quick_audit_adds_incremental_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._prepare_root(root)
+            report = run_pipeline(root=root, run_id="quick-check", query="guardrails", mode="confirm_write", audit_level="quick")
+            self.assertEqual(report.get("audit_level"), "quick")
+            summary = report.get("incremental_summary", [])
+            self.assertEqual(len(summary), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

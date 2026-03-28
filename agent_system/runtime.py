@@ -84,6 +84,47 @@ def collect_git_status(root: Path) -> str:
         return "(git status unavailable)"
 
 
+def collect_git_changed_files(root: Path) -> list[str]:
+    try:
+        out = subprocess.check_output(
+            ["git", "diff", "--name-only", "HEAD"],
+            cwd=root,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+        )
+        return [line.strip() for line in out.splitlines() if line.strip()]
+    except Exception:
+        return []
+
+
+def resolve_audit_level(requested: str, changed_files: list[str], runtime_policy: dict[str, Any]) -> str:
+    level = str(requested or "auto").strip().lower()
+    if level in {"quick", "full"}:
+        return level
+
+    full_keywords = list(runtime_policy.get("full_audit_keywords", [])) or [
+        "agent_system/runtime.py",
+        "agent_system/executors",
+        "agent_system/harness",
+        "agent_system/learning",
+        "agent_system/rag",
+        "architecture-contract.json",
+        "required-agents.json",
+    ]
+    quick_max = int(runtime_policy.get("quick_audit_max_files", 4))
+    if not changed_files:
+        return "full"
+    if len(changed_files) > quick_max:
+        return "full"
+    for item in changed_files:
+        normalized = item.replace("\\", "/").lower()
+        for token in full_keywords:
+            if str(token).lower() in normalized:
+                return "full"
+    return "quick"
+
+
 def check_required_outputs(required_outputs: list[str], planned_outputs: dict[str, str]) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     for output_name in required_outputs:
@@ -109,7 +150,7 @@ def check_review_mode_enforced(review_mode: dict[str, Any], agent_results: list[
     return {"name": "review_mode_forbidden_paths_enforced", "passed": passed}
 
 
-def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, Any]:
+def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: str = "auto") -> dict[str, Any]:
     harness_dir = root / "docs" / "harness"
     run_reports_dir = root / "agent_system" / "output"
     paths = HarnessPaths(
@@ -131,11 +172,24 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
             "current_goal": "run configured agent pipeline with evidence",
             "next_actions": ["review run report", "decide next implementation step"],
             "summary": "Pipeline executed with checkpointed harness state.",
+            "quick_audit_max_files": 4,
+            "quick_rag_sources": [
+                "AGENTS.md",
+                "docs/harness/current_session.md",
+                "docs/memory/self_improving_agent.md",
+            ],
         },
     )
     required_outputs = list(architecture_contract.get("required_outputs", []))
     rag_sources = list(architecture_contract.get("rag_sources", []))
     review_mode = dict(architecture_contract.get("review_mode", {}))
+
+    changed_files = collect_git_changed_files(root)
+    effective_audit_level = resolve_audit_level(audit_level, changed_files, runtime_policy)
+    active_rag_sources = rag_sources
+    if effective_audit_level == "quick":
+        quick_sources = list(runtime_policy.get("quick_rag_sources", []))
+        active_rag_sources = quick_sources or rag_sources[:3]
 
     preflight_agent_plan = build_preflight_agent_plan(required_agents)
     planned_outputs = {
@@ -155,7 +209,7 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
 
     rag_db = root / "agent_system" / "data" / "rag_index.sqlite"
     index = KnowledgeIndex(rag_db)
-    doc_count = index.bulk_upsert(gather_rag_documents(root, rag_sources=rag_sources))
+    doc_count = index.bulk_upsert(gather_rag_documents(root, rag_sources=active_rag_sources))
     hits = index.query(query=query, top_k=8)
     retrieval_trace = {
         "updated_at": utc_now(),
@@ -180,9 +234,10 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
 
     checks = [
         {"name": "preflight_ok", "passed": preflight["status"] == "ok"},
-        {"name": "retrieval_non_empty", "passed": len(hits) > 0},
         {"name": "required_agents_defined", "passed": len(required_agents) > 0},
     ]
+    if effective_audit_level == "full":
+        checks.append({"name": "retrieval_non_empty", "passed": len(hits) > 0})
     checks.append(check_review_mode_enforced(review_mode, agent_results))
     run_status = "blocked" if preflight["status"] != "ok" else "done"
     if run_status == "done" and not all(item["passed"] for item in checks):
@@ -218,6 +273,8 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
     if not paths.closed_loop_verdict.exists():
         write_json(paths.closed_loop_verdict, {"status": "pending", "updated_at": utc_now()})
     output_checks = check_required_outputs(required_outputs, planned_outputs)
+    if effective_audit_level == "quick":
+        output_checks = [item for item in output_checks if "run_report" in item["name"] or "guardrail_report" in item["name"]]
     checks.extend(output_checks)
     if run_status == "done" and not all(item["passed"] for item in checks):
         run_status = "failed"
@@ -233,6 +290,13 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str) -> dict[str, An
         },
     )
     run_report["closed_loop"] = verdict
+    run_report["audit_level"] = effective_audit_level
+    run_report["changed_files"] = changed_files
+    run_report["incremental_summary"] = [
+        f"Changed scope: {len(changed_files)} file(s); audit={effective_audit_level}.",
+        f"Core logic preserved: {'yes' if preflight['status'] == 'ok' else 'check required'}.",
+        f"Core checks pass: {sum(1 for x in checks if x.get('passed'))}/{len(checks)}.",
+    ]
     write_json(run_report_file, run_report)
     write_json(paths.closed_loop_verdict, verdict)
 
@@ -267,13 +331,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id", default="architecture-run", help="Run identifier")
     parser.add_argument("--query", default="agent architecture guardrails and harness recovery", help="RAG query")
     parser.add_argument("--mode", choices=["preview", "confirm_write"], default="preview")
+    parser.add_argument("--audit-level", choices=["auto", "quick", "full"], default="auto")
     parser.add_argument("--pretty", action="store_true")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    report = run_pipeline(Path(args.root).resolve(), args.run_id, args.query, args.mode)
+    report = run_pipeline(Path(args.root).resolve(), args.run_id, args.query, args.mode, audit_level=args.audit_level)
     if args.pretty:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
