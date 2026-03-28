@@ -15,8 +15,9 @@ def test_desktop_has_three_pane_layout_and_global_scroll() -> None:
     assert "ttk.Panedwindow(" in src
     assert "_configure_canvas_scrollregion" in src
     assert "self.api_input_text.bind(\"<Return>\"" in src
-    assert "self.api_result_pane = ttk.Panedwindow" in src
-    assert "self.root.after_idle(lambda: self._set_api_result_split(0.72))" in src
+    assert "self.api_result_pane = tk.PanedWindow" in src
+    assert "showhandle=True" in src
+    assert "self.root.after_idle(self._set_api_result_split_default)" in src
     assert "self._build_radar_section(self.left_panel)" in src
     assert "self._build_guide_section(self.left_panel)" in src
 

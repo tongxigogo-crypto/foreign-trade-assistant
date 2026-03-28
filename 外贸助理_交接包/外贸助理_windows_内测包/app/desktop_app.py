@@ -717,38 +717,74 @@ class DesktopWindow:
         self.api_use_local_context_check = ttk.Checkbutton(self.api_box, text="\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587", variable=self.api_use_local_context_var)
         self.api_use_local_context_check.pack(anchor=tk.W, pady=(6, 0))
 
-        self.api_input_label = ttk.Label(self.api_box, text="\u8f93\u5165")
-        self.api_input_label.pack(anchor=tk.W, pady=(6, 0))
-        self.api_input_text = tk.Text(self.api_box, height=8, wrap=tk.WORD)
+        self.api_result_pane = tk.PanedWindow(
+            self.api_box,
+            orient=tk.VERTICAL,
+            sashwidth=10,
+            sashrelief=tk.RAISED,
+            showhandle=True,
+            bg="#9ca3af",
+        )
+        self.api_result_pane.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+
+        self.api_input_frame = ttk.Frame(self.api_result_pane)
+        self.api_result_pane.add(self.api_input_frame, stretch="always", minsize=120)
+        self.api_input_label = ttk.Label(self.api_input_frame, text="\u8f93\u5165")
+        self.api_input_label.pack(anchor=tk.W, pady=(0, 2))
+        self.api_input_text = tk.Text(
+            self.api_input_frame,
+            height=8,
+            wrap=tk.WORD,
+            relief=tk.SOLID,
+            bd=1,
+            highlightthickness=1,
+            highlightbackground="#9ca3af",
+            highlightcolor="#2563eb",
+        )
         self.api_input_text.pack(fill=tk.BOTH, expand=True)
         self.api_input_text.bind("<Return>", self._on_api_input_return)
         self.api_input_text.bind("<KP_Enter>", self._on_api_input_return)
 
-        send_row = ttk.Frame(self.api_box)
+        send_row = ttk.Frame(self.api_input_frame)
         send_row.pack(fill=tk.X, pady=(6, 0))
         self.api_status_var = tk.StringVar(value="\u5f85\u8fde\u63a5")
         ttk.Label(send_row, textvariable=self.api_status_var).pack(side=tk.LEFT)
         self.api_send_button = ttk.Button(send_row, text="\u53d1\u9001", command=self.send_api_message)
         self.api_send_button.pack(side=tk.RIGHT)
 
-        self.api_result_pane = ttk.Panedwindow(self.api_box, orient=tk.VERTICAL)
-        self.api_result_pane.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
-
         self.api_reply_frame = ttk.Frame(self.api_result_pane)
-        self.api_result_pane.add(self.api_reply_frame, weight=3)
+        self.api_result_pane.add(self.api_reply_frame, stretch="always", minsize=100)
         self.api_reply_label = ttk.Label(self.api_reply_frame, text="\u56de\u590d")
         self.api_reply_label.pack(anchor=tk.W, pady=(0, 2))
-        self.api_reply_text = tk.Text(self.api_reply_frame, height=8, wrap=tk.WORD)
+        self.api_reply_text = tk.Text(
+            self.api_reply_frame,
+            height=8,
+            wrap=tk.WORD,
+            relief=tk.SOLID,
+            bd=1,
+            highlightthickness=1,
+            highlightbackground="#9ca3af",
+            highlightcolor="#2563eb",
+        )
         self.api_reply_text.pack(fill=tk.BOTH, expand=True)
 
         self.api_basis_frame = ttk.Frame(self.api_result_pane)
-        self.api_result_pane.add(self.api_basis_frame, weight=2)
+        self.api_result_pane.add(self.api_basis_frame, stretch="always", minsize=90)
         self.api_basis_label = ttk.Label(self.api_basis_frame, text="\u56de\u7b54\u4f9d\u636e")
         self.api_basis_label.pack(anchor=tk.W, pady=(0, 2))
-        self.api_basis_text = tk.Text(self.api_basis_frame, height=4, wrap=tk.WORD)
+        self.api_basis_text = tk.Text(
+            self.api_basis_frame,
+            height=4,
+            wrap=tk.WORD,
+            relief=tk.SOLID,
+            bd=1,
+            highlightthickness=1,
+            highlightbackground="#9ca3af",
+            highlightcolor="#2563eb",
+        )
         self.api_basis_text.pack(fill=tk.BOTH, expand=True)
         self._set_text_content(self.api_basis_text, self.api_basis_default_zh)
-        self.root.after_idle(lambda: self._set_api_result_split(0.72))
+        self.root.after_idle(self._set_api_result_split_default)
 
     def _on_api_provider_changed(self, _event: tk.Event | None = None) -> None:
         provider = self.api_provider_var.get().strip().lower() or "nvidia"
@@ -797,15 +833,21 @@ class DesktopWindow:
             capture_exception(exc_value, {"surface": "tk_callback"})
         messagebox.showerror("Runtime Error", str(exc_value))
 
-    def _set_api_result_split(self, ratio: float) -> None:
+    def _set_api_result_split(self, upper_ratio: float, lower_ratio: float) -> None:
         try:
             total_height = self.api_result_pane.winfo_height()
             if total_height <= 1:
                 total_height = self.api_box.winfo_height()
             if total_height > 1:
-                self.api_result_pane.sashpos(0, max(120, int(total_height * ratio)))
+                pos0 = max(120, int(total_height * upper_ratio))
+                pos1 = max(pos0 + 120, int(total_height * lower_ratio))
+                self.api_result_pane.sash_place(0, 2, pos0)
+                self.api_result_pane.sash_place(1, 2, pos1)
         except tk.TclError:
             pass
+
+    def _set_api_result_split_default(self) -> None:
+        self._set_api_result_split(0.38, 0.72)
 
     def test_api_connection(self) -> None:
         settings = self._collect_api_settings()
