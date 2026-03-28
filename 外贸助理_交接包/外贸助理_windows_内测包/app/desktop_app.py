@@ -203,6 +203,11 @@ class DesktopWindow:
             self.filter_customer_keyword_label.configure(text="\u5ba2\u6237\u5173\u952e\u8bcd")
             self.filter_clear_button.configure(text="\u6e05\u7a7a\u7b5b\u9009")
             self.task_filter_status_box.configure(values=["all", "waiting_reply", "in_progress", "overdue", "completed"])
+            self.kanban_label.configure(text="\u4efb\u52a1\u770b\u677f\uff08CRM \u98ce\u683c\uff09")
+            self.kanban_frames["waiting_reply"].configure(text="\u5f85\u56de\u590d")
+            self.kanban_frames["in_progress"].configure(text="\u8fdb\u884c\u4e2d")
+            self.kanban_frames["overdue"].configure(text="\u5df2\u903e\u671f")
+            self.kanban_frames["completed"].configure(text="\u5df2\u5b8c\u6210")
             self.radar_section_box.configure(text="\u96f7\u8fbe\u68c0\u7d22")
             self.radar_hint_label.configure(text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002")
             self.import_hint_label.configure(text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002")
@@ -288,6 +293,11 @@ class DesktopWindow:
             self.filter_customer_keyword_label.configure(text="Customer Keyword")
             self.filter_clear_button.configure(text="Clear Filters")
             self.task_filter_status_box.configure(values=["all", "waiting_reply", "in_progress", "overdue", "completed"])
+            self.kanban_label.configure(text="Task Board (CRM Style)")
+            self.kanban_frames["waiting_reply"].configure(text="Waiting Reply")
+            self.kanban_frames["in_progress"].configure(text="In Progress")
+            self.kanban_frames["overdue"].configure(text="Overdue")
+            self.kanban_frames["completed"].configure(text="Completed")
             self.radar_section_box.configure(text="Radar Search")
             self.radar_hint_label.configure(text="Supports fuzzy and exact terms: customer/email/phone/product/SKU/series.")
             self.import_hint_label.configure(text="Repeatable import + auto-dedup. First full import, then incremental import.")
@@ -544,6 +554,28 @@ class DesktopWindow:
         self.filter_clear_button = ttk.Button(filter_row, text="\u6e05\u7a7a\u7b5b\u9009", command=self._clear_business_filters)
         self.filter_clear_button.pack(side=tk.LEFT, padx=6)
 
+        self.kanban_label = ttk.Label(self.business_panel_box, text="\u4efb\u52a1\u770b\u677f\uff08CRM \u98ce\u683c\uff09")
+        self.kanban_label.pack(anchor=tk.W, pady=(6, 0))
+        kanban_wrap = ttk.Frame(self.business_panel_box)
+        kanban_wrap.pack(fill=tk.BOTH, expand=False)
+        self.kanban_lists: dict[str, tk.Listbox] = {}
+        self.kanban_maps: dict[str, list[dict]] = {}
+        self.kanban_frames: dict[str, ttk.LabelFrame] = {}
+        for col_key, col_title in [
+            ("waiting_reply", "\u5f85\u56de\u590d"),
+            ("in_progress", "\u8fdb\u884c\u4e2d"),
+            ("overdue", "\u5df2\u903e\u671f"),
+            ("completed", "\u5df2\u5b8c\u6210"),
+        ]:
+            col = ttk.LabelFrame(kanban_wrap, text=col_title, padding=4)
+            col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6))
+            lb = tk.Listbox(col, height=6)
+            lb.pack(fill=tk.BOTH, expand=True)
+            lb.bind("<<ListboxSelect>>", lambda _e, c=col_key: self._on_kanban_select(c))
+            self.kanban_frames[col_key] = col
+            self.kanban_lists[col_key] = lb
+            self.kanban_maps[col_key] = []
+
         self.focus_label = ttk.Label(self.business_panel_box, text="\u91cd\u70b9\u4efb\u52a1")
         self.focus_label.pack(anchor=tk.W)
         focus_wrap = ttk.Frame(self.business_panel_box)
@@ -601,6 +633,8 @@ class DesktopWindow:
         self._customer_rows: list[dict] = []
         self._filtered_task_rows: list[dict] = []
         self._filtered_customer_rows: list[dict] = []
+        self._selected_kanban_column: str = ""
+        self._selected_kanban_task_id: str = ""
 
         action_row = ttk.Frame(box)
         action_row.pack(fill=tk.X, pady=(8, 0))
@@ -1147,14 +1181,21 @@ class DesktopWindow:
             self._set_section_visible(self.quick_actions_frame, visible=beginner, fill=tk.X, pady=8)
         if hasattr(self, "output_section_box"):
             self._set_section_visible(self.output_section_box, visible=not beginner, fill=tk.X, pady=6)
-        if hasattr(self, "guide_section_box"):
-            self._set_section_visible(self.guide_section_box, visible=not beginner, fill=tk.X, pady=6)
         if hasattr(self, "feedback_section_box"):
             self._set_section_visible(self.feedback_section_box, visible=not beginner, fill=tk.X, pady=6)
         if hasattr(self, "import_section_box"):
             self._set_section_visible(self.import_section_box, visible=not beginner, fill=tk.BOTH, expand=True, pady=6)
+        if hasattr(self, "guide_section_box"):
+            self._set_section_visible(self.guide_section_box, visible=not beginner, fill=tk.X, pady=6)
         if beginner:
             self.service_advanced_frame.pack_forget()
+        else:
+            # Keep extension guide directly below import section.
+            if hasattr(self, "import_section_box") and hasattr(self, "guide_section_box"):
+                try:
+                    self.guide_section_box.pack_configure(after=self.import_section_box)
+                except tk.TclError:
+                    pass
 
     def _focus_primary_entry(self) -> None:
         try:
@@ -1704,6 +1745,11 @@ class DesktopWindow:
         self.customers_listbox.delete(0, tk.END)
         self._filtered_task_rows = []
         self._filtered_customer_rows = []
+        self._selected_kanban_column = ""
+        self._selected_kanban_task_id = ""
+        for key, lb in self.kanban_lists.items():
+            lb.delete(0, tk.END)
+            self.kanban_maps[key] = []
 
         for task in self._task_rows:
             status = str(task.get("computed_status", "")).strip().lower()
@@ -1717,6 +1763,15 @@ class DesktopWindow:
             if customer_kw and customer_kw not in customer.lower():
                 continue
             self._filtered_task_rows.append(task)
+            col_key = self._normalize_kanban_status(status)
+            self.kanban_maps[col_key].append(task)
+            due = str(task.get("due_at_utc", "")).replace("T", " ")[:16]
+            show_customer = customer or "-"
+            show_title = title or "-"
+            card = f"{show_customer} | {show_title}"
+            if due:
+                card += f" | {due}"
+            self.kanban_lists[col_key].insert(tk.END, card[:120])
 
         if not self._filtered_task_rows:
             self.tasks_listbox.insert(tk.END, self._tr("\u6682\u65e0\u5339\u914d\u4efb\u52a1", "No matching tasks"))
@@ -1742,6 +1797,41 @@ class DesktopWindow:
             in_progress = int(row.get("in_progress_tasks", 0))
             overdue = int(row.get("overdue_tasks", 0))
             self.customers_listbox.insert(tk.END, f"{customer} | \u5f00\u653e {open_tasks} | \u8fdb\u884c {in_progress} | \u903e\u671f {overdue}")
+        self._refresh_kanban_titles()
+
+    def _normalize_kanban_status(self, status: str) -> str:
+        s = (status or "").strip().lower()
+        if s in {"waiting_reply", "in_progress", "overdue", "completed"}:
+            return s
+        return "waiting_reply"
+
+    def _refresh_kanban_titles(self) -> None:
+        titles = {
+            "waiting_reply": self._tr("\u5f85\u56de\u590d", "Waiting Reply"),
+            "in_progress": self._tr("\u8fdb\u884c\u4e2d", "In Progress"),
+            "overdue": self._tr("\u5df2\u903e\u671f", "Overdue"),
+            "completed": self._tr("\u5df2\u5b8c\u6210", "Completed"),
+        }
+        for key, frame in self.kanban_frames.items():
+            count = len(self.kanban_maps.get(key, []))
+            frame.configure(text=f"{titles[key]} ({count})")
+
+    def _on_kanban_select(self, col_key: str) -> None:
+        lb = self.kanban_lists.get(col_key)
+        rows = self.kanban_maps.get(col_key, [])
+        if lb is None:
+            return
+        selected = lb.curselection()
+        if not selected:
+            return
+        idx = int(selected[0])
+        if idx >= len(rows):
+            return
+        task_id = str(rows[idx].get("task_id", "")).strip()
+        self._selected_kanban_column = col_key
+        self._selected_kanban_task_id = task_id
+        self.tasks_listbox.selection_clear(0, tk.END)
+        self.focus_listbox.selection_clear(0, tk.END)
 
     def _clear_business_filters(self) -> None:
         self.task_filter_status_var.set("all")
@@ -1750,9 +1840,9 @@ class DesktopWindow:
         self._render_filtered_business_lists()
 
     def _update_selected_task_status(self, status: str) -> None:
-        task_id = ""
+        task_id = self._selected_kanban_task_id.strip()
         idx_task = self.tasks_listbox.curselection()
-        if idx_task:
+        if not task_id and idx_task:
             task_index = int(idx_task[0])
             if task_index < len(self._filtered_task_rows):
                 task_id = str(self._filtered_task_rows[task_index].get("task_id", "")).strip()
