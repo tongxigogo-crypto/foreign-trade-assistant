@@ -1,0 +1,46 @@
+﻿{
+  "agent_results": [
+    {
+      "agent": "orchestrator_agent",
+      "status": "done",
+      "payload": {
+        "phase": "checkpoint",
+        "summary": "pipeline reached checkpoint"
+      },
+      "missing_data": []
+    },
+    {
+      "agent": "rag_agent",
+      "status": "done",
+      "payload": {
+        "indexed": true
+      },
+      "missing_data": []
+    },
+    {
+      "agent": "guardrails_agent",
+      "status": "done",
+      "payload": {
+        "violations": []
+      },
+      "missing_data": []
+    },
+    {
+      "agent": "self_improving_agent",
+      "status": "done",
+      "payload": {
+        "memory_write": "ready"
+      },
+      "missing_data": []
+    },
+    {
+      "agent": "review_agent",
+      "status": "needs_confirmation",
+      "payload": {
+        "mode": "review_only",
+        "software_changes": false
+      },
+      "missing_data": []
+    }
+  ]
+}

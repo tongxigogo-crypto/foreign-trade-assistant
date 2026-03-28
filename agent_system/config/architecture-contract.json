@@ -1,0 +1,28 @@
+﻿{
+  "version": "2.0",
+  "required_outputs": [
+    "run_report",
+    "retrieval_trace",
+    "guardrail_report",
+    "closed_loop_verdict"
+  ],
+  "closed_loop_checks": [
+    "preflight_ok",
+    "retrieval_non_empty",
+    "required_agents_defined"
+  ],
+  "rag_sources": [
+    "AGENTS.md",
+    "docs/harness/session_state.json",
+    "docs/harness/current_session.md",
+    "docs/memory/self_improving_agent.md",
+    "agent_system/config/required-agents.json",
+    "agent_system/config/architecture-contract.json"
+  ],
+  "review_mode": {
+    "code_edit_forbidden_paths": [
+      "外贸助理_交接包"
+    ],
+    "software_edit_default": false
+  }
+}
