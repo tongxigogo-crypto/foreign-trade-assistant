@@ -126,17 +126,16 @@ class DesktopWindow:
         self.middle_panel = ttk.Frame(self.main_panes, padding=(6, 0, 6, 0))
         self.right_panel = ttk.Frame(self.main_panes, padding=(6, 0, 0, 0))
         self.main_panes.add(self.left_panel, weight=3)
-        self.main_panes.add(self.middle_panel, weight=4)
+        self.main_panes.add(self.middle_panel, weight=5)
         self.main_panes.add(self.right_panel, weight=3)
 
         self._build_service_section(self.left_panel)
         self._build_import_section(self.left_panel)
+        self._build_guide_section(self.left_panel)
         self._build_output_section(self.left_panel)
+        self._build_radar_section(self.left_panel)
 
         self._build_api_section(self.middle_panel)
-
-        self._build_radar_section(self.left_panel)
-        self._build_guide_section(self.left_panel)
 
         self._build_runtime_section(self.right_panel)
         self._build_feedback_section(self.right_panel)
@@ -151,7 +150,9 @@ class DesktopWindow:
         self.main_canvas.configure(scrollregion=self.main_canvas.bbox("all"))
 
     def _on_canvas_configure(self, event: tk.Event) -> None:
-        self.main_canvas.itemconfigure(self.main_window, width=max(event.width, 1360))
+        target_width = max(event.width, 1360)
+        target_height = max(event.height, self.main_content.winfo_reqheight())
+        self.main_canvas.itemconfigure(self.main_window, width=target_width, height=target_height)
         self._configure_canvas_scrollregion()
 
     def _switch_language(self, lang: str) -> None:
@@ -181,7 +182,7 @@ class DesktopWindow:
             self.export_diag_button.configure(text="\u5bfc\u51fa\u8bca\u65ad")
             self.feedback_inbox_button.configure(text="\u53cd\u9988\u6536\u4ef6\u7bb1")
             self.error_reporting_check.configure(text="\u9519\u8bef\u4e0a\u62a5\uff08Sentry\uff09")
-            self.runtime_section_box.configure(text="2) \u770b\u677f\u8f93\u51fa\uff08\u7f51\u9875\u770b\u677f\u5904\u7406\u4e1a\u52a1\uff09")
+            self.runtime_section_box.configure(text="2) \u4e1a\u52a1\u8f93\u51fa\uff08\u4e0e\u7f51\u9875\u770b\u677f\u540c\u6e90\uff09")
             self.runtime_hint_var.set(self._runtime_mode_hint())
             self.output_section_box.configure(text="\u8f93\u51fa\u76ee\u5f55")
             self.import_section_box.configure(text="\u5386\u53f2\u5bfc\u5165")
@@ -190,11 +191,18 @@ class DesktopWindow:
             self.business_panel_box.configure(text="3) \u4e1a\u52a1\u9762\u677f\uff08\u684c\u9762\u4e3b\u5de5\u4f5c\u53f0\uff09")
             self.focus_label.configure(text="\u91cd\u70b9\u4efb\u52a1")
             self.alert_label.configure(text="\u5173\u952e\u98ce\u9669")
+            self.tasks_label.configure(text="\u4efb\u52a1\u5217\u8868\uff08\u53ef\u7b5b\u9009\uff09")
+            self.customers_label.configure(text="\u5ba2\u6237\u7ebf")
             self.events_label.configure(text="\u6700\u8fd1\u4e8b\u4ef6")
             self.panel_refresh_button.configure(text="\u5237\u65b0\u9762\u677f")
             self.task_in_progress_button.configure(text="\u6807\u8bb0\u4e3a\u8fdb\u884c\u4e2d")
             self.task_complete_button.configure(text="\u6807\u8bb0\u4e3a\u5df2\u5b8c\u6210")
             self.alert_snooze_button.configure(text="\u98ce\u9669\u5ef6\u540e24\u5c0f\u65f6")
+            self.filter_status_label.configure(text="\u72b6\u6001")
+            self.filter_task_keyword_label.configure(text="\u4efb\u52a1\u5173\u952e\u8bcd")
+            self.filter_customer_keyword_label.configure(text="\u5ba2\u6237\u5173\u952e\u8bcd")
+            self.filter_clear_button.configure(text="\u6e05\u7a7a\u7b5b\u9009")
+            self.task_filter_status_box.configure(values=["all", "waiting_reply", "in_progress", "overdue", "completed"])
             self.radar_section_box.configure(text="\u96f7\u8fbe\u68c0\u7d22")
             self.radar_hint_label.configure(text="\u652f\u6301\u6a21\u7cca\u8bcd\u548c\u7cbe\u786e\u8bcd\uff1a\u5ba2\u6237/\u90ae\u7bb1/\u7535\u8bdd/\u4ea7\u54c1/SKU/\u7cfb\u5217\u3002")
             self.import_hint_label.configure(text="\u53ef\u91cd\u590d\u5bfc\u5165 + \u81ea\u52a8\u53bb\u91cd\u3002\u9996\u6b21\u5168\u91cf\u5bfc\u5165\uff0c\u540e\u7eed\u589e\u91cf\u5bfc\u5165\u3002")
@@ -259,7 +267,7 @@ class DesktopWindow:
             self.export_diag_button.configure(text="Export Diagnostics")
             self.feedback_inbox_button.configure(text="Feedback Inbox")
             self.error_reporting_check.configure(text="Error Reporting (Sentry)")
-            self.runtime_section_box.configure(text="2) Workbench Output (Web Workbench handles business)")
+            self.runtime_section_box.configure(text="2) Business Output (Synced with Web Board)")
             self.runtime_hint_var.set(self._runtime_mode_hint())
             self.output_section_box.configure(text="Output Directory")
             self.import_section_box.configure(text="History Import")
@@ -268,11 +276,18 @@ class DesktopWindow:
             self.business_panel_box.configure(text="3) Business Panel (Desktop Primary Workspace)")
             self.focus_label.configure(text="Focus Tasks")
             self.alert_label.configure(text="Critical Risks")
+            self.tasks_label.configure(text="Task List (Filterable)")
+            self.customers_label.configure(text="Customer Lines")
             self.events_label.configure(text="Recent Events")
             self.panel_refresh_button.configure(text="Refresh Panel")
             self.task_in_progress_button.configure(text="Mark In Progress")
             self.task_complete_button.configure(text="Mark Completed")
             self.alert_snooze_button.configure(text="Snooze 24h")
+            self.filter_status_label.configure(text="Status")
+            self.filter_task_keyword_label.configure(text="Task Keyword")
+            self.filter_customer_keyword_label.configure(text="Customer Keyword")
+            self.filter_clear_button.configure(text="Clear Filters")
+            self.task_filter_status_box.configure(values=["all", "waiting_reply", "in_progress", "overdue", "completed"])
             self.radar_section_box.configure(text="Radar Search")
             self.radar_hint_label.configure(text="Supports fuzzy and exact terms: customer/email/phone/product/SKU/series.")
             self.import_hint_label.configure(text="Repeatable import + auto-dedup. First full import, then incremental import.")
@@ -452,7 +467,7 @@ class DesktopWindow:
         self.service_advanced_frame.pack_forget()
 
     def _build_runtime_section(self, parent: ttk.Frame) -> None:
-        box = ttk.LabelFrame(parent, text="2) \u770b\u677f\u8f93\u51fa\uff08\u7f51\u9875\u770b\u677f\u5904\u7406\u4e1a\u52a1\uff09", padding=10)
+        box = ttk.LabelFrame(parent, text="2) \u4e1a\u52a1\u8f93\u51fa\uff08\u4e0e\u7f51\u9875\u770b\u677f\u540c\u6e90\uff09", padding=10)
         box.pack(fill=tk.BOTH, pady=6)
         self.runtime_section_box = box
 
@@ -473,7 +488,7 @@ class DesktopWindow:
         ttk.Label(metrics, textvariable=self.metric_alerts).pack(side=tk.LEFT)
 
         self.runtime_hint_var = tk.StringVar(
-            value="Use desktop for startup/import/sync. Use web workbench for tasks/customers/events."
+            value=self._runtime_mode_hint()
         )
         ttk.Label(
             box,
@@ -497,6 +512,38 @@ class DesktopWindow:
         self.alert_snooze_button = ttk.Button(panel_actions, text="\u98ce\u9669\u5ef6\u540e24\u5c0f\u65f6", command=self._snooze_selected_alert)
         self.alert_snooze_button.pack(side=tk.LEFT, padx=6)
 
+        filter_row = ttk.Frame(self.business_panel_box)
+        filter_row.pack(fill=tk.X, pady=(0, 6))
+        self.filter_status_label = ttk.Label(filter_row, text="\u72b6\u6001")
+        self.filter_status_label.pack(side=tk.LEFT)
+        self.task_filter_status_var = tk.StringVar(value="all")
+        self.task_filter_status_box = ttk.Combobox(
+            filter_row,
+            width=10,
+            textvariable=self.task_filter_status_var,
+            values=["all", "waiting_reply", "in_progress", "overdue", "completed"],
+            state="readonly",
+        )
+        self.task_filter_status_box.pack(side=tk.LEFT)
+        self.task_filter_status_box.bind("<<ComboboxSelected>>", lambda _e: self._render_filtered_business_lists())
+
+        self.filter_task_keyword_label = ttk.Label(filter_row, text="\u4efb\u52a1\u5173\u952e\u8bcd")
+        self.filter_task_keyword_label.pack(side=tk.LEFT, padx=(8, 2))
+        self.task_filter_keyword_var = tk.StringVar(value="")
+        self.task_filter_keyword_entry = ttk.Entry(filter_row, textvariable=self.task_filter_keyword_var, width=20)
+        self.task_filter_keyword_entry.pack(side=tk.LEFT, padx=6)
+        self.task_filter_keyword_entry.bind("<KeyRelease>", lambda _e: self._render_filtered_business_lists())
+
+        self.filter_customer_keyword_label = ttk.Label(filter_row, text="\u5ba2\u6237\u5173\u952e\u8bcd")
+        self.filter_customer_keyword_label.pack(side=tk.LEFT, padx=(8, 2))
+        self.customer_filter_keyword_var = tk.StringVar(value="")
+        self.customer_filter_keyword_entry = ttk.Entry(filter_row, textvariable=self.customer_filter_keyword_var, width=20)
+        self.customer_filter_keyword_entry.pack(side=tk.LEFT, padx=6)
+        self.customer_filter_keyword_entry.bind("<KeyRelease>", lambda _e: self._render_filtered_business_lists())
+
+        self.filter_clear_button = ttk.Button(filter_row, text="\u6e05\u7a7a\u7b5b\u9009", command=self._clear_business_filters)
+        self.filter_clear_button.pack(side=tk.LEFT, padx=6)
+
         self.focus_label = ttk.Label(self.business_panel_box, text="\u91cd\u70b9\u4efb\u52a1")
         self.focus_label.pack(anchor=tk.W)
         focus_wrap = ttk.Frame(self.business_panel_box)
@@ -517,6 +564,26 @@ class DesktopWindow:
         self.alert_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.alert_listbox.config(yscrollcommand=self.alert_scroll.set)
 
+        self.tasks_label = ttk.Label(self.business_panel_box, text="\u4efb\u52a1\u5217\u8868\uff08\u53ef\u7b5b\u9009\uff09")
+        self.tasks_label.pack(anchor=tk.W, pady=(6, 0))
+        tasks_wrap = ttk.Frame(self.business_panel_box)
+        tasks_wrap.pack(fill=tk.BOTH, expand=False)
+        self.tasks_listbox = tk.Listbox(tasks_wrap, height=6)
+        self.tasks_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.tasks_scroll = ttk.Scrollbar(tasks_wrap, orient=tk.VERTICAL, command=self.tasks_listbox.yview)
+        self.tasks_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tasks_listbox.config(yscrollcommand=self.tasks_scroll.set)
+
+        self.customers_label = ttk.Label(self.business_panel_box, text="\u5ba2\u6237\u7ebf")
+        self.customers_label.pack(anchor=tk.W, pady=(6, 0))
+        customers_wrap = ttk.Frame(self.business_panel_box)
+        customers_wrap.pack(fill=tk.BOTH, expand=False)
+        self.customers_listbox = tk.Listbox(customers_wrap, height=5)
+        self.customers_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.customers_scroll = ttk.Scrollbar(customers_wrap, orient=tk.VERTICAL, command=self.customers_listbox.yview)
+        self.customers_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.customers_listbox.config(yscrollcommand=self.customers_scroll.set)
+
         self.events_label = ttk.Label(self.business_panel_box, text="\u6700\u8fd1\u4e8b\u4ef6")
         self.events_label.pack(anchor=tk.W, pady=(6, 0))
         events_wrap = ttk.Frame(self.business_panel_box)
@@ -530,6 +597,10 @@ class DesktopWindow:
         self._focus_rows: list[dict] = []
         self._alert_rows: list[dict] = []
         self._event_rows: list[dict] = []
+        self._task_rows: list[dict] = []
+        self._customer_rows: list[dict] = []
+        self._filtered_task_rows: list[dict] = []
+        self._filtered_customer_rows: list[dict] = []
 
         action_row = ttk.Frame(box)
         action_row.pack(fill=tk.X, pady=(8, 0))
@@ -583,8 +654,8 @@ class DesktopWindow:
 
         self.api_input_label = ttk.Label(self.api_box, text="\u8f93\u5165")
         self.api_input_label.pack(anchor=tk.W, pady=(6, 0))
-        self.api_input_text = tk.Text(self.api_box, height=4, wrap=tk.WORD)
-        self.api_input_text.pack(fill=tk.X)
+        self.api_input_text = tk.Text(self.api_box, height=8, wrap=tk.WORD)
+        self.api_input_text.pack(fill=tk.BOTH, expand=True)
         self.api_input_text.bind("<Return>", self._on_api_input_return)
         self.api_input_text.bind("<KP_Enter>", self._on_api_input_return)
 
@@ -1536,13 +1607,15 @@ class DesktopWindow:
             events = list(reversed(self.state_board.latest(limit=20)))
             rows = self.state_board.focus(limit=10)
             alerts = self.state_board.alerts(limit=10)
+            tasks = self.state_board.list_tasks(limit=300)
+            customers = self.state_board.customer_lines(limit=200)
         except Exception:
             self.sync_status_var.set("Last sync: unavailable")
             self.metric_events.set("Events: 0")
             self.metric_focus.set("Focus tasks: 0")
             self.metric_alerts.set("Critical alerts: 0")
             self.runtime_hint_var.set(self._runtime_mode_hint(service_ok=False))
-            self._render_business_panel([], [], [])
+            self._render_business_panel([], [], [], [], [])
             self.root.after(5000, self.refresh_runtime_status)
             return
 
@@ -1555,7 +1628,7 @@ class DesktopWindow:
             f"Last sync: {latest_sync.get('created_at_utc', '')}" if latest_sync else "Last sync: none"
         )
         self.runtime_hint_var.set(self._runtime_mode_hint(service_ok=True))
-        self._render_business_panel(rows, alerts, events)
+        self._render_business_panel(rows, alerts, events, tasks, customers)
         self.root.after(5000, self.refresh_runtime_status)
 
     def _runtime_mode_hint(self, service_ok: bool = True) -> str:
@@ -1575,14 +1648,25 @@ class DesktopWindow:
             "No API configured: use web compatibility mode; desktop still supports start/import/search/growth feedback.",
         )
 
-    def _render_business_panel(self, focus_rows: list[dict], alert_rows: list[dict], event_rows: list[dict]) -> None:
+    def _render_business_panel(
+        self,
+        focus_rows: list[dict],
+        alert_rows: list[dict],
+        event_rows: list[dict],
+        task_rows: list[dict],
+        customer_rows: list[dict],
+    ) -> None:
         self._focus_rows = focus_rows
         self._alert_rows = alert_rows
         self._event_rows = event_rows
+        self._task_rows = task_rows
+        self._customer_rows = customer_rows
 
         self.focus_listbox.delete(0, tk.END)
         self.alert_listbox.delete(0, tk.END)
         self.events_listbox.delete(0, tk.END)
+        self.tasks_listbox.delete(0, tk.END)
+        self.customers_listbox.delete(0, tk.END)
 
         if not focus_rows:
             self.focus_listbox.insert(tk.END, self._tr("\u6682\u65e0\u91cd\u70b9\u4efb\u52a1", "No focus tasks"))
@@ -1609,15 +1693,78 @@ class DesktopWindow:
             customer = self._extract_customer_from_event(item) or "-"
             self.events_listbox.insert(tk.END, f"{at} | {action} | {customer}")
 
+        self._render_filtered_business_lists()
+
+    def _render_filtered_business_lists(self) -> None:
+        status_filter = self.task_filter_status_var.get().strip().lower() or "all"
+        task_kw = self.task_filter_keyword_var.get().strip().lower()
+        customer_kw = self.customer_filter_keyword_var.get().strip().lower()
+
+        self.tasks_listbox.delete(0, tk.END)
+        self.customers_listbox.delete(0, tk.END)
+        self._filtered_task_rows = []
+        self._filtered_customer_rows = []
+
+        for task in self._task_rows:
+            status = str(task.get("computed_status", "")).strip().lower()
+            customer = str(task.get("customer_name", "")).strip()
+            title = str(task.get("title", "")).strip()
+            task_hay = f"{customer} {title} {task.get('task_id', '')}".lower()
+            if status_filter != "all" and status != status_filter:
+                continue
+            if task_kw and task_kw not in task_hay:
+                continue
+            if customer_kw and customer_kw not in customer.lower():
+                continue
+            self._filtered_task_rows.append(task)
+
+        if not self._filtered_task_rows:
+            self.tasks_listbox.insert(tk.END, self._tr("\u6682\u65e0\u5339\u914d\u4efb\u52a1", "No matching tasks"))
+        for task in self._filtered_task_rows[:200]:
+            status = str(task.get("computed_status", "")).strip() or "-"
+            customer = str(task.get("customer_name", "")).strip() or "-"
+            title = str(task.get("title", "")).strip() or "-"
+            due = str(task.get("due_at_utc", "")).replace("T", " ")[:16]
+            self.tasks_listbox.insert(tk.END, f"{status} | {customer} | {due} | {title}")
+
+        for row in self._customer_rows:
+            customer = str(row.get("customer_name", "")).strip() or str(row.get("customer_id", "")).strip()
+            hay = f"{customer} {row.get('customer_id', '')}".lower()
+            if customer_kw and customer_kw not in hay:
+                continue
+            self._filtered_customer_rows.append(row)
+
+        if not self._filtered_customer_rows:
+            self.customers_listbox.insert(tk.END, self._tr("\u6682\u65e0\u5339\u914d\u5ba2\u6237", "No matching customers"))
+        for row in self._filtered_customer_rows[:200]:
+            customer = str(row.get("customer_name", "")).strip() or "-"
+            open_tasks = int(row.get("open_tasks", 0))
+            in_progress = int(row.get("in_progress_tasks", 0))
+            overdue = int(row.get("overdue_tasks", 0))
+            self.customers_listbox.insert(tk.END, f"{customer} | \u5f00\u653e {open_tasks} | \u8fdb\u884c {in_progress} | \u903e\u671f {overdue}")
+
+    def _clear_business_filters(self) -> None:
+        self.task_filter_status_var.set("all")
+        self.task_filter_keyword_var.set("")
+        self.customer_filter_keyword_var.set("")
+        self._render_filtered_business_lists()
+
     def _update_selected_task_status(self, status: str) -> None:
-        idx = self.focus_listbox.curselection()
-        if not idx:
+        task_id = ""
+        idx_task = self.tasks_listbox.curselection()
+        if idx_task:
+            task_index = int(idx_task[0])
+            if task_index < len(self._filtered_task_rows):
+                task_id = str(self._filtered_task_rows[task_index].get("task_id", "")).strip()
+        if not task_id:
+            idx_focus = self.focus_listbox.curselection()
+            if idx_focus:
+                focus_index = int(idx_focus[0])
+                if focus_index < len(self._focus_rows):
+                    task_id = str(self._focus_rows[focus_index].get("task_id", "")).strip()
+        if not task_id:
             messagebox.showinfo(self._tr("\u63d0\u793a", "Notice"), self._tr("\u8bf7\u5148\u9009\u4e2d\u4e00\u6761\u4efb\u52a1\u3002", "Select one task first."))
             return
-        row_index = int(idx[0])
-        if row_index >= len(self._focus_rows):
-            return
-        task_id = str(self._focus_rows[row_index].get("task_id", "")).strip()
         if not task_id:
             return
         note = self._tr("\u684c\u9762\u9762\u677f\u624b\u52a8\u66f4\u65b0", "Updated from desktop panel")
