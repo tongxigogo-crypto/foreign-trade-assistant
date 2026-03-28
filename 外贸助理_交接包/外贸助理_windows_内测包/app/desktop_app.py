@@ -368,7 +368,20 @@ class DesktopWindow:
         self.service_status = tk.StringVar(value="\u672a\u542f\u52a8")
         self.start_work_button = ttk.Button(row, text="\u4e00\u952e\u542f\u52a8", command=self.begin_work_session)
         self.start_work_button.pack(side=tk.LEFT)
-        self.open_workbench_button = ttk.Button(row, text="\u6253\u5f00\u7f51\u9875\u770b\u677f", command=self.open_dashboard_workbench)
+        self.open_workbench_button = tk.Button(
+            row,
+            text="\u6253\u5f00\u7f51\u9875\u770b\u677f",
+            command=self.open_dashboard_workbench,
+            bg="#0ea5e9",
+            fg="#ffffff",
+            activebackground="#0284c7",
+            activeforeground="#ffffff",
+            relief=tk.FLAT,
+            bd=0,
+            padx=12,
+            pady=3,
+            cursor="hand2",
+        )
         self.open_workbench_button.pack(side=tk.LEFT, padx=8)
         self.beginner_mode_var = tk.BooleanVar(value=True)
         self.beginner_mode_check = ttk.Checkbutton(
@@ -435,7 +448,20 @@ class DesktopWindow:
         top.pack(fill=tk.X, pady=(0, 6))
         self.sync_status_var = tk.StringVar(value="\u6700\u8fd1\u540c\u6b65\uff1a\u65e0")
         ttk.Label(top, textvariable=self.sync_status_var).pack(side=tk.LEFT)
-        self.runtime_open_workbench_button = ttk.Button(top, text="\u6253\u5f00\u7f51\u9875\u770b\u677f", command=self.open_dashboard_workbench)
+        self.runtime_open_workbench_button = tk.Button(
+            top,
+            text="\u6253\u5f00\u7f51\u9875\u770b\u677f",
+            command=self.open_dashboard_workbench,
+            bg="#0ea5e9",
+            fg="#ffffff",
+            activebackground="#0284c7",
+            activeforeground="#ffffff",
+            relief=tk.FLAT,
+            bd=0,
+            padx=10,
+            pady=2,
+            cursor="hand2",
+        )
         self.runtime_open_workbench_button.pack(side=tk.RIGHT)
         self.runtime_refresh_button = ttk.Button(top, text="\u5237\u65b0", command=self.refresh_runtime_status)
         self.runtime_refresh_button.pack(side=tk.RIGHT, padx=(0, 8))
@@ -1008,7 +1034,7 @@ class DesktopWindow:
             return
 
     def begin_work_session(self) -> None:
-        self.open_dashboard_after_start = True
+        self.open_dashboard_after_start = False
         self.start_services()
 
     def open_dashboard_workbench(
@@ -1058,9 +1084,6 @@ class DesktopWindow:
             self.root.after(0, lambda: self.service_status.set(msg))
             if bridge_ok and not self.did_initial_self_check:
                 self.root.after(0, self.run_health_check_silent)
-            if bridge_ok and dashboard_ok and self.open_dashboard_after_start:
-                self.root.after(0, self.open_dashboard_workbench)
-                self.open_dashboard_after_start = False
             self.root.after(0, self.refresh_runtime_status)
 
         threading.Thread(target=worker, daemon=True).start()
