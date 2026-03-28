@@ -1954,28 +1954,52 @@ class DesktopWindow:
 
     def _render_customer_detail(self, customer_name: str) -> None:
         payload = self._collect_customer_knowledge(customer_name)
-        lines: list[str] = []
-        lines.append(self._tr(f"\u5ba2\u6237\uff1a{customer_name}", f"Customer: {customer_name}"))
-        lines.append(self._tr("\u2014\u2014 \u90ae\u4ef6\u5f80\u6765 \u2014\u2014", "-- Email History --"))
-        lines.extend(payload["emails"][:20] or [self._tr("\u6682\u65e0", "None")])
-        lines.append("")
-        lines.append(self._tr("\u2014\u2014 \u5408\u540c\u5386\u53f2 \u2014\u2014", "-- Contract History --"))
-        lines.extend(payload["contracts"][:20] or [self._tr("\u6682\u65e0", "None")])
-        lines.append("")
-        lines.append(self._tr("\u2014\u2014 \u4ea7\u54c1\u4fe1\u606f \u2014\u2014", "-- Product Info --"))
-        lines.extend(payload["products"][:20] or [self._tr("\u6682\u65e0", "None")])
-        lines.append("")
-        lines.append(self._tr("\u2014\u2014 \u9500\u552e\u4ef7\u683c \u2014\u2014", "-- Sales Prices --"))
-        lines.extend(payload["prices"][:20] or [self._tr("\u6682\u65e0", "None")])
-        self._set_text_content(self.customer_detail_text, "\n".join(lines))
+        self.customer_detail_text.configure(state=tk.NORMAL)
+        self.customer_detail_text.delete("1.0", tk.END)
+        self.customer_detail_text.insert(tk.END, self._tr(f"\u5ba2\u6237\uff1a{customer_name}\n", f"Customer: {customer_name}\n"))
+        self._render_customer_detail_section(self._tr("\u2014\u2014 \u90ae\u4ef6\u5f80\u6765 \u2014\u2014", "-- Email History --"), payload["emails"])
+        self._render_customer_detail_section(self._tr("\u2014\u2014 \u5408\u540c\u5386\u53f2 \u2014\u2014", "-- Contract History --"), payload["contracts"])
+        self._render_customer_detail_section(self._tr("\u2014\u2014 \u4ea7\u54c1\u4fe1\u606f \u2014\u2014", "-- Product Info --"), payload["products"])
+        self._render_customer_detail_section(self._tr("\u2014\u2014 \u9500\u552e\u4ef7\u683c \u2014\u2014", "-- Sales Prices --"), payload["prices"])
+        self.customer_detail_text.configure(state=tk.DISABLED)
 
-    def _collect_customer_knowledge(self, customer_name: str) -> dict[str, list[str]]:
+    def _render_customer_detail_section(self, title: str, items: list[dict[str, str]]) -> None:
+        self.customer_detail_text.insert(tk.END, f"\n{title}\n")
+        if not items:
+            self.customer_detail_text.insert(tk.END, f"{self._tr('\u6682\u65e0', 'None')}\n")
+            return
+        for idx, item in enumerate(items[:20], start=1):
+            text = item.get("text", "").strip()
+            path = item.get("path", "").strip()
+            if not text:
+                continue
+            if path:
+                tag = f"customer_link_{title}_{idx}_{abs(hash(path))}"
+                self.customer_detail_text.insert(tk.END, f"{text}\n", (tag,))
+                self.customer_detail_text.tag_configure(tag, foreground="#1d4ed8", underline=1)
+                self.customer_detail_text.tag_bind(tag, "<Button-1>", lambda _e, p=path: self._open_customer_detail_file(p))
+                self.customer_detail_text.tag_bind(tag, "<Enter>", lambda _e: self.customer_detail_text.config(cursor="hand2"))
+                self.customer_detail_text.tag_bind(tag, "<Leave>", lambda _e: self.customer_detail_text.config(cursor="xterm"))
+            else:
+                self.customer_detail_text.insert(tk.END, f"{text}\n")
+
+    def _open_customer_detail_file(self, path_text: str) -> None:
+        path = Path(path_text)
+        if not path.exists():
+            messagebox.showwarning(self._tr("\u6587\u4ef6\u4e0d\u5b58\u5728", "File Missing"), path_text)
+            return
+        try:
+            open_path(path)
+        except OSError as exc:
+            messagebox.showerror(self._tr("\u6253\u5f00\u5931\u8d25", "Open Failed"), str(exc))
+
+    def _collect_customer_knowledge(self, customer_name: str) -> dict[str, list[dict[str, str]]]:
         name_l = customer_name.lower()
         kb = self.store.load()
-        emails: list[str] = []
-        contracts: list[str] = []
-        products: list[str] = []
-        prices: list[str] = []
+        emails: list[dict[str, str]] = []
+        contracts: list[dict[str, str]] = []
+        products: list[dict[str, str]] = []
+        prices: list[dict[str, str]] = []
 
         for fact in reversed(kb.doc_facts):
             text = str(fact).strip()
@@ -1985,13 +2009,13 @@ class DesktopWindow:
             if name_l and name_l not in text_l:
                 continue
             if any(k in text_l for k in ["mail", "email", "\u90ae\u4ef6", "reply", "inquiry"]):
-                emails.append(f"- {text}")
+                emails.append({"text": f"- {text}", "path": ""})
             if any(k in text_l for k in ["contract", "agreement", "po", "\u5408\u540c", "\u8ba2\u5355"]):
-                contracts.append(f"- {text}")
+                contracts.append({"text": f"- {text}", "path": ""})
             if any(k in text_l for k in ["product", "sku", "model", "\u4ea7\u54c1", "\u578b\u53f7"]):
-                products.append(f"- {text}")
+                products.append({"text": f"- {text}", "path": ""})
             if any(k in text_l for k in ["price", "usd", "eur", "$", "\u62a5\u4ef7", "\u4ef7\u683c"]):
-                prices.append(f"- {text}")
+                prices.append({"text": f"- {text}", "path": ""})
 
         events = list(reversed(self.state_board.latest(limit=400)))
         for event in events:
@@ -2000,20 +2024,39 @@ class DesktopWindow:
                 continue
             action = str(event.get("action_name", "")).strip()
             created = str(event.get("created_at_utc", "")).replace("T", " ")[:16]
+            # Only treat real inbound/outbound email traces as "email history".
+            if action in {"ingest_email_thread", "generate_followup_draft"}:
+                source_file = self._extract_source_file_from_event(event)
+                emails.append({"text": f"- [{created}] {self._event_action_label(action)}", "path": source_file})
+
+            for result in (event.get("results", []) if isinstance(event.get("results", []), list) else []):
+                if not isinstance(result, dict):
+                    continue
+                artifacts = result.get("artifacts", []) if isinstance(result.get("artifacts", []), list) else []
+                for art in artifacts:
+                    info = self._extract_business_info_from_artifact(str(art))
+                    if not info:
+                        continue
+                    if info.get("contract"):
+                        contracts.append({"text": f"- [{created}] {info['contract']}", "path": info.get("path", "")})
+                    if info.get("product"):
+                        products.append({"text": f"- [{created}] {info['product']}", "path": info.get("path", "")})
+                    if info.get("price"):
+                        prices.append({"text": f"- [{created}] {info['price']}", "path": info.get("path", "")})
+
+            # Fallback extraction from event message/context when artifact text is not available.
             product = self._extract_product_from_event(event)
             price_text = self._extract_price_from_event(event)
-            if action in {"ingest_email_thread", "conversation_sync", "generate_followup_draft"}:
-                emails.append(f"- [{created}] {self._event_action_label(action)}")
             if action in {"generate_quote_draft", "generate_followup_draft"} and product:
-                products.append(f"- [{created}] {product}")
+                products.append({"text": f"- [{created}] {product}", "path": ""})
             if action == "generate_quote_draft" and price_text:
-                prices.append(f"- [{created}] {price_text}")
+                prices.append({"text": f"- [{created}] {price_text}", "path": ""})
 
         return {
-            "emails": self._dedup_keep_order(emails),
-            "contracts": self._dedup_keep_order(contracts),
-            "products": self._dedup_keep_order(products),
-            "prices": self._dedup_keep_order(prices),
+            "emails": self._dedup_keep_order_entries(emails),
+            "contracts": self._dedup_keep_order_entries(contracts),
+            "products": self._dedup_keep_order_entries(products),
+            "prices": self._dedup_keep_order_entries(prices),
         }
 
     def _extract_price_from_event(self, event: dict) -> str:
@@ -2036,7 +2079,37 @@ class DesktopWindow:
                     val = match.group(1)
                     curr = (match.group(2) or "USD").upper()
                     return f"{val} {curr}"
+            artifacts = item.get("artifacts", []) if isinstance(item.get("artifacts", []), list) else []
+            for art in artifacts:
+                info = self._extract_business_info_from_artifact(str(art))
+                if info.get("price"):
+                    return str(info["price"])
         return ""
+
+    def _extract_business_info_from_artifact(self, artifact_path: str) -> dict[str, str]:
+        path = Path(artifact_path.strip())
+        if not path.exists() or not path.is_file():
+            return {}
+        data: dict[str, str] = {"path": str(path)}
+        low_name = path.name.lower()
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return data
+
+        if any(k in low_name for k in ("contract", "agreement", "po")):
+            data["contract"] = path.name
+
+        for line in text.splitlines():
+            clean = line.strip()
+            lower = clean.lower()
+            if lower.startswith("- product:") and "product" not in data:
+                data["product"] = clean.split(":", 1)[1].strip()
+            elif lower.startswith("- price:") and "price" not in data:
+                data["price"] = clean.split(":", 1)[1].strip()
+            elif ("contract" in lower or "agreement" in lower or "po#" in lower) and "contract" not in data:
+                data["contract"] = clean
+        return data
 
     def _dedup_keep_order(self, items: list[str]) -> list[str]:
         seen: set[str] = set()
@@ -2048,6 +2121,38 @@ class DesktopWindow:
             seen.add(s)
             out.append(s)
         return out
+
+    def _dedup_keep_order_entries(self, items: list[dict[str, str]]) -> list[dict[str, str]]:
+        seen: set[str] = set()
+        out: list[dict[str, str]] = []
+        for item in items:
+            text = str(item.get("text", "")).strip()
+            path = str(item.get("path", "")).strip()
+            key = f"{text}|{path}"
+            if not text or key in seen:
+                continue
+            seen.add(key)
+            out.append({"text": text, "path": path})
+        return out
+
+    def _extract_source_file_from_event(self, event: dict) -> str:
+        results = event.get("results", [])
+        if not isinstance(results, list):
+            return ""
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            ctx = item.get("context", {})
+            if isinstance(ctx, dict):
+                src = str(ctx.get("source_file", "")).strip()
+                if src:
+                    return src
+            artifacts = item.get("artifacts", []) if isinstance(item.get("artifacts", []), list) else []
+            for art in artifacts:
+                p = str(art).strip()
+                if p:
+                    return p
+        return ""
 
     def _collect_radar_data(self, query: str) -> dict:
         kb = self.store.load()
