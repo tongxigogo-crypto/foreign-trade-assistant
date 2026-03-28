@@ -4,7 +4,12 @@ setlocal
 cd /d "%~dp0"
 
 if exist "InVault.exe" (
-  start "" "InVault.exe"
+  start "" "%~dp0InVault.exe"
+  exit /b 0
+)
+
+if exist "dist\\InVault.exe" (
+  start "" "%~dp0dist\\InVault.exe"
   exit /b 0
 )
 

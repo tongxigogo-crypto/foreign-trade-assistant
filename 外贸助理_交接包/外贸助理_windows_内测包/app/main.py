@@ -135,7 +135,7 @@ def run_cli(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    root = Path(os.getenv("TRADE_ASSISTANT_ROOT", Path(__file__).resolve().parents[1]))
+    root = _resolve_runtime_root()
     config = AppConfig.load(root)
     settings_store = UserSettingsStore(config.user_settings_file)
     runtime_settings = settings_store.load()
@@ -560,6 +560,28 @@ def _safe_print(text: str) -> None:
         print(text)
     except UnicodeEncodeError:
         sys.stdout.buffer.write((text + "\n").encode("utf-8", errors="replace"))
+
+
+def _resolve_runtime_root() -> Path:
+    env_root = os.getenv("TRADE_ASSISTANT_ROOT", "").strip()
+    if env_root:
+        return Path(env_root).expanduser().resolve()
+
+    candidates: list[Path] = [Path.cwd().resolve()]
+    if getattr(sys, "frozen", False):
+        exe_parent = Path(sys.executable).resolve().parent
+        candidates.extend([exe_parent, exe_parent.parent])
+    else:
+        candidates.append(Path(__file__).resolve().parents[1])
+
+    def _is_project_root(path: Path) -> bool:
+        return (path / "app").exists() and (path / "config").exists()
+
+    for candidate in candidates:
+        if _is_project_root(candidate):
+            return candidate
+
+    return Path(__file__).resolve().parents[1]
 
 
 if __name__ == "__main__":

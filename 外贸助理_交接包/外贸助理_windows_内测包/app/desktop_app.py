@@ -2170,13 +2170,33 @@ class DesktopWindow:
         self.result_text.configure(state=tk.DISABLED)
 
     def open_extension_folder(self) -> None:
-        path = self.config.root_dir / "extension"
-        if os.name == "nt":
-            os.startfile(path)  # type: ignore[attr-defined]
-        elif sys.platform == "darwin":
-            subprocess.Popen(["open", str(path)])
-        else:
-            subprocess.Popen(["xdg-open", str(path)])
+        candidate_paths = [
+            self.config.root_dir / "extension",
+            self.config.root_dir.parent / "extension",
+            Path.cwd() / "extension",
+        ]
+        path = next((item for item in candidate_paths if item.exists()), None)
+        if path is None:
+            messagebox.showerror(
+                self._tr("扩展目录不存在", "Extension folder missing"),
+                self._tr(
+                    "未找到 extension 目录，请确认内测包结构完整。",
+                    "Cannot find extension folder. Please verify package structure.",
+                ),
+            )
+            return
+        try:
+            if os.name == "nt":
+                os.startfile(str(path))  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", str(path)])
+            else:
+                subprocess.Popen(["xdg-open", str(path)])
+        except OSError as exc:
+            messagebox.showerror(
+                self._tr("打开失败", "Open failed"),
+                self._tr(f"无法打开目录：{exc}", f"Failed to open folder: {exc}"),
+            )
 
     def open_chrome_extensions_page(self) -> None:
         url = "chrome://extensions/"
