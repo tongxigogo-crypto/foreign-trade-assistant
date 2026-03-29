@@ -57,7 +57,7 @@ jobs:
           chmod +x scripts/build_mac_release.sh
           SKIP_TESTS=1 ./scripts/build_mac_release.sh "${{ steps.version.outputs.value }}"
 
-      - name: Harden mac beta package (Gatekeeper-safe launcher)
+      - name: Harden mac beta package (App-only distribution)
         if: runner.os == 'macOS'
         shell: bash
         run: |
@@ -79,43 +79,6 @@ jobs:
 
           # Remove unsigned binary to avoid hard Gatekeeper block in beta phase.
           rm -f "$STAGE_DIR/InVault"
-
-          cat > "$STAGE_DIR/Launch_InVault_Mac.command" <<'EOF'
-          #!/bin/bash
-          set -euo pipefail
-          SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-          cd "$SCRIPT_DIR"
-
-          if command -v xattr >/dev/null 2>&1; then
-            xattr -dr com.apple.quarantine "$SCRIPT_DIR" 2>/dev/null || true
-          fi
-
-          chmod +x "$SCRIPT_DIR"/*.command 2>/dev/null || true
-
-          # Bootstrap local runtime without depending on localized script names.
-          if [ ! -x "$SCRIPT_DIR/.venv/bin/python" ] && command -v python3 >/dev/null 2>&1; then
-            python3 -m venv "$SCRIPT_DIR/.venv" || true
-            if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
-              "$SCRIPT_DIR/.venv/bin/python" -m pip install --upgrade pip >/dev/null 2>&1 || true
-              if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
-                "$SCRIPT_DIR/.venv/bin/python" -m pip install -r "$SCRIPT_DIR/requirements.txt" >/dev/null 2>&1 || true
-              fi
-              touch "$SCRIPT_DIR/.venv/.invault_ready_v1" || true
-            fi
-          fi
-
-          if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
-            exec "$SCRIPT_DIR/.venv/bin/python" -m app.main desktop
-          fi
-          if command -v python3 >/dev/null 2>&1; then
-            exec python3 -m app.main desktop
-          fi
-          echo "[ERROR] Python runtime not found."
-          exit 1
-          EOF
-
-          chmod +x "$STAGE_DIR/Launch_InVault_Mac.command"
-          chmod +x "$STAGE_DIR"/*.command 2>/dev/null || true
 
           # Ensure beta package keeps full runtime source payload.
           PKG_DIR="$(cd .. && pwd)"

@@ -81,12 +81,13 @@ class DesktopWindow:
         self.radar_placeholder_en = "Enter keywords then click Search.\n"
         self.import_result_placeholder_zh = "导入结果会显示在这里。\n"
         self.import_result_placeholder_en = "Import results will appear here.\n"
+        error_reporting_enabled = bool(getattr(self.settings, "error_reporting_enabled", False))
         init_error_reporting(
-            enabled=bool(self.settings.error_reporting_enabled),
+            enabled=error_reporting_enabled,
             app_version=APP_VERSION,
             surface="desktop_window",
         )
-        set_error_reporting_enabled(bool(self.settings.error_reporting_enabled))
+        set_error_reporting_enabled(error_reporting_enabled)
 
         self._build_ui()
 

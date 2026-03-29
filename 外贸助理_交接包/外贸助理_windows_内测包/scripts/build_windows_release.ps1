@@ -90,8 +90,19 @@ if not exist "InVault.exe" (
   pause
   exit /b 1
 )
-start "" "InVault.exe"
+start "" "InVault.exe" cli desktop
 '@ | Set-Content -Encoding UTF8 (Join-Path $stageDir "Launch_InVault_Windows.bat")
+    @'
+@echo off
+chcp 65001 >nul
+cd /d "%~dp0"
+if not exist "InVault.exe" (
+  echo [ERROR] InVault.exe not found.
+  pause
+  exit /b 1
+)
+start "" "InVault.exe"
+'@ | Set-Content -Encoding UTF8 (Join-Path $stageDir "Launch_InVault_Tray.bat")
 }
 
 Run-Step "Create zip" {

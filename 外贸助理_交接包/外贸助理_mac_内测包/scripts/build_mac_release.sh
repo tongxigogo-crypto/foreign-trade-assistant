@@ -90,6 +90,10 @@ InVault for macOS - First Use
 Inside app:
 1) Click "One-click Start"
 2) Click "Open Web Workbench"
+
+Important:
+- Use InVault.app from Applications.
+- Do not use terminal command launchers for end users.
 TXT
 
 echo "==> Build zip package"

@@ -8,6 +8,12 @@ from pathlib import Path
 @dataclass
 class UserSettings:
     output_dir: str = ""
+    api_provider: str = "nvidia"
+    api_key: str = ""
+    api_model: str = ""
+    api_url: str = ""
+    api_use_local_context: bool = True
+    api_timeout_sec: int = 30
     auto_open_dashboard_after_wizard: bool = True
     extension_domain_whitelist: list[str] = field(default_factory=list)
     mail_provider: str = "gmail"
@@ -17,6 +23,7 @@ class UserSettings:
     mail_max_messages: int = 200
     mail_password: str = ""
     remember_mail_password: bool = False
+    error_reporting_enabled: bool = False
     extra: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -24,6 +31,12 @@ class UserSettings:
         payload.update(
             {
                 "output_dir": self.output_dir,
+                "api_provider": self.api_provider,
+                "api_key": self.api_key,
+                "api_model": self.api_model,
+                "api_url": self.api_url,
+                "api_use_local_context": bool(self.api_use_local_context),
+                "api_timeout_sec": int(self.api_timeout_sec),
                 "auto_open_dashboard_after_wizard": self.auto_open_dashboard_after_wizard,
                 "extension_domain_whitelist": list(self.extension_domain_whitelist),
                 "mail_provider": self.mail_provider,
@@ -33,6 +46,7 @@ class UserSettings:
                 "mail_max_messages": int(self.mail_max_messages),
                 "mail_password": self.mail_password if self.remember_mail_password else "",
                 "remember_mail_password": bool(self.remember_mail_password),
+                "error_reporting_enabled": bool(self.error_reporting_enabled),
             }
         )
         return payload
@@ -40,6 +54,15 @@ class UserSettings:
     @classmethod
     def from_dict(cls, data: dict) -> "UserSettings":
         output_dir = str(data.get("output_dir", "")).strip()
+        api_provider = str(data.get("api_provider", "nvidia")).strip().lower() or "nvidia"
+        api_key = str(data.get("api_key", "")).strip()
+        api_model = str(data.get("api_model", "")).strip()
+        api_url = str(data.get("api_url", "")).strip()
+        api_use_local_context = bool(data.get("api_use_local_context", True))
+        try:
+            api_timeout_sec = int(data.get("api_timeout_sec", 30))
+        except (TypeError, ValueError):
+            api_timeout_sec = 30
         auto_open = bool(data.get("auto_open_dashboard_after_wizard", True))
         whitelist_raw = data.get("extension_domain_whitelist", [])
         whitelist: list[str] = []
@@ -60,12 +83,19 @@ class UserSettings:
             mail_max_messages = 200
         remember_mail_password = bool(data.get("remember_mail_password", False))
         mail_password = str(data.get("mail_password", "")).strip() if remember_mail_password else ""
+        error_reporting_enabled = bool(data.get("error_reporting_enabled", False))
         extra = {
             key: value
             for key, value in data.items()
             if key
             not in {
                 "output_dir",
+                "api_provider",
+                "api_key",
+                "api_model",
+                "api_url",
+                "api_use_local_context",
+                "api_timeout_sec",
                 "auto_open_dashboard_after_wizard",
                 "extension_domain_whitelist",
                 "mail_provider",
@@ -75,10 +105,17 @@ class UserSettings:
                 "mail_max_messages",
                 "mail_password",
                 "remember_mail_password",
+                "error_reporting_enabled",
             }
         }
         return cls(
             output_dir=output_dir,
+            api_provider=api_provider,
+            api_key=api_key,
+            api_model=api_model,
+            api_url=api_url,
+            api_use_local_context=api_use_local_context,
+            api_timeout_sec=max(5, min(api_timeout_sec, 180)),
             auto_open_dashboard_after_wizard=auto_open,
             extension_domain_whitelist=whitelist,
             mail_provider=mail_provider,
@@ -88,6 +125,7 @@ class UserSettings:
             mail_max_messages=max(1, min(mail_max_messages, 5000)),
             mail_password=mail_password,
             remember_mail_password=remember_mail_password,
+            error_reporting_enabled=error_reporting_enabled,
             extra=extra,
         )
 
