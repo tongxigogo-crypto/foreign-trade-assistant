@@ -8,7 +8,39 @@ from typing import Callable, Iterable
 
 from .local_store import LocalKnowledgeStore
 
-SUPPORTED_SUFFIXES = {".txt", ".md", ".markdown", ".json", ".log", ".csv"}
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
+
+try:
+    from docx import Document
+except ImportError:
+    Document = None
+
+try:
+    from openpyxl import load_workbook
+except ImportError:
+    load_workbook = None
+
+try:
+    import xlrd
+except ImportError:
+    xlrd = None
+
+
+SUPPORTED_SUFFIXES = {
+    ".txt",
+    ".md",
+    ".markdown",
+    ".json",
+    ".log",
+    ".csv",
+    ".pdf",
+    ".docx",
+    ".xlsx",
+    ".xls",
+}
 TEXT_KEYS = {
     "text",
     "content",
@@ -147,8 +179,17 @@ def detect_history_source(path: Path) -> str:
 
 
 def extract_facts_from_history_file(path: Path, *, max_lines: int, max_chars_per_fact: int) -> list[str]:
-    if path.suffix.lower() == ".json":
+    suffix = path.suffix.lower()
+    if suffix == ".json":
         return _extract_from_json(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".pdf":
+        return _extract_from_pdf(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".docx":
+        return _extract_from_docx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".xlsx":
+        return _extract_from_xlsx(path, max_lines=max_lines, max_chars=max_chars_per_fact)
+    if suffix == ".xls":
+        return _extract_from_xls(path, max_lines=max_lines, max_chars=max_chars_per_fact)
     return _extract_from_plain_text(path, max_lines=max_lines, max_chars=max_chars_per_fact)
 
 
@@ -171,6 +212,76 @@ def _extract_from_json(path: Path, *, max_lines: int, max_chars: int) -> list[st
             collected.append(line)
         if len(collected) >= max_lines:
             break
+    return collected
+
+
+def _extract_from_pdf(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    if PdfReader is None:
+        return []
+    reader = PdfReader(path)
+    collected: list[str] = []
+    for page in reader.pages:
+        text = page.extract_text() or ""
+        for line in text.splitlines():
+            cleaned = _clean_line(line, max_chars=max_chars)
+            if cleaned:
+                collected.append(cleaned)
+            if len(collected) >= max_lines:
+                return collected
+    return collected
+
+
+def _extract_from_docx(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    if Document is None:
+        return []
+    document = Document(path)
+    collected: list[str] = []
+    for paragraph in document.paragraphs:
+        cleaned = _clean_line(paragraph.text, max_chars=max_chars)
+        if cleaned:
+            collected.append(cleaned)
+        if len(collected) >= max_lines:
+            break
+    return collected
+
+
+def _extract_from_xlsx(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    if load_workbook is None:
+        return []
+    workbook = load_workbook(path, read_only=True, data_only=True)
+    try:
+        return _extract_rows_from_sheets(
+            (sheet.iter_rows(values_only=True) for sheet in workbook.worksheets),
+            max_lines=max_lines,
+            max_chars=max_chars,
+        )
+    finally:
+        close = getattr(workbook, "close", None)
+        if callable(close):
+            close()
+
+
+def _extract_from_xls(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
+    if xlrd is None:
+        return []
+    workbook = xlrd.open_workbook(path)
+    sheets = []
+    for index in range(getattr(workbook, "nsheets", 0)):
+        sheet = workbook.sheet_by_index(index)
+        sheets.append((sheet.row_values(row_index) for row_index in range(getattr(sheet, "nrows", 0))))
+    return _extract_rows_from_sheets(sheets, max_lines=max_lines, max_chars=max_chars)
+
+
+def _extract_rows_from_sheets(sheet_rows: Iterable[Iterable[object]], *, max_lines: int, max_chars: int) -> list[str]:
+    collected: list[str] = []
+    for rows in sheet_rows:
+        for row in rows:
+            line = " ".join(str(cell).strip() for cell in row if str(cell).strip())
+            cleaned = _clean_line(line, max_chars=max_chars)
+            if cleaned:
+                collected.append(cleaned)
+            if len(collected) >= max_lines:
+                return collected
     return collected
 
 

@@ -1,12 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_data_files
 
 project_root = Path.cwd()
 datas = [
     (str(project_root / "app" / "dashboard_ui.html"), "app"),
     (str(project_root / "app" / "dashboard_layout_v2.json"), "app"),
 ]
+datas += collect_data_files("docx")
+datas += collect_data_files("openpyxl")
 
 a = Analysis(
     [str(project_root / "app" / "tray_entry.py")],
@@ -21,6 +24,10 @@ a = Analysis(
         "PIL",
         "PIL.Image",
         "PIL.ImageDraw",
+        "pypdf",
+        "docx",
+        "openpyxl",
+        "xlrd",
     ],
     hookspath=[],
     hooksconfig={},
