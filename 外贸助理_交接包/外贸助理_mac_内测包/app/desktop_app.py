@@ -186,6 +186,7 @@ class DesktopWindow:
         self._build_feedback_section(self.right_panel)
         self._apply_language_texts()
         self._apply_beginner_mode()
+        self.root.after_idle(self._set_main_pane_split_default)
         self.root.after(500, self.begin_work_session)
         self.root.after(1200, self._focus_primary_entry)
         self.root.after(1500, self.refresh_runtime_status)
@@ -199,6 +200,23 @@ class DesktopWindow:
         target_height = max(event.height, self.main_content.winfo_reqheight())
         self.main_canvas.itemconfigure(self.main_window, width=target_width, height=target_height)
         self._configure_canvas_scrollregion()
+        self.root.after_idle(self._set_main_pane_split_default)
+
+    def _set_main_pane_split_default(self) -> None:
+        try:
+            total_width = self.main_panes.winfo_width()
+            if total_width <= 1:
+                total_width = self.main_content.winfo_width()
+            if total_width <= 1:
+                total_width = self.root.winfo_width() - 40
+            if total_width <= 600:
+                return
+            left_width = max(320, int(total_width * 0.28))
+            middle_width = max(420, int(total_width * 0.44))
+            self.main_panes.sashpos(0, left_width)
+            self.main_panes.sashpos(1, left_width + middle_width)
+        except tk.TclError:
+            return
 
     def _switch_language(self, lang: str) -> None:
         self.ui_lang = "en" if lang == "en" else "zh"
@@ -1307,6 +1325,9 @@ class DesktopWindow:
             self.import_status.set(self._tr("\u7b49\u5f85\u5bfc\u5165", "Waiting for import"))
 
     def choose_import_source(self) -> None:
+        if sys.platform == "darwin":
+            self.choose_import_dir()
+            return
         choice = messagebox.askyesnocancel(
             self._tr("\u9009\u62e9\u5bfc\u5165\u65b9\u5f0f", "Choose import source"),
             self._tr(

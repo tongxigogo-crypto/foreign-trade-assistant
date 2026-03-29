@@ -45,6 +45,7 @@ python -m PyInstaller \
   --clean \
   --windowed \
   --name "$APP_NAME" \
+  --collect-data certifi \
   --add-data "app/dashboard_ui.html:app" \
   --add-data "app/dashboard_layout_v2.json:app" \
   "app/desktop_entry.py"

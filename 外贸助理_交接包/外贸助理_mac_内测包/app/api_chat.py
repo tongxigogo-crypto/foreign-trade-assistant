@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import json
+import ssl
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+try:
+    import certifi
+except ImportError:  # pragma: no cover - optional in dev, bundled in release
+    certifi = None
 
 from .capsule_builder import CapsuleBuilder
 from .contracts import CapsuleRequest
@@ -196,8 +202,14 @@ def send_chat_request(settings: ApiChatSettings, prompt: str) -> str:
             "Authorization": f"Bearer {settings.api_key.strip()}",
         },
     )
+    ssl_context = ssl.create_default_context()
+    if certifi is not None:
+        try:
+            ssl_context.load_verify_locations(cafile=certifi.where())
+        except OSError:
+            pass
     try:
-        with urlopen(req, timeout=max(5, int(settings.timeout_sec))) as resp:  # noqa: S310
+        with urlopen(req, timeout=max(5, int(settings.timeout_sec)), context=ssl_context) as resp:  # noqa: S310
             raw = resp.read().decode("utf-8", errors="ignore")
     except HTTPError as exc:
         body = ""
