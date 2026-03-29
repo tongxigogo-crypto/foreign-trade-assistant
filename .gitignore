@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*.pyd
+
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+.venv/
+.venv-*/
+
+# build outputs
+build/
+dist/
+local_data/
+updates/
+
+# agent/harness runtime outputs
+agent_system/output/
+
+# packaged release artifacts (kept locally for distribution)
+外贸助理_交接包/**/release/
+外贸助理_交接包/**/website/assets/downloads/
+
+# local bridge experiments/logs
+scripts/feishu_bridge*.log
+scripts/feishu_codex_bridge*.json
+scripts/feishu_codex_bridge*.py
+scripts/start-feishu-codex-bridge.ps1
+scripts/README-feishu-codex-bridge.md
