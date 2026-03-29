@@ -81,6 +81,9 @@ class DesktopWindow:
         self.radar_placeholder_en = "Enter keywords then click Search.\n"
         self.import_result_placeholder_zh = "导入结果会显示在这里。\n"
         self.import_result_placeholder_en = "Import results will appear here.\n"
+        self._last_callback_error_sig = ""
+        self._last_callback_error_ts = 0.0
+        self._callback_error_suppressed = 0
         error_reporting_enabled = bool(getattr(self.settings, "error_reporting_enabled", False))
         init_error_reporting(
             enabled=error_reporting_enabled,
@@ -908,6 +911,17 @@ class DesktopWindow:
     def _report_callback_exception(self, _exc_type, exc_value, _exc_tb) -> None:
         if isinstance(exc_value, BaseException):
             capture_exception(exc_value, {"surface": "tk_callback"})
+        sig = f"{type(exc_value).__name__}:{exc_value}"
+        now = time.time()
+        if sig == self._last_callback_error_sig and (now - self._last_callback_error_ts) < 10:
+            self._callback_error_suppressed += 1
+            if self._callback_error_suppressed == 1:
+                self.service_status.set(self._tr("检测到重复错误，已临时抑制弹窗。", "Repeated error detected; popup temporarily suppressed."))
+            self._last_callback_error_ts = now
+            return
+        self._last_callback_error_sig = sig
+        self._last_callback_error_ts = now
+        self._callback_error_suppressed = 0
         messagebox.showerror("Runtime Error", str(exc_value))
 
     def _set_api_result_split(self, upper_ratio: float, lower_ratio: float) -> None:
