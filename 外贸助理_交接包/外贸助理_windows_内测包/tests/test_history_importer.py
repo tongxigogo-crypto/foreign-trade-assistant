@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from pathlib import Path
 
 from app import history_importer
 
@@ -104,3 +105,37 @@ def test_extract_xls_uses_xlrd(monkeypatch, tmp_path) -> None:
     facts = history_importer.extract_facts_from_history_file(source, max_lines=10, max_chars_per_fact=100)
     assert "SKU A-001" in facts
     assert "数量 50" in facts
+
+
+def test_ingest_history_directory_marks_parser_exception_as_failed(monkeypatch, tmp_path) -> None:
+    source = tmp_path / "broken.xlsx"
+    source.write_bytes(b"broken")
+    knowledge_file = tmp_path / "knowledge_base.json"
+    store = history_importer.LocalKnowledgeStore(knowledge_file)
+    store.ensure_initialized()
+
+    monkeypatch.setattr(history_importer, "_scan_files", lambda *_args, **_kwargs: [source])
+
+    def fake_extract(path: Path, *, max_lines: int, max_chars_per_fact: int) -> list[str]:  # noqa: ARG001
+        raise ValueError("File is not a zip file")
+
+    monkeypatch.setattr(history_importer, "extract_facts_from_history_file", fake_extract)
+
+    stats = history_importer.ingest_history_directory(store, tmp_path, recursive=True, max_files=10)
+    assert stats.scanned_files == 1
+    assert stats.imported_files == 0
+    assert stats.skipped_files == 1
+    assert stats.failed_files == [str(source)]
+
+
+def test_extract_xlsx_returns_empty_on_parser_error(monkeypatch, tmp_path) -> None:
+    source = tmp_path / "broken.xlsx"
+    source.write_bytes(b"broken")
+
+    def fake_load_workbook(path, read_only: bool = False, data_only: bool = False):  # noqa: ARG001
+        raise IndexError("list index out of range")
+
+    monkeypatch.setattr(history_importer, "load_workbook", fake_load_workbook, raising=False)
+
+    facts = history_importer.extract_facts_from_history_file(source, max_lines=10, max_chars_per_fact=100)
+    assert facts == []

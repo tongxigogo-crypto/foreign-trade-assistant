@@ -104,7 +104,7 @@ def ingest_history_directory(
                 max_lines=max_lines_per_file,
                 max_chars_per_fact=max_chars_per_fact,
             )
-        except OSError:
+        except Exception:
             stats.failed_files.append(str(path))
             extracted = []
         if not extracted:
@@ -218,10 +218,16 @@ def _extract_from_json(path: Path, *, max_lines: int, max_chars: int) -> list[st
 def _extract_from_pdf(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
     if PdfReader is None:
         return []
-    reader = PdfReader(path)
+    try:
+        reader = PdfReader(path)
+    except Exception:
+        return []
     collected: list[str] = []
     for page in reader.pages:
-        text = page.extract_text() or ""
+        try:
+            text = page.extract_text() or ""
+        except Exception:
+            continue
         for line in text.splitlines():
             cleaned = _clean_line(line, max_chars=max_chars)
             if cleaned:
@@ -234,7 +240,10 @@ def _extract_from_pdf(path: Path, *, max_lines: int, max_chars: int) -> list[str
 def _extract_from_docx(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
     if Document is None:
         return []
-    document = Document(path)
+    try:
+        document = Document(path)
+    except Exception:
+        return []
     collected: list[str] = []
     for paragraph in document.paragraphs:
         cleaned = _clean_line(paragraph.text, max_chars=max_chars)
@@ -248,7 +257,10 @@ def _extract_from_docx(path: Path, *, max_lines: int, max_chars: int) -> list[st
 def _extract_from_xlsx(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
     if load_workbook is None:
         return []
-    workbook = load_workbook(path, read_only=True, data_only=True)
+    try:
+        workbook = load_workbook(path, read_only=True, data_only=True)
+    except Exception:
+        return []
     try:
         return _extract_rows_from_sheets(
             (sheet.iter_rows(values_only=True) for sheet in workbook.worksheets),
@@ -264,10 +276,16 @@ def _extract_from_xlsx(path: Path, *, max_lines: int, max_chars: int) -> list[st
 def _extract_from_xls(path: Path, *, max_lines: int, max_chars: int) -> list[str]:
     if xlrd is None:
         return []
-    workbook = xlrd.open_workbook(path)
+    try:
+        workbook = xlrd.open_workbook(path)
+    except Exception:
+        return []
     sheets = []
     for index in range(getattr(workbook, "nsheets", 0)):
-        sheet = workbook.sheet_by_index(index)
+        try:
+            sheet = workbook.sheet_by_index(index)
+        except Exception:
+            continue
         sheets.append((sheet.row_values(row_index) for row_index in range(getattr(sheet, "nrows", 0))))
     return _extract_rows_from_sheets(sheets, max_lines=max_lines, max_chars=max_chars)
 
