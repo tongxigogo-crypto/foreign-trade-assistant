@@ -4,6 +4,14 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+DEFAULT_POLICY = {
+    "data_dir": "local_data",
+    "knowledge_file": "knowledge_base.json",
+    "output_dir": "artifacts",
+    "state_board_file": "state_board.json",
+    "user_settings_file": "user_settings.json",
+}
+
 
 @dataclass
 class AppConfig:
@@ -17,7 +25,10 @@ class AppConfig:
     @classmethod
     def load(cls, root_dir: Path) -> "AppConfig":
         policy_path = root_dir / "config" / "partner-policy.json"
-        data = json.loads(policy_path.read_text(encoding="utf-8"))
+        if policy_path.exists():
+            data = json.loads(policy_path.read_text(encoding="utf-8"))
+        else:
+            data = dict(DEFAULT_POLICY)
         data_dir = root_dir / data.get("data_dir", "local_data")
         knowledge_file = data_dir / data.get("knowledge_file", "knowledge_base.json")
         output_dir = data_dir / data.get("output_dir", "artifacts")

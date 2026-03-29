@@ -122,6 +122,18 @@ jobs:
           rm -rf "$STAGE_DIR/app" "$STAGE_DIR/config" "$STAGE_DIR/docs" "$STAGE_DIR/requirements.txt"
           cp -R "$PKG_DIR/app" "$STAGE_DIR/app"
           [ -d "$PKG_DIR/config" ] && cp -R "$PKG_DIR/config" "$STAGE_DIR/config"
+          if [ ! -f "$STAGE_DIR/config/partner-policy.json" ]; then
+            mkdir -p "$STAGE_DIR/config"
+            cat > "$STAGE_DIR/config/partner-policy.json" <<'JSON'
+          {
+            "data_dir": "local_data",
+            "knowledge_file": "knowledge_base.json",
+            "output_dir": "artifacts",
+            "state_board_file": "state_board.json",
+            "user_settings_file": "user_settings.json"
+          }
+          JSON
+          fi
           [ -d "$PKG_DIR/docs" ] && cp -R "$PKG_DIR/docs" "$STAGE_DIR/docs"
           [ -f "$PKG_DIR/requirements.txt" ] && cp "$PKG_DIR/requirements.txt" "$STAGE_DIR/requirements.txt"
 
