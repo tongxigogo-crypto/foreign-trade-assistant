@@ -5,8 +5,10 @@
 当前分支：`codex/product-manager`
 
 ## 1) 当前代码进度
-- 桌面端已进入 `build14` 迭代（版本：`v0.1.1-beta1-build14`）。
-- Windows 侧核心流程已可回归通过：导入、API 对话、客户详情、看板状态流转。
+- 桌面端已发布 `build16`（版本：`v0.1.1-beta1-build16`）。
+- Windows 侧核心流程已回归通过：导入、API 对话、客户详情、看板状态流转。
+- Windows 已支持“一键更新”（自动下载 + 就地替换 + 重启），用户无需重复整包下载。
+- macOS 已产出 `InVault.app` + `.dmg`，且 App 内置 Python 运行时（用户无需安装 Python/pip）。
 - 桌面 UI 已包含：
   - 左侧：启动/导入/雷达检索/扩展安装向导
   - 中间：API 对话（输入/回复/回答依据可调节）
@@ -27,28 +29,27 @@
   - 测试/隔离运行默认 workspace（避免测试串到系统历史数据）。
 
 ## 3) 已完成项（最近）
-- `0fdde13`：客户详情页签、快捷报价、看板拖拽流转、导入可见性增强、build14 版本升级。
-- `44692db`：修复 isolated data dir 默认行为；修复 Windows 打包脚本用户指南匹配。
-- `c36dfc0`：Harness 分级审计 + 增量摘要落地并测试通过。
-- `3b8d628`：Mac 打包链路改造为目标产物 `InVault.app`，并修 CI workflow 构建路径配置。
-- `b07ee99`：新增 RAG 新鲜度规则并补充 status 快照。
+- Windows：一键更新（release-manifest 优先 + 就地替换 + 回滚保护）与 UI 入口调整完成。
+- macOS：修复 CI 打包脚本回退问题，恢复产出 `InVault.app` + `.dmg`，并验证 zip 内含内置 Python 运行时。
+- 发布收口：已将 build16 产物同步到固定 `release/` 目录并清理归档旧版本。
+- 工程：补齐 `docs/harness/*` 作为新线程启动锚点；补齐 `.gitignore`（忽略本地产物/缓存）以减少噪音提交。
 
 ## 4) 待办事项（优先级）
-- P0：把 `3b8d628` 推到远端分支并重新触发构建（当前网络导致 push 不稳定）。
-- P0：验证 GitHub macOS 构建产物确实包含：
-  - `InVault.app`
-  - `.dmg`
-  - 用户无需安装 Python/pip。
-- P1：收敛 release 目录历史包（仅保留当前对外版本，旧包归档/清理策略固定）。
-- P1：完善 Mac 小白安装文档（Gatekeeper/权限弹窗的一步步处理）。
+- P0（下一版方向）：预留“本地开发 API”（仅本机可访问），为未来企业专属飞书/协作对接提供稳定调用面（UI 给用户、API 给 AI/自动化）。
+- P1（企业协作方向）：飞书侧以“多维表格（Bitable）= 指令收件箱/结果回写”作为零自建服务器的主路线（后续按企业专属对接交付）。
+- P1：mac 分发体验补齐（Gatekeeper 处理文档 + 评估签名/公证策略）。
 
 ## 5) 当前阻塞与风险
-- 阻塞：本地到 GitHub `443` 连接间歇失败，导致新提交无法稳定推送。
-- 风险：若构建基于旧 head，Mac 产物会退回脚本包（体积约 95KB），不满足“免 Python”目标。
+- 阻塞：本地到 GitHub `443` 连接间歇失败，git push 不稳定（必要时用 `gh api` 走 git-data API 作为补救通道）。
+- 风险：mac 未签名/未公证时，用户端仍可能遇到 Gatekeeper “已损坏/无法打开” 提示（需文档/签名策略降低概率）。
 
 ## 6) 验收标准（本轮）
 - Windows 包：可双击启动，且不依赖用户本机 Python。
 - Mac 包：用户拿到 `.dmg` 后可直接安装 `InVault.app`，无 Python 安装步骤。
+- 固定输出目录（build16）：
+  - Windows：`E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_windows_内测包\release\TA_Beta_v0.1.1-beta1-build16_windows.zip`
+  - macOS：`E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_mac_内测包\release\TA_Beta_v0.1.1-beta1-build16_mac.dmg`
+  - macOS：`E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_mac_内测包\release\TA_Beta_v0.1.1-beta1-build16_mac.zip`
 - 新线程启动时，仅需读取：
   - `AGENTS.md`
   - `status.md`

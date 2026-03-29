@@ -1,9 +1,11 @@
 ﻿{
     "updated_at":  "2026-03-29T00:00:00Z",
-    "active_task":  "ready_for_next_task",
-    "current_goal":  "resume from status.md and wait for user instruction",
+    "active_task":  "closeout_complete",
+    "current_goal":  "status.md and harness snapshots updated; repo is ready for next task",
     "progress":  [
-                     "harness directory recreated"
+                     "harness directory recreated",
+                     "status.md updated to build16 and next-direction notes",
+                     "working tree cleaned from accidental release-site edits"
                  ],
     "open_questions":  [
 
@@ -12,9 +14,8 @@
 
                  ],
     "next_actions":  [
-                         "read AGENTS.md",
-                         "read status.md",
-                         "wait for task"
+                         "start build17 design: local developer API (loopback-only) as stable surface for future enterprise connectors",
+                         "defer Feishu/Bitable integration to enterprise custom delivery"
                      ],
-    "last_git_status":  "(pending refresh)"
+    "last_git_status":  "(refresh on next run)"
 }
