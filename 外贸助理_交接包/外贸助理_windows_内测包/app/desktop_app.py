@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import os
@@ -84,6 +84,9 @@ class DesktopWindow:
         self._last_callback_error_sig = ""
         self._last_callback_error_ts = 0.0
         self._callback_error_suppressed = 0
+        self._callback_error_window_start = 0.0
+        self._callback_error_window_count = 0
+        self._callback_panic_until = 0.0
         error_reporting_enabled = bool(getattr(self.settings, "error_reporting_enabled", False))
         init_error_reporting(
             enabled=error_reporting_enabled,
@@ -913,10 +916,29 @@ class DesktopWindow:
             capture_exception(exc_value, {"surface": "tk_callback"})
         sig = f"{type(exc_value).__name__}:{exc_value}"
         now = time.time()
+        if now < self._callback_panic_until:
+            self._callback_error_suppressed += 1
+            self.service_status.set(self._tr("检测到高频错误，已进入静默保护。", "High-frequency runtime errors; popup guard enabled."))
+            return
+        if (now - self._callback_error_window_start) > 8:
+            self._callback_error_window_start = now
+            self._callback_error_window_count = 0
+        self._callback_error_window_count += 1
+        if self._callback_error_window_count >= 4:
+            self._callback_panic_until = now + 120
+            self._callback_error_suppressed += 1
+            self.service_status.set(self._tr("检测到高频错误，弹窗已熔断 120 秒。", "High-frequency runtime errors; popup fuse on for 120s."))
+            return
         if sig == self._last_callback_error_sig and (now - self._last_callback_error_ts) < 10:
             self._callback_error_suppressed += 1
             if self._callback_error_suppressed == 1:
                 self.service_status.set(self._tr("检测到重复错误，已临时抑制弹窗。", "Repeated error detected; popup temporarily suppressed."))
+            self._last_callback_error_ts = now
+            return
+        if (now - self._last_callback_error_ts) < 5:
+            self._callback_error_suppressed += 1
+            self.service_status.set(self._tr("错误触发过快，已抑制弹窗。", "Error rate too high; popup suppressed."))
+            self._last_callback_error_sig = sig
             self._last_callback_error_ts = now
             return
         self._last_callback_error_sig = sig
