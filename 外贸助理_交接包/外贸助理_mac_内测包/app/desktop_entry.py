@@ -54,9 +54,12 @@ def _install_exception_guards() -> None:
         threading.excepthook = _thread_hook
 
 
-def run_desktop_entry() -> int:
+def run_desktop_entry(argv: list[str] | None = None) -> int:
     _install_exception_guards()
     try:
+        args = list(argv or sys.argv[1:])
+        if args and args[0] == "cli":
+            return run_cli(args[1:])
         return run_cli(["desktop"])
     except BaseException as exc:
         _write_crash_log(exc)
