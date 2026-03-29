@@ -87,6 +87,10 @@ class DesktopWindow:
         self._callback_error_window_start = 0.0
         self._callback_error_window_count = 0
         self._callback_panic_until = 0.0
+        self._error_dialog_window_start = 0.0
+        self._error_dialog_window_count = 0
+        self._error_dialog_block_until = 0.0
+        self._last_error_dialog_ts = 0.0
         error_reporting_enabled = bool(getattr(self.settings, "error_reporting_enabled", False))
         init_error_reporting(
             enabled=error_reporting_enabled,
@@ -903,13 +907,31 @@ class DesktopWindow:
         self.api_send_button.configure(state=tk.NORMAL)
         self.api_status_var.set(self._tr("\u5931\u8d25", "Failed"))
         self._append_text_content(self.api_reply_text, f"\n[ERROR] {exc}\n")
-        messagebox.showerror(title, str(exc))
+        self._show_error_dialog(title, str(exc))
 
     def _on_api_input_return(self, event: tk.Event) -> str | None:
         if getattr(event, "state", 0) & 0x0001:
             return None
         self.send_api_message()
         return "break"
+
+    def _show_error_dialog(self, title: str, message: str) -> None:
+        now = time.time()
+        if now < self._error_dialog_block_until:
+            self.service_status.set(self._tr("检测到连续异常，错误弹窗已临时静默。", "Repeated errors detected; dialogs temporarily muted."))
+            return
+        if (now - self._error_dialog_window_start) > 10:
+            self._error_dialog_window_start = now
+            self._error_dialog_window_count = 0
+        self._error_dialog_window_count += 1
+        if self._error_dialog_window_count >= 3:
+            self._error_dialog_block_until = now + 180
+            self.service_status.set(self._tr("错误弹窗过于频繁，已熔断 180 秒。", "Error dialogs too frequent; fused for 180s."))
+            return
+        if (now - self._last_error_dialog_ts) < 3:
+            return
+        self._last_error_dialog_ts = now
+        self._show_error_dialog(title, message)
 
     def _report_callback_exception(self, _exc_type, exc_value, _exc_tb) -> None:
         if isinstance(exc_value, BaseException):
@@ -944,7 +966,7 @@ class DesktopWindow:
         self._last_callback_error_sig = sig
         self._last_callback_error_ts = now
         self._callback_error_suppressed = 0
-        messagebox.showerror("Runtime Error", str(exc_value))
+        self._show_error_dialog("Runtime Error", str(exc_value))
 
     def _set_api_result_split(self, upper_ratio: float, lower_ratio: float) -> None:
         try:
@@ -983,7 +1005,7 @@ class DesktopWindow:
                     lambda e=exc: (
                         self.api_send_button.configure(state=tk.NORMAL),
                         self.api_status_var.set(self._tr("\u5931\u8d25", "Failed")),
-                        messagebox.showerror("Connection Test", str(e)),
+                        self._show_error_dialog("Connection Test", str(e)),
                     ),
                 )
                 return
@@ -1038,7 +1060,7 @@ class DesktopWindow:
                         self.api_send_button.configure(state=tk.NORMAL),
                         self.api_status_var.set(self._tr("\u5931\u8d25", "Failed")),
                         self._append_text_content(self.api_reply_text, f"\n[ERROR] {e}\n"),
-                        messagebox.showerror("API Chat", str(e)),
+                        self._show_error_dialog("API Chat", str(e)),
                     ),
                 )
                 return
@@ -1229,7 +1251,7 @@ class DesktopWindow:
         try:
             path.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            messagebox.showerror("\u4fdd\u5b58\u5931\u8d25", str(exc))
+            self._show_error_dialog("\u4fdd\u5b58\u5931\u8d25", str(exc))
             return
         self.settings.output_dir = str(path)
         self.settings_store.save(self.settings)
@@ -1414,13 +1436,13 @@ class DesktopWindow:
         if task_id:
             query["task_id"] = task_id
         if not self._ensure_services_ready(require_dashboard=True):
-            messagebox.showerror("Service", "Dashboard service unavailable. Please retry.")
+            self._show_error_dialog("Service", "Dashboard service unavailable. Please retry.")
             return
         webbrowser.open(f"http://127.0.0.1:8787/?{urlencode(query)}")
 
     def open_feedback_inbox(self) -> None:
         if not self._ensure_services_ready(require_dashboard=False):
-            messagebox.showerror("Feedback", "Bridge service unavailable.")
+            self._show_error_dialog("Feedback", "Bridge service unavailable.")
             return
         webbrowser.open("http://127.0.0.1:8765/feedback/inbox")
 
@@ -1625,7 +1647,7 @@ class DesktopWindow:
                         msg = "Network error. Unable to check updates."
                     else:
                         msg = "Update failed."
-                    messagebox.showerror("One-click Update", f"{msg}\n{err}")
+                    self._show_error_dialog("One-click Update", f"{msg}\n{err}")
 
                 self.root.after(0, fail)
                 return
@@ -1662,7 +1684,7 @@ class DesktopWindow:
                         updates_root=self.config.data_dir / "updates",
                     )
                 except Exception as exc:
-                    messagebox.showerror(
+                    self._show_error_dialog(
                         "One-click Update",
                         self._tr(f"启动更新器失败：\n{exc}", f"Failed to start updater:\n{exc}"),
                     )
@@ -1720,12 +1742,12 @@ class DesktopWindow:
             messagebox.showwarning("Action", "Input must contain one complete <action>...</action> tag.")
             return
         if not self._ensure_services_ready(require_dashboard=False):
-            messagebox.showerror("Action", "Bridge service unavailable.")
+            self._show_error_dialog("Action", "Bridge service unavailable.")
             return
         try:
             payload = self._post_json("http://127.0.0.1:8765/actions/execute", {"model_output": action_text})
         except (OSError, URLError, ValueError):
-            messagebox.showerror("Action", "Bridge service unavailable.")
+            self._show_error_dialog("Action", "Bridge service unavailable.")
             return
         results = payload.get("results", []) if isinstance(payload.get("results", []), list) else []
         if not results:
@@ -1757,12 +1779,12 @@ class DesktopWindow:
 
     def run_health_check(self) -> None:
         if not self._ensure_services_ready(require_dashboard=False):
-            messagebox.showerror("Health Check", "Bridge service unavailable.")
+            self._show_error_dialog("Health Check", "Bridge service unavailable.")
             return
         try:
             data = self._post_json("http://127.0.0.1:8765/health/check", {})
         except (OSError, URLError, ValueError):
-            messagebox.showerror("Health Check", "Bridge service unavailable.")
+            self._show_error_dialog("Health Check", "Bridge service unavailable.")
             return
         checks = data.get("checks", []) if isinstance(data.get("checks", []), list) else []
         failed = [c for c in checks if isinstance(c, dict) and c.get("status") != "ok"]
@@ -1785,12 +1807,12 @@ class DesktopWindow:
 
     def export_diagnostics(self) -> None:
         if not self._ensure_services_ready(require_dashboard=False):
-            messagebox.showerror("Diagnostics", "Bridge service unavailable.")
+            self._show_error_dialog("Diagnostics", "Bridge service unavailable.")
             return
         try:
             data = self._post_json("http://127.0.0.1:8765/diagnostics/export", {})
         except (OSError, URLError, ValueError):
-            messagebox.showerror("Diagnostics", "Bridge service unavailable.")
+            self._show_error_dialog("Diagnostics", "Bridge service unavailable.")
             return
         path = str(data.get("path", "")).strip()
         if not path:
@@ -1804,12 +1826,12 @@ class DesktopWindow:
             messagebox.showinfo("Feedback", "Please enter feedback first.")
             return
         if not self._ensure_services_ready(require_dashboard=False):
-            messagebox.showerror("Feedback", "Bridge service unavailable.")
+            self._show_error_dialog("Feedback", "Bridge service unavailable.")
             return
         try:
             self._post_json("http://127.0.0.1:8765/feedback/add", {"source": "desktop", "text": text})
         except (OSError, URLError, ValueError):
-            messagebox.showerror("Feedback", "Bridge service unavailable.")
+            self._show_error_dialog("Feedback", "Bridge service unavailable.")
             return
         self.feedback_var.set("")
         messagebox.showinfo("Feedback", "Feedback submitted.")
@@ -2149,7 +2171,7 @@ class DesktopWindow:
         note = self._tr("\u684c\u9762\u9762\u677f\u624b\u52a8\u66f4\u65b0", "Updated from desktop panel")
         updated = self.state_board.update_task_status(task_id=task_id, status=status, note=note)
         if updated is None:
-            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("\u4efb\u52a1\u66f4\u65b0\u5931\u8d25\u3002", "Failed to update task."))
+            self._show_error_dialog(self._tr("\u5931\u8d25", "Failed"), self._tr("\u4efb\u52a1\u66f4\u65b0\u5931\u8d25\u3002", "Failed to update task."))
             return
         self.refresh_runtime_status()
 
@@ -2166,7 +2188,7 @@ class DesktopWindow:
             return
         ack = self.state_board.ack_alert(task_id=task_id, snooze_hours=24)
         if ack is None:
-            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("\u98ce\u9669\u5ef6\u540e\u5931\u8d25\u3002", "Failed to snooze alert."))
+            self._show_error_dialog(self._tr("\u5931\u8d25", "Failed"), self._tr("\u98ce\u9669\u5ef6\u540e\u5931\u8d25\u3002", "Failed to snooze alert."))
             return
         self.refresh_runtime_status()
 
@@ -2275,7 +2297,7 @@ class DesktopWindow:
             messagebox.showinfo(self._tr("\u63d0\u793a", "Notice"), self._tr("\u8bf7\u5148\u9009\u62e9\u5ba2\u6237\u3002", "Please select a customer first."))
             return
         if not self._ensure_services_ready(require_dashboard=False):
-            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("Bridge \u670d\u52a1\u4e0d\u53ef\u7528\u3002", "Bridge service unavailable."))
+            self._show_error_dialog(self._tr("\u5931\u8d25", "Failed"), self._tr("Bridge \u670d\u52a1\u4e0d\u53ef\u7528\u3002", "Bridge service unavailable."))
             return
 
         products = self._customer_detail_rows.get("products", [])
@@ -2299,7 +2321,7 @@ class DesktopWindow:
         try:
             payload = self._post_json("http://127.0.0.1:8765/actions/execute", {"model_output": action_text})
         except (OSError, URLError, ValueError):
-            messagebox.showerror(self._tr("\u5931\u8d25", "Failed"), self._tr("Bridge \u670d\u52a1\u4e0d\u53ef\u7528\u3002", "Bridge service unavailable."))
+            self._show_error_dialog(self._tr("\u5931\u8d25", "Failed"), self._tr("Bridge \u670d\u52a1\u4e0d\u53ef\u7528\u3002", "Bridge service unavailable."))
             return
         results = payload.get("results", []) if isinstance(payload.get("results", []), list) else []
         if not results:
@@ -2357,7 +2379,7 @@ class DesktopWindow:
         try:
             open_path(path)
         except OSError as exc:
-            messagebox.showerror(self._tr("\u6253\u5f00\u5931\u8d25", "Open Failed"), str(exc))
+            self._show_error_dialog(self._tr("\u6253\u5f00\u5931\u8d25", "Open Failed"), str(exc))
 
     def _collect_customer_knowledge(self, customer_name: str) -> dict[str, list[dict[str, str]]]:
         name_l = customer_name.lower()
@@ -2798,7 +2820,7 @@ class DesktopWindow:
             return
         root_dir = Path(source).expanduser().resolve() if source else selected_files[0].parent
         if not selected_files and (not root_dir.exists() or not root_dir.is_dir()):
-            messagebox.showerror("\u9519\u8bef", "\u5386\u53f2\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
+            self._show_error_dialog("\u9519\u8bef", "\u5386\u53f2\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
             return
 
         self._set_import_buttons_busy(True)
@@ -2902,7 +2924,7 @@ class DesktopWindow:
         self._set_import_buttons_busy(False)
         self.import_status.set(self._tr("\u5bfc\u5165\u5931\u8d25", "Import failed"))
         self._append_result(self._tr("\n[错误] ", "\n[Error] ") + str(exc) + "\n")
-        messagebox.showerror(self._tr("\u5bfc\u5165\u5931\u8d25", "Import failed"), str(exc))
+        self._show_error_dialog(self._tr("\u5bfc\u5165\u5931\u8d25", "Import failed"), str(exc))
 
     def retry_failed(self) -> None:
         if not self.last_failed_files:
@@ -2940,7 +2962,7 @@ class DesktopWindow:
             return
         root_dir = Path(source).expanduser().resolve()
         if not root_dir.exists() or not root_dir.is_dir():
-            messagebox.showerror("\u9519\u8bef", "\u90ae\u4ef6\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
+            self._show_error_dialog("\u9519\u8bef", "\u90ae\u4ef6\u6587\u4ef6\u5939\u4e0d\u5b58\u5728\u3002")
             return
 
         self._set_import_buttons_busy(True)
@@ -3158,7 +3180,7 @@ class DesktopWindow:
         if pull_result.get("error"):
             raw_error = str(pull_result.get("error"))
             self.import_status.set(self._tr(f"\u90ae\u7bb1\u62c9\u53d6\u5931\u8d25\uff1a{raw_error}", f"Mailbox pull failed: {raw_error}"))
-            messagebox.showerror(
+            self._show_error_dialog(
                 "\u62c9\u53d6\u5931\u8d25",
                 self._mail_login_help(raw_error),
             )
@@ -3256,7 +3278,7 @@ class DesktopWindow:
         ]
         path = next((item for item in candidate_paths if item.exists()), None)
         if path is None:
-            messagebox.showerror(
+            self._show_error_dialog(
                 self._tr("扩展目录不存在", "Extension folder missing"),
                 self._tr(
                     "未找到 extension 目录，请确认内测包结构完整。",
@@ -3272,7 +3294,7 @@ class DesktopWindow:
             else:
                 subprocess.Popen(["xdg-open", str(path)])
         except OSError as exc:
-            messagebox.showerror(
+            self._show_error_dialog(
                 self._tr("打开失败", "Open failed"),
                 self._tr(f"无法打开目录：{exc}", f"Failed to open folder: {exc}"),
             )
@@ -3345,3 +3367,4 @@ class DesktopWindow:
 def run_desktop_window(config: AppConfig) -> int:
     app = DesktopWindow(config)
     return app.run()
+
