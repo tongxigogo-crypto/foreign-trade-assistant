@@ -51,8 +51,32 @@ from .version import APP_VERSION
 # 中文 | 邮箱一键拉取 | 批量导入邮件线程
 
 
+def _install_macos_messagebox_shim() -> None:
+    if sys.platform != "darwin":
+        return
+
+    def _emit(kind: str, title: str, message: str) -> str:
+        print(f"[mac-messagebox:{kind}] {title}: {message}", file=sys.stderr)
+        return "ok"
+
+    def _ask_yes_no(title: str, message: str) -> bool:
+        print(f"[mac-messagebox:askyesno] {title}: {message}", file=sys.stderr)
+        return False
+
+    def _ask_yes_no_cancel(title: str, message: str) -> bool | None:
+        print(f"[mac-messagebox:askyesnocancel] {title}: {message}", file=sys.stderr)
+        return None
+
+    messagebox.showerror = lambda title, message, **_kwargs: _emit("error", str(title), str(message))
+    messagebox.showwarning = lambda title, message, **_kwargs: _emit("warning", str(title), str(message))
+    messagebox.showinfo = lambda title, message, **_kwargs: _emit("info", str(title), str(message))
+    messagebox.askyesno = lambda title, message, **_kwargs: _ask_yes_no(str(title), str(message))
+    messagebox.askyesnocancel = lambda title, message, **_kwargs: _ask_yes_no_cancel(str(title), str(message))
+
+
 class DesktopWindow:
     def __init__(self, config: AppConfig) -> None:
+        _install_macos_messagebox_shim()
         self.config = config
         self.store = LocalKnowledgeStore(config.knowledge_file)
         self.capsule_builder = CapsuleBuilder(store=self.store)
@@ -1627,7 +1651,7 @@ class DesktopWindow:
         self.root.after(2500, self._service_watchdog_tick)
 
     def _on_close_request(self) -> None:
-        if not messagebox.askyesno("Exit", "Close Trade Assistant desktop?"):
+        if sys.platform != "darwin" and not messagebox.askyesno("Exit", "Close Trade Assistant desktop?"):
             return
         self.keep_alive_enabled = False
         try:

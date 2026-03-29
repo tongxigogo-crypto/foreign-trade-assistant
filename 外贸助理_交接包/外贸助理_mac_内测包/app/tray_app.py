@@ -212,6 +212,9 @@ def _load_pillow_types():  # noqa: ANN202
 
 
 def _show_dialog(kind: str, title: str, message: str) -> None:
+    if sys.platform == "darwin":
+        print(f"[tray:{kind}] {title}: {message}")
+        return
     try:
         import tkinter as tk
         from tkinter import messagebox
