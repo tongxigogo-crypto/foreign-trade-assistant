@@ -915,58 +915,76 @@ class DesktopWindow:
         self.send_api_message()
         return "break"
 
+    def _set_service_status_safe(self, text: str) -> None:
+        status_var = getattr(self, "service_status", None)
+        if status_var is None:
+            return
+        try:
+            status_var.set(text)
+        except Exception:
+            return
+
     def _show_error_dialog(self, title: str, message: str) -> None:
-        now = time.time()
-        if now < self._error_dialog_block_until:
-            self.service_status.set(self._tr("检测到连续异常，错误弹窗已临时静默。", "Repeated errors detected; dialogs temporarily muted."))
+        try:
+            now = time.time()
+            if now < self._error_dialog_block_until:
+                self._set_service_status_safe(self._tr("检测到连续异常，错误弹窗已临时静默。", "Repeated errors detected; dialogs temporarily muted."))
+                return
+            if (now - self._error_dialog_window_start) > 10:
+                self._error_dialog_window_start = now
+                self._error_dialog_window_count = 0
+            self._error_dialog_window_count += 1
+            if self._error_dialog_window_count >= 3:
+                self._error_dialog_block_until = now + 180
+                self._set_service_status_safe(self._tr("错误弹窗过于频繁，已熔断 180 秒。", "Error dialogs too frequent; fused for 180s."))
+                return
+            if (now - self._last_error_dialog_ts) < 3:
+                return
+            self._last_error_dialog_ts = now
+            if sys.platform == "darwin":
+                self._set_service_status_safe(f"{title}: {str(message)[:120]}")
+                return
+            messagebox.showerror(title, message)
+        except Exception:
             return
-        if (now - self._error_dialog_window_start) > 10:
-            self._error_dialog_window_start = now
-            self._error_dialog_window_count = 0
-        self._error_dialog_window_count += 1
-        if self._error_dialog_window_count >= 3:
-            self._error_dialog_block_until = now + 180
-            self.service_status.set(self._tr("错误弹窗过于频繁，已熔断 180 秒。", "Error dialogs too frequent; fused for 180s."))
-            return
-        if (now - self._last_error_dialog_ts) < 3:
-            return
-        self._last_error_dialog_ts = now
-        self._show_error_dialog(title, message)
 
     def _report_callback_exception(self, _exc_type, exc_value, _exc_tb) -> None:
-        if isinstance(exc_value, BaseException):
-            capture_exception(exc_value, {"surface": "tk_callback"})
-        sig = f"{type(exc_value).__name__}:{exc_value}"
-        now = time.time()
-        if now < self._callback_panic_until:
-            self._callback_error_suppressed += 1
-            self.service_status.set(self._tr("检测到高频错误，已进入静默保护。", "High-frequency runtime errors; popup guard enabled."))
-            return
-        if (now - self._callback_error_window_start) > 8:
-            self._callback_error_window_start = now
-            self._callback_error_window_count = 0
-        self._callback_error_window_count += 1
-        if self._callback_error_window_count >= 4:
-            self._callback_panic_until = now + 120
-            self._callback_error_suppressed += 1
-            self.service_status.set(self._tr("检测到高频错误，弹窗已熔断 120 秒。", "High-frequency runtime errors; popup fuse on for 120s."))
-            return
-        if sig == self._last_callback_error_sig and (now - self._last_callback_error_ts) < 10:
-            self._callback_error_suppressed += 1
-            if self._callback_error_suppressed == 1:
-                self.service_status.set(self._tr("检测到重复错误，已临时抑制弹窗。", "Repeated error detected; popup temporarily suppressed."))
-            self._last_callback_error_ts = now
-            return
-        if (now - self._last_callback_error_ts) < 5:
-            self._callback_error_suppressed += 1
-            self.service_status.set(self._tr("错误触发过快，已抑制弹窗。", "Error rate too high; popup suppressed."))
+        try:
+            if isinstance(exc_value, BaseException):
+                capture_exception(exc_value, {"surface": "tk_callback"})
+            sig = f"{type(exc_value).__name__}:{exc_value}"
+            now = time.time()
+            if now < self._callback_panic_until:
+                self._callback_error_suppressed += 1
+                self._set_service_status_safe(self._tr("检测到高频错误，已进入静默保护。", "High-frequency runtime errors; popup guard enabled."))
+                return
+            if (now - self._callback_error_window_start) > 8:
+                self._callback_error_window_start = now
+                self._callback_error_window_count = 0
+            self._callback_error_window_count += 1
+            if self._callback_error_window_count >= 4:
+                self._callback_panic_until = now + 120
+                self._callback_error_suppressed += 1
+                self._set_service_status_safe(self._tr("检测到高频错误，弹窗已熔断 120 秒。", "High-frequency runtime errors; popup fuse on for 120s."))
+                return
+            if sig == self._last_callback_error_sig and (now - self._last_callback_error_ts) < 10:
+                self._callback_error_suppressed += 1
+                if self._callback_error_suppressed == 1:
+                    self._set_service_status_safe(self._tr("检测到重复错误，已临时抑制弹窗。", "Repeated error detected; popup temporarily suppressed."))
+                self._last_callback_error_ts = now
+                return
+            if (now - self._last_callback_error_ts) < 5:
+                self._callback_error_suppressed += 1
+                self._set_service_status_safe(self._tr("错误触发过快，已抑制弹窗。", "Error rate too high; popup suppressed."))
+                self._last_callback_error_sig = sig
+                self._last_callback_error_ts = now
+                return
             self._last_callback_error_sig = sig
             self._last_callback_error_ts = now
+            self._callback_error_suppressed = 0
+            self._show_error_dialog("Runtime Error", str(exc_value))
+        except Exception:
             return
-        self._last_callback_error_sig = sig
-        self._last_callback_error_ts = now
-        self._callback_error_suppressed = 0
-        self._show_error_dialog("Runtime Error", str(exc_value))
 
     def _set_api_result_split(self, upper_ratio: float, lower_ratio: float) -> None:
         try:
