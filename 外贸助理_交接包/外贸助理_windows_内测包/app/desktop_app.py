@@ -35,7 +35,14 @@ from .history_importer import extract_facts_from_history_file, ingest_history_di
 from .local_store import LocalKnowledgeStore
 from .state_board import StateBoard
 from .telemetry import capture_exception, init_error_reporting, set_error_reporting_enabled
-from .update_manager import check_and_prepare_update, is_http_not_found_error, is_network_error, open_path
+from .update_manager import (
+    check_and_prepare_update,
+    is_http_not_found_error,
+    is_network_error,
+    open_path,
+    resolve_install_dir,
+    schedule_windows_inplace_update,
+)
 from .user_settings import UserSettings, UserSettingsStore
 from .version import APP_VERSION
 
@@ -106,6 +113,9 @@ class DesktopWindow:
         self.lang_zh_btn.pack(side=tk.RIGHT, padx=(6, 0))
         self.lang_en_btn = ttk.Button(top, text="EN", width=6, command=lambda: self._switch_language("en"))
         self.lang_en_btn.pack(side=tk.RIGHT)
+        # One-click update is not frequently used; keep it next to language switches.
+        self.update_button = ttk.Button(top, text="\u4e00\u952e\u66f4\u65b0", command=self.one_click_update)
+        self.update_button.pack(side=tk.RIGHT, padx=(0, 10))
 
         self.main_canvas = tk.Canvas(frame, highlightthickness=0)
         self.main_scroll_y = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.main_canvas.yview)
@@ -457,7 +467,7 @@ class DesktopWindow:
         )
         self.show_advanced_check.pack(side=tk.LEFT, padx=8)
         self.service_status_label = ttk.Label(row, textvariable=self.service_status)
-        self.service_status_label.pack(side=tk.LEFT, padx=12)
+        self.service_status_label.pack(side=tk.RIGHT, padx=12)
 
         self.quick_actions_frame = ttk.Frame(box)
         self.quick_actions_frame.pack(fill=tk.X, pady=(8, 0))
@@ -471,8 +481,6 @@ class DesktopWindow:
             command=lambda: self.open_dashboard_workbench(task_status="open"),
         )
         self.quick_task_button.pack(side=tk.LEFT, padx=8)
-        self.update_button = ttk.Button(self.quick_actions_frame, text="\u4e00\u952e\u66f4\u65b0", command=self.one_click_update)
-        self.update_button.pack(side=tk.LEFT, padx=8)
 
         self.service_advanced_frame = ttk.Frame(box)
         self.service_advanced_frame.pack(fill=tk.X, pady=(8, 0))
@@ -1565,6 +1573,7 @@ class DesktopWindow:
                 info, launcher, prepared_path = check_and_prepare_update(
                     current_version=APP_VERSION,
                     updates_root=self.config.data_dir / "updates",
+                    root_dir=self.config.root_dir,
                 )
             except Exception as exc:
                 err = exc
@@ -1589,21 +1598,71 @@ class DesktopWindow:
                     self.update_button.configure(state=tk.NORMAL)
                 self.service_status.set(previous_status)
                 if not info.has_update:
-                    messagebox.showinfo("One-click Update", "Already the latest version.")
+                    messagebox.showinfo("One-click Update", self._tr("当前已是最新版本。", "Already the latest version."))
                     return
-                prompt = (
-                    f"New version found: {info.latest_version}\n"
-                    f"Source: {info.source_repo}\n"
-                    "Open the new launcher now?"
+
+                prompt = self._tr(
+                    f"发现新版本：{info.latest_version}\n来源：{info.source_repo}\n\n是否现在一键更新并自动重启？",
+                    f"New version found: {info.latest_version}\nSource: {info.source_repo}\n\nUpdate now and restart automatically?",
                 )
-                if launcher and messagebox.askyesno("One-click Update", prompt):
-                    open_path(launcher)
+                if not messagebox.askyesno("One-click Update", prompt):
+                    if launcher:
+                        open_path(launcher)
+                    else:
+                        messagebox.showinfo(
+                            "One-click Update",
+                            self._tr(f"更新包已准备：\n{prepared_path}", f"Update package prepared:\n{prepared_path}"),
+                        )
                     return
-                messagebox.showinfo("One-click Update", f"Update package prepared:\n{prepared_path}")
+
+                try:
+                    install_dir = resolve_install_dir(self.config.root_dir)
+                    script_path = schedule_windows_inplace_update(
+                        update=info,
+                        prepared_dir=prepared_path,
+                        install_dir=install_dir,
+                        current_pid=os.getpid(),
+                        updates_root=self.config.data_dir / "updates",
+                    )
+                except Exception as exc:
+                    messagebox.showerror(
+                        "One-click Update",
+                        self._tr(f"启动更新器失败：\n{exc}", f"Failed to start updater:\n{exc}"),
+                    )
+                    return
+
+                messagebox.showinfo(
+                    "One-click Update",
+                    self._tr(
+                        "更新器已启动：程序将自动关闭，并在更新后重新打开。\n\n"
+                        f"更新脚本：\n{script_path}",
+                        "Updater started. The app will close now and reopen after update.\n\n"
+                        f"Updater script:\n{script_path}",
+                    ),
+                )
+                self._shutdown_for_update()
 
             self.root.after(0, done)
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _shutdown_for_update(self) -> None:
+        # Close without prompts so updater can replace the executable.
+        self.keep_alive_enabled = False
+        try:
+            if self.bridge_process and self.bridge_process.poll() is None:
+                self.bridge_process.terminate()
+            if self.dashboard_process and self.dashboard_process.poll() is None:
+                self.dashboard_process.terminate()
+        except OSError:
+            pass
+        try:
+            self.root.after(200, self.root.destroy)
+        except Exception:
+            try:
+                self.root.destroy()
+            except Exception:
+                pass
 
     def _post_json(self, url: str, payload: dict) -> dict:
         req = Request(

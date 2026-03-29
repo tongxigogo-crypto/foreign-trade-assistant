@@ -11,7 +11,13 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from .update_manager import check_and_prepare_update, is_network_error, open_path
+from .update_manager import (
+    check_and_prepare_update,
+    is_network_error,
+    open_path,
+    resolve_install_dir,
+    schedule_windows_inplace_update,
+)
 from .version import APP_VERSION
 
 @dataclass
@@ -145,6 +151,7 @@ def _check_update(runtime: ServiceRuntime) -> None:
             info, launcher, prepared_path = check_and_prepare_update(
                 current_version=APP_VERSION,
                 updates_root=runtime.root_dir / "updates",
+                root_dir=runtime.root_dir,
             )
         except Exception as exc:
             message = f"网络异常，更新失败：{exc}" if is_network_error(exc) else f"更新失败：{exc}"
@@ -155,11 +162,28 @@ def _check_update(runtime: ServiceRuntime) -> None:
             _show_dialog("info", "一键更新 / Check Update", "当前已是最新版本。")
             return
 
-        if launcher:
-            open_path(launcher)
-            _show_dialog("info", "一键更新 / Check Update", f"已准备并打开新版本启动器：{info.latest_version}")
+        try:
+            install_dir = resolve_install_dir(runtime.root_dir)
+            script_path = schedule_windows_inplace_update(
+                update=info,
+                prepared_dir=prepared_path,
+                install_dir=install_dir,
+                current_pid=os.getpid(),
+                updates_root=runtime.root_dir / "updates",
+            )
+        except Exception as exc:
+            if launcher:
+                open_path(launcher)
+            _show_dialog("error", "一键更新 / Check Update", f"更新启动失败：{exc}")
             return
-        _show_dialog("info", "一键更新 / Check Update", f"更新包已准备：{prepared_path}")
+
+        _show_dialog(
+            "info",
+            "一键更新 / Check Update",
+            f"已开始更新：{info.latest_version}\n更新完成后将自动重启。\n\nUpdater: {script_path}",
+        )
+        runtime.stop()
+        os._exit(0)  # noqa: S606 - intentional hard-exit for updater
 
     threading.Thread(target=worker, daemon=True).start()
 

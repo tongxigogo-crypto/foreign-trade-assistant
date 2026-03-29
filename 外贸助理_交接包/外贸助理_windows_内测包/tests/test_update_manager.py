@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import json
+import zipfile
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request
 
@@ -66,6 +68,7 @@ def test_check_latest_update_fallbacks_to_releases_list_when_latest_404(monkeypa
     monkeypatch.setattr(update_manager, "urlopen", fake_urlopen)
     monkeypatch.setattr(update_manager, "_candidate_repos", lambda: ["tongxigogo-crypto/foreign-trade-assistant"])
     monkeypatch.setattr(update_manager, "platform_id", lambda: "windows")
+    monkeypatch.setenv("TRADE_ASSISTANT_UPDATE_MANIFEST_URL", "")
 
     info = update_manager.check_latest_update("v0.1.1")
     assert info.latest_version == "v0.1.2"
@@ -84,4 +87,79 @@ def test_is_http_not_found_error_true_for_404() -> None:
         fp=io.BytesIO(b"{}"),
     )
     assert update_manager.is_http_not_found_error(err) is True
+
+
+def test_extract_zip_prefers_root_when_launcher_present(tmp_path: Path) -> None:
+    zip_path = tmp_path / "TA_Beta_x_windows.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("InVault.exe", b"dummy")
+        zf.writestr("Launch_InVault_Windows.bat", "@echo off\r\n")
+        zf.writestr("extension/manifest.json", "{}")
+
+    out_dir = tmp_path / "out"
+    extracted = update_manager.extract_zip(zip_path, out_dir)
+    assert extracted == out_dir
+    assert (extracted / "InVault.exe").exists()
+    assert (extracted / "Launch_InVault_Windows.bat").exists()
+
+
+def test_check_latest_update_uses_manifest_when_configured(monkeypatch) -> None:
+    def fake_urlopen(req: Request, timeout: int = 8):  # noqa: ARG001
+        assert "release-manifest.json" in req.full_url
+        payload = {
+            "version": "v0.1.2-build99",
+            "published_at": "2026-03-29T00:00:00Z",
+            "assets": [
+                {
+                    "name": "TA_Beta_build99_windows.zip",
+                    "url": "./assets/downloads/TA_Beta_build99_windows.zip",
+                    "build": "build99",
+                }
+            ],
+        }
+        return _FakeResponse(payload)
+
+    monkeypatch.setattr(update_manager, "urlopen", fake_urlopen)
+    monkeypatch.setattr(update_manager, "platform_id", lambda: "windows")
+    monkeypatch.setenv("TRADE_ASSISTANT_UPDATE_MANIFEST_URL", "https://example.com/api/release-manifest.json")
+
+    info = update_manager.check_latest_update("v0.1.1-build1")
+    assert info.latest_version == "v0.1.2-build99"
+    assert info.asset_name.endswith("_windows.zip")
+    assert info.download_url.startswith("https://example.com/")
+
+
+def test_update_info_has_update_compares_versions() -> None:
+    newer = update_manager.UpdateInfo(
+        current_version="v0.1.1-beta1-build14",
+        latest_version="v0.1.2-beta1-build1",
+        asset_name="TA_Beta_build_x_windows.zip",
+        download_url="https://example.com/a.zip",
+        body="",
+        published_at="",
+        source_repo="manifest",
+    )
+    assert newer.has_update is True
+
+    older_build = update_manager.UpdateInfo(
+        current_version="v0.1.1-beta1-build14",
+        latest_version="v0.1.1-beta1-build11",
+        asset_name="TA_Beta_build_x_windows.zip",
+        download_url="https://example.com/a.zip",
+        body="",
+        published_at="",
+        source_repo="manifest",
+    )
+    assert older_build.has_update is False
+
+    stable_beats_beta = update_manager.UpdateInfo(
+        current_version="v0.1.1-beta2-build99",
+        latest_version="v0.1.1-build1",
+        asset_name="TA_Beta_build_x_windows.zip",
+        download_url="https://example.com/a.zip",
+        body="",
+        published_at="",
+        source_repo="manifest",
+    )
+    assert stable_beats_beta.has_update is True
 
