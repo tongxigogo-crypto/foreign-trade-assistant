@@ -9,10 +9,13 @@ Build, maintain, and evolve a coordinated multi-agent system for international t
 For any new conversation in this worktree, read these sources first in this order:
 
 1. `AGENTS.md`
-2. `docs/memory/self_improving_agent.md`
-3. `trade_ops/config/foreign-trade-worktree.md`
-4. `trade_ops/config/pricing-rules.json`
-5. Latest outputs under `trade_ops/output/`
+2. `status.md`
+3. `docs/harness/session_state.json`
+4. `docs/harness/current_session.md`
+5. `docs/memory/self_improving_agent.md`
+6. `trade_ops/config/foreign-trade-worktree.md`
+7. `trade_ops/config/pricing-rules.json`
+8. Latest outputs under `trade_ops/output/`
 
 ## Required Agents
 
@@ -30,6 +33,19 @@ For any new conversation in this worktree, read these sources first in this orde
 - Shared business objects should be defined once and reused.
 - Machine handoff must prefer structured outputs.
 - Outbound email recommendations are draft-only for human editing; do not auto-send.
+- When a user instruction references specific files, prioritize RAG retrieval of latest local files over chat history snippets.
+- If local files and conversation snippets conflict, local files are source of truth.
+
+## Workspace Hygiene (Hard Rules)
+
+- `status.md` and `docs/harness/*` are protected baseline files; cleanup routines must never delete them.
+- Treat `status.md` and harness files as context anchors, not temporary artifacts.
+- At end of each substantial run:
+  - Check existence of `status.md`, `docs/harness/session_state.json`, `docs/harness/current_session.md`.
+  - If any missing, recreate immediately before reporting completion.
+  - Then run `git status --short` and classify changes into:
+    - commit candidates (same-theme functional work),
+    - cleanup-only noise (`__pycache__`, temp downloads, local caches).
 
 ## Source Of Truth
 
