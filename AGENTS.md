@@ -43,6 +43,7 @@ For any new conversation in this worktree, read these sources first in this orde
 - At end of each substantial run:
   - Check existence of `status.md`, `docs/harness/session_state.json`, `docs/harness/current_session.md`.
   - If any missing, recreate immediately before reporting completion.
+  - Run `scripts/harness-finish.ps1` to force a quick harness checkpoint + self-improving writeback.
   - Then run `git status --short` and classify changes into:
     - commit candidates (same-theme functional work),
     - cleanup-only noise (`__pycache__`, temp downloads, local caches).
