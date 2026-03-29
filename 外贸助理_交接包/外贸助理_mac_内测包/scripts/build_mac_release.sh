@@ -46,6 +46,8 @@ python -m PyInstaller \
   --windowed \
   --name "$APP_NAME" \
   --collect-data certifi \
+  --collect-data openpyxl \
+  --collect-data docx \
   --add-data "app/dashboard_ui.html:app" \
   --add-data "app/dashboard_layout_v2.json:app" \
   "app/desktop_entry.py"
