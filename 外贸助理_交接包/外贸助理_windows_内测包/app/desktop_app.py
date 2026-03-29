@@ -2189,11 +2189,7 @@ class DesktopWindow:
             self._render_customer_detail(name)
 
     def _refresh_customer_picker(self) -> None:
-        names = []
-        for row in self._filtered_customer_rows:
-            name = str(row.get("customer_name", "")).strip()
-            if name and name not in names:
-                names.append(name)
+        names = self._merge_customer_names_for_picker()
         self.customer_picker_box.configure(values=names)
         if names:
             current = self.customer_picker_var.get().strip()
@@ -2203,6 +2199,18 @@ class DesktopWindow:
         else:
             self.customer_picker_var.set("")
             self._clear_customer_detail_lists(self._tr("\u6682\u65e0\u5ba2\u6237\u53ef\u5c55\u793a", "No customer details available"))
+
+    def _merge_customer_names_for_picker(self) -> list[str]:
+        names: list[str] = []
+        for row in self._filtered_customer_rows:
+            name = str(row.get("customer_name", "")).strip()
+            if name and name not in names:
+                names.append(name)
+        for name in self._last_import_customer_sources.keys():
+            normalized = str(name).strip()
+            if normalized and normalized not in names:
+                names.append(normalized)
+        return names
 
     def _render_customer_detail(self, customer_name: str) -> None:
         payload = self._collect_customer_knowledge(customer_name)
@@ -3239,6 +3247,10 @@ class DesktopWindow:
                 facts = []
             if not facts:
                 continue
+            inferred_names = self._infer_customer_names_from_facts(facts)
+            for inferred in inferred_names:
+                if inferred not in names:
+                    names.append(inferred)
             blob = "\n".join(facts).lower()
             for name in names:
                 if name.lower() in blob:
@@ -3247,6 +3259,28 @@ class DesktopWindow:
                     if sp not in source_map[name]:
                         source_map[name].append(sp)
         return source_map
+
+    def _infer_customer_names_from_facts(self, facts: list[str]) -> list[str]:
+        patterns = [
+            r"(?:customer|client|buyer|company)\s*[:：]\s*([A-Za-z0-9\u4e00-\u9fff&().,'\-\s]{2,80})",
+            r"(?:客户|客戶|买方|公司)\s*[:：]\s*([A-Za-z0-9\u4e00-\u9fff&().,'\-\s]{2,80})",
+            r"([A-Za-z0-9\u4e00-\u9fff&().,'\-\s]{2,80})\s*<\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\s*>",
+        ]
+        out: list[str] = []
+        for fact in facts:
+            line = str(fact).strip()
+            if not line:
+                continue
+            for pattern in patterns:
+                match = re.search(pattern, line, flags=re.IGNORECASE)
+                if not match:
+                    continue
+                candidate = re.sub(r"\s+", " ", match.group(1)).strip(" \t-:：,.;")
+                if len(candidate) < 2:
+                    continue
+                if candidate not in out:
+                    out.append(candidate)
+        return out
 
     def open_extension_folder(self) -> None:
         candidate_paths = [
