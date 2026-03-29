@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from .main import run_cli
+try:
+    from .main import run_cli
+except ImportError:
+    from app.main import run_cli
 
 
 def run_desktop_entry() -> int:
