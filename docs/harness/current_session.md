@@ -1,23 +1,23 @@
 # Current Session
 
 ## Active Task
-- agent system runtime execution
+- build29 release closure + next-window handoff
 
 ## Current Goal
-- run configured orchestrator/rag/guardrails/self-improving/review pipeline with objective evidence
+- close the current round with verified importer stability and publish a clean continuation snapshot
 
 ## Progress
-- preflight status=ok
-- retrieval hits=3
-- run status=needs_confirmation
+- parser-exception isolation landed for mac/windows history importer
+- build29 tagged, built, and artifacts synced to fixed release folders
+- mandatory baseline files updated for handoff
 
 ## Blockers
-- None
+- none
 
 ## Next Actions
-- review run report
-- inspect closed-loop verdict
-- decide next architecture iteration
+- run mixed real-data import smoke on mac package
+- run mixed real-data import smoke on windows package
+- decide legacy `.doc` support policy for next micro version
 
 ## Summary
-- Runtime executed through single entry with checkpointed harness state and closed-loop evidence.
+- small-version closure completed with test evidence and release evidence, ready for a new development window.

@@ -1,18 +1,20 @@
 {
-  "updated_at": "2026-03-29T15:13:45Z",
-  "active_task": "agent system runtime execution",
-  "current_goal": "run configured orchestrator/rag/guardrails/self-improving/review pipeline with objective evidence",
+  "updated_at": "2026-03-30T00:10:00Z",
+  "active_task": "build29 release closure + next-window handoff",
+  "current_goal": "complete small-version closure with verified importer stability and clean handoff context",
   "progress": [
-    "preflight status=ok",
-    "retrieval hits=3",
-    "run status=needs_confirmation"
+    "mac/windows importer now isolates parser exceptions per file",
+    "build29 tagged and CI run 23715376491 completed successfully",
+    "release artifacts synced to fixed mac/windows release folders"
   ],
-  "open_questions": [],
+  "open_questions": [
+    "Should legacy .doc be supported in windows package or remain explicitly unsupported?"
+  ],
   "blockers": [],
   "next_actions": [
-    "review run report",
-    "inspect closed-loop verdict",
-    "decide next architecture iteration"
+    "run mixed-folder real import smoke on mac package",
+    "run mixed-folder real import smoke on windows package",
+    "finalize legacy .doc support policy for next build"
   ],
-  "last_git_status": "M AGENTS.md\nA  agent_system/__init__.py\nA  agent_system/config/architecture-contract.json\nA  agent_system/config/required-agents.json\nA  agent_system/config/runtime-policy.json\nA  agent_system/data/learning_incidents.json\nA  agent_system/executors/__init__.py\nA  agent_system/executors/core_agents.py\nA  agent_system/harness/__init__.py\nA  agent_system/harness/workflow_engine.py\nA  agent_system/input/agent-results.sample.json\nA  agent_system/learning/__init__.py\nA  agent_system/learning/self_improving.py\nA  agent_system/rag/__init__.py\nA  agent_system/rag/knowledge_index.py\nA  agent_system/runtime.py\n M docs/harness/current_session.md\n M docs/harness/session_state.json\n M docs/memory/self_improving_agent.md\n?? agent_system/data/rag_index.sqlite\n?? docs/harness/architecture_guardrails.json\n?? docs/harness/closed_loop_verdict.json\n?? scripts/harness-finish.ps1"
+  "last_git_status": "clean working tree after closure commit/push target"
 }
