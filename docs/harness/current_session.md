@@ -1,23 +1,24 @@
-# Current Session
+﻿# Current Session
 
 ## Active Task
-- build29 release closure + next-window handoff
+- small-version closure (beta2 baseline) + next-window handoff
 
 ## Current Goal
-- close the current round with verified importer stability and publish a clean continuation snapshot
+- close current window with verifiable beta2 baseline, updated manifests, and reproducible continuation context
 
 ## Progress
-- parser-exception isolation landed for mac/windows history importer
-- build29 tagged, built, and artifacts synced to fixed release folders
-- mandatory baseline files updated for handoff
+- API chat path upgraded: local miss -> web fallback, and no-local-context now keeps multi-turn memory
+- beta2 baseline applied in both mac/windows app version files
+- windows beta2 package rebuilt and release artifact generated
+- update manifests normalized to beta2 with absolute asset URLs
 
 ## Blockers
-- none
+- mac packaging cannot complete in current environment (python3-venv/hdiutil unavailable)
 
 ## Next Actions
-- run mixed real-data import smoke on mac package
-- run mixed real-data import smoke on windows package
-- decide legacy `.doc` support policy for next micro version
+- run mac native packaging for beta2 build1
+- validate auto-update E2E from previous beta builds
+- perform windows real-package smoke focused on new chat behavior
 
 ## Summary
-- small-version closure completed with test evidence and release evidence, ready for a new development window.
+- code + version baseline have moved to beta2 build1 and windows package is ready; remaining gap is mac native packaging + update flow E2E confirmation.

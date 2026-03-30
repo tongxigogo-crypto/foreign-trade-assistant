@@ -1,20 +1,24 @@
-{
-  "updated_at": "2026-03-30T00:10:00Z",
-  "active_task": "build29 release closure + next-window handoff",
-  "current_goal": "complete small-version closure with verified importer stability and clean handoff context",
+﻿{
+  "updated_at": "2026-03-30T05:20:00Z",
+  "active_task": "beta2 baseline closure + continuation handoff",
+  "current_goal": "close this window with verified beta2 baseline, clean release metadata, and actionable next steps",
   "progress": [
-    "mac/windows importer now isolates parser exceptions per file",
-    "build29 tagged and CI run 23715376491 completed successfully",
-    "release artifacts synced to fixed mac/windows release folders"
+    "desktop API chat supports local-miss web fallback",
+    "desktop API chat keeps multi-turn memory when local context is disabled",
+    "beta2 build1 version baseline applied in mac/windows",
+    "windows beta2 package rebuilt successfully",
+    "release manifests updated to beta2 build1 with absolute asset urls"
   ],
   "open_questions": [
-    "Should legacy .doc be supported in windows package or remain explicitly unsupported?"
+    "When will mac native environment be available to build beta2 dmg/zip?"
   ],
-  "blockers": [],
+  "blockers": [
+    "mac packaging blocked in current environment: missing python3-venv/hdiutil"
+  ],
   "next_actions": [
-    "run mixed-folder real import smoke on mac package",
-    "run mixed-folder real import smoke on windows package",
-    "finalize legacy .doc support policy for next build"
+    "run mac native packaging for v0.1.1-beta2-build1",
+    "execute auto-update end-to-end from older installs to beta2 build1",
+    "run windows real-package smoke for new chat fallback/memory behavior"
   ],
-  "last_git_status": "clean working tree after closure commit/push target"
+  "last_git_status": "M docs/harness/architecture_guardrails.json; M docs/harness/closed_loop_verdict.json; M docs/harness/current_session.md; M docs/harness/session_state.json; M docs/memory/self_improving_agent.md; M status.md"
 }

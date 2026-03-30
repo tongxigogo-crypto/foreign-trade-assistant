@@ -33,3 +33,31 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 - Rule: importer loops must isolate per-file parse exceptions and continue
 - Scope: `history_importer.py` in mac/windows package trees
 - Action: keep regression tests for parser failures and rerun them for both package trees before shipping
+
+## [2026-03-30 02:24:47] harness-finish
+
+- status: success
+- summary: Changed scope: 2 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## [2026-03-30 12:37:02] harness-finish
+
+- status: success
+- summary: Changed scope: 11 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## [2026-03-30 12:56:02] harness-finish
+
+- status: success
+- summary: Changed scope: 6 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## [2026-03-30 13:09:54] harness-finish
+
+- status: success
+- summary: Changed scope: 5 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-03-30 - Version/Manifest Consistency Guard
+
+- Context: release package names moved ahead while in-app version constants lagged on beta1 build19
+- Signal: package filename/version and app runtime version diverged, causing update and verification ambiguity
+- Rule: when bumping release build tags, update `app/version.py` and `website/api/release-manifest.json` in mac/windows together before packaging
+- Scope: beta packaging + auto-update pipeline
+- Action: enforce a pre-build checklist item for version constant + manifest consistency
