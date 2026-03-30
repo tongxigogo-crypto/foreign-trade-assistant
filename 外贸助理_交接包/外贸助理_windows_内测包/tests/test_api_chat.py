@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 from app.api_chat import (
     ApiChatError,
+    ApiChatSettings,
     build_local_context,
     classify_http_error,
     default_api_url,
+    send_chat_request,
 )
 from app.capsule_builder import CapsuleBuilder
 from app.local_store import LocalKnowledgeStore
@@ -73,3 +76,97 @@ def test_classify_http_error() -> None:
     assert err401.kind == "auth"
     assert err429.kind == "rate_limit"
     assert err404.kind == "not_found"
+
+
+def test_send_chat_request_passes_history(monkeypatch) -> None:
+    captured: list[dict] = []
+
+    class _Resp:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return json.dumps(self._payload, ensure_ascii=False).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # noqa: ANN001
+        body = req.data.decode("utf-8")
+        captured.append(json.loads(body))
+        return _Resp({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr("app.api_chat.urlopen", fake_urlopen)
+
+    settings = ApiChatSettings(provider="openai", api_key="k", model="m", api_url="https://example.test/v1/chat/completions")
+    reply = send_chat_request(
+        settings,
+        "current question",
+        history=[{"role": "user", "content": "q1"}, {"role": "assistant", "content": "a1"}],
+    )
+
+    assert reply == "ok"
+    messages = captured[0]["messages"]
+    assert messages[1] == {"role": "user", "content": "q1"}
+    assert messages[2] == {"role": "assistant", "content": "a1"}
+    assert messages[-1] == {"role": "user", "content": "current question"}
+
+
+def test_send_chat_request_web_fallback_when_answer_insufficient(monkeypatch) -> None:
+    captured: list[dict] = []
+
+    class _Resp:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return json.dumps(self._payload, ensure_ascii=False).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    class _HtmlResp:
+        def __init__(self, html: str) -> None:
+            self._html = html
+
+        def read(self) -> bytes:
+            return self._html.encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # noqa: ANN001
+        if req.full_url.startswith("https://duckduckgo.com/"):
+            html = """
+            <a class="result__a">ACME news</a>
+            <a class="result__snippet">latest freight trend</a>
+            """
+            return _HtmlResp(html)
+        body = req.data.decode("utf-8")
+        captured.append(json.loads(body))
+        if len(captured) == 1:
+            return _Resp({"choices": [{"message": {"content": "I don't know based on local data."}}]})
+        return _Resp({"choices": [{"message": {"content": "suggestion from web snippets"}}]})
+
+    monkeypatch.setattr("app.api_chat.urlopen", fake_urlopen)
+
+    settings = ApiChatSettings(provider="openai", api_key="k", model="m", api_url="https://example.test/v1/chat/completions")
+    reply = send_chat_request(
+        settings,
+        "please advise",
+        allow_web_fallback=True,
+        web_search_query="acme freight update",
+    )
+
+    assert reply == "suggestion from web snippets"
+    assert len(captured) == 2
+    assert "Web search snippets" in captured[1]["messages"][-1]["content"]

@@ -101,6 +101,7 @@ class DesktopWindow:
         self.error_reporting_var: tk.BooleanVar | None = None
         self.api_basis_default_zh = "尚未使用本地上下文。"
         self.api_basis_default_en = "No local context used yet."
+        self.api_chat_history: list[dict[str, str]] = []
         self.radar_placeholder_zh = "输入关键词后点击检索。\n"
         self.radar_placeholder_en = "Enter keywords then click Search.\n"
         self.import_result_placeholder_zh = "导入结果会显示在这里。\n"
@@ -1090,7 +1091,9 @@ class DesktopWindow:
             return
 
         prompt = user_text
-        if bool(self.api_use_local_context_var.get()):
+        use_local_context = bool(self.api_use_local_context_var.get())
+        local_context_missing = False
+        if use_local_context:
             context = build_local_context(
                 capsule_builder=self.capsule_builder,
                 user_input=user_text,
@@ -1099,6 +1102,7 @@ class DesktopWindow:
             )
             prompt = context.prompt
             self._set_text_content(self.api_basis_text, context.answer_basis)
+            local_context_missing = "No local fact was matched." in context.answer_basis
         else:
             self._set_text_content(self.api_basis_text, "Local context disabled.")
 
@@ -1108,7 +1112,13 @@ class DesktopWindow:
 
         def worker() -> None:
             try:
-                reply = send_chat_request(settings, prompt)
+                reply = send_chat_request(
+                    settings,
+                    prompt,
+                    history=self.api_chat_history,
+                    allow_web_fallback=use_local_context and local_context_missing,
+                    web_search_query=user_text,
+                )
             except ApiChatError as exc:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="API Chat"))
                 return
@@ -1130,11 +1140,22 @@ class DesktopWindow:
                     self.api_send_button.configure(state=tk.NORMAL),
                     self.api_status_var.set(self._tr("\u5b8c\u6210", "Done")),
                     self._append_text_content(self.api_reply_text, r + "\n"),
+                    self._append_api_history("user", user_text),
+                    self._append_api_history("assistant", r),
                     self.api_input_text.delete("1.0", tk.END),
                 ),
             )
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _append_api_history(self, role: str, content: str) -> None:
+        r = role.strip().lower()
+        t = content.strip()
+        if r not in {"user", "assistant"} or not t:
+            return
+        self.api_chat_history.append({"role": r, "content": t})
+        if len(self.api_chat_history) > 24:
+            self.api_chat_history = self.api_chat_history[-24:]
 
     def _build_radar_section(self, parent: ttk.Frame) -> None:
         box = ttk.LabelFrame(parent, text="\u96f7\u8fbe\u68c0\u7d22", padding=10)
