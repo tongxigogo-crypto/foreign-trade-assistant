@@ -4,6 +4,7 @@ set -euo pipefail
 VERSION="${1:-$(date +%Y%m%d)}"
 SKIP_TESTS="${SKIP_TESTS:-0}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKSPACE_ROOT="$(cd "$ROOT_DIR/../.." && pwd)"
 
 cd "$ROOT_DIR"
 
@@ -11,6 +12,16 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "Python3 not found." >&2
   exit 1
 fi
+
+echo "==> Runtime audit gate (auto)"
+(
+  cd "$WORKSPACE_ROOT"
+  python3 -m agent_system.runtime \
+    --root "$WORKSPACE_ROOT" \
+    --run-id "build-gate-mac-${VERSION}" \
+    --mode preview \
+    --audit-level auto >/dev/null
+)
 
 RELEASE_ROOT="$ROOT_DIR/release"
 STAGE_DIR="$RELEASE_ROOT/TA_Beta_${VERSION}_mac"

@@ -8,6 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
+$workspaceRoot = (Resolve-Path (Join-Path $root "..\..")).Path
 
 function Resolve-PythonCommand {
     if (Get-Command py -ErrorAction SilentlyContinue) {
@@ -36,6 +37,19 @@ $buildVenv = Join-Path $root ".venv-build"
 $releaseRoot = Join-Path $root "release"
 $stageDir = Join-Path $releaseRoot ("TA_Beta_{0}_windows" -f $Version)
 $zipPath = Join-Path $releaseRoot ("TA_Beta_{0}_windows.zip" -f $Version)
+
+Run-Step "Runtime audit gate (auto)" {
+    Push-Location $workspaceRoot
+    try {
+        Invoke-Expression "$pyCmd -m agent_system.runtime --root `"$workspaceRoot`" --run-id `"build-gate-win-$Version`" --mode preview --audit-level auto" | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Runtime audit gate failed."
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
 
 Run-Step "Create build virtualenv" {
     if (Test-Path $buildVenv) {

@@ -31,6 +31,15 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Runtime Audit Gate (auto)
+        shell: bash
+        run: |
+          python -m agent_system.runtime \
+            --root "$GITHUB_WORKSPACE" \
+            --run-id "ci-gate-${{ runner.os }}-${{ github.run_id }}" \
+            --mode preview \
+            --audit-level auto >/dev/null
+
       - name: Resolve Version
         id: version
         shell: bash
