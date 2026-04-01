@@ -74,3 +74,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 8 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-02 - Architecture Focus Guard (Depth Before Breadth)
+
+- Context: roadmap decision for next stage after windows build32 closure
+- Signal: user concern on privacy-boundary complexity for enterprise chat ingestion
+- Rule: when compliance/permission boundary is unclear, prioritize core assistant quality stack first (evaluation harness + preference learning + retrieval quality)
+- Scope: roadmap planning for this workspace
+- Action: execute 1) eval harness, 2) self-improving v1, 3) rag dual-index, 4) model adapter before expanding ingestion channels
+
+## [2026-04-02 02:58:41] harness-finish
+
+- status: success
+- summary: Changed scope: 4 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
