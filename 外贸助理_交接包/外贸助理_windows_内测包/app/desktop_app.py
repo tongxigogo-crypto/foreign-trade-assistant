@@ -8,6 +8,10 @@ import sys
 import threading
 import time
 import webbrowser
+try:
+    import winreg
+except Exception:  # pragma: no cover
+    winreg = None
 from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -117,6 +121,20 @@ class DesktopWindow:
         top.pack(fill=tk.X, pady=(0, 8))
         self.notice_label = ttk.Label(top, text="\u6743\u9650\u53ea\u8bfb\uff1a\u4ec5\u626b\u63cf\u4f60\u9009\u62e9\u7684\u6587\u4ef6\u3002", foreground="#8b5a00")
         self.notice_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.version_label = ttk.Label(top, text=f"Build: {APP_VERSION}")
+        self.version_label.pack(side=tk.RIGHT, padx=(8, 0))
+        self.theme_mode_var = tk.StringVar(value=self._theme_mode_to_display(getattr(self.settings, "theme_mode", "system")))
+        self.theme_label = ttk.Label(top, text="\u5916\u89c2")
+        self.theme_label.pack(side=tk.RIGHT, padx=(8, 2))
+        self.theme_mode_box = ttk.Combobox(
+            top,
+            width=10,
+            textvariable=self.theme_mode_var,
+            values=self._theme_mode_display_values(),
+            state="readonly",
+        )
+        self.theme_mode_box.pack(side=tk.RIGHT)
+        self.theme_mode_box.bind("<<ComboboxSelected>>", self._on_theme_mode_changed)
         self.lang_zh_btn = ttk.Button(top, text="\u4e2d\u6587", width=6, command=lambda: self._switch_language("zh"))
         self.lang_zh_btn.pack(side=tk.RIGHT, padx=(6, 0))
         self.lang_en_btn = ttk.Button(top, text="EN", width=6, command=lambda: self._switch_language("en"))
@@ -158,6 +176,7 @@ class DesktopWindow:
         self._build_runtime_section(self.right_panel)
         self._build_feedback_section(self.right_panel)
         self._apply_language_texts()
+        self._apply_theme(self._get_theme_mode())
         self._apply_beginner_mode()
         self.root.after(500, self.begin_work_session)
         self.root.after(1200, self._focus_primary_entry)
@@ -175,16 +194,142 @@ class DesktopWindow:
 
     def _switch_language(self, lang: str) -> None:
         self.ui_lang = "en" if lang == "en" else "zh"
+        self.theme_mode_box.configure(values=self._theme_mode_display_values())
+        self.theme_mode_var.set(self._theme_mode_to_display(self._get_theme_mode()))
         self._apply_language_texts()
 
     def _tr(self, zh: str, en: str) -> str:
         return zh if self.ui_lang == "zh" else en
+
+    def _theme_mode_display_values(self) -> list[str]:
+        if self.ui_lang == "zh":
+            return ["\u8ddf\u968f\u7cfb\u7edf", "\u6d45\u8272", "\u6df1\u8272"]
+        return ["System", "Light", "Dark"]
+
+    def _theme_mode_to_display(self, mode: str) -> str:
+        normalized = str(mode).strip().lower()
+        if normalized not in {"system", "light", "dark"}:
+            normalized = "system"
+        if self.ui_lang == "zh":
+            return {
+                "system": "\u8ddf\u968f\u7cfb\u7edf",
+                "light": "\u6d45\u8272",
+                "dark": "\u6df1\u8272",
+            }[normalized]
+        return {
+            "system": "System",
+            "light": "Light",
+            "dark": "Dark",
+        }[normalized]
+
+    def _display_to_theme_mode(self, display: str) -> str:
+        normalized = str(display).strip().lower()
+        mapping = {
+            "system": "system",
+            "light": "light",
+            "dark": "dark",
+            "\u8ddf\u968f\u7cfb\u7edf": "system",
+            "\u6d45\u8272": "light",
+            "\u6df1\u8272": "dark",
+        }
+        return mapping.get(normalized, "system")
+
+    def _get_theme_mode(self) -> str:
+        current = getattr(self.settings, "theme_mode", "system")
+        normalized = str(current).strip().lower()
+        if normalized not in {"system", "light", "dark"}:
+            normalized = "system"
+        return normalized
+
+    def _is_windows_system_dark(self) -> bool:
+        if winreg is None:
+            return False
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+            )
+            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            return int(value) == 0
+        except Exception:
+            return False
+
+    def _resolve_theme_mode(self, mode: str) -> str:
+        if mode == "system":
+            return "dark" if self._is_windows_system_dark() else "light"
+        return mode
+
+    def _on_theme_mode_changed(self, _event: tk.Event | None = None) -> None:
+        mode = self._display_to_theme_mode(self.theme_mode_var.get())
+        self.settings.theme_mode = mode
+        self.settings_store.save(self.settings)
+        self._apply_theme(mode)
+
+    def _apply_theme(self, mode: str) -> None:
+        effective = self._resolve_theme_mode(mode)
+        is_dark = effective == "dark"
+        bg = "#111827" if is_dark else "#f5f7fb"
+        fg = "#e5e7eb" if is_dark else "#111827"
+        input_bg = "#1f2937" if is_dark else "#ffffff"
+        input_fg = "#f9fafb" if is_dark else "#111827"
+        accent = "#60a5fa" if is_dark else "#2563eb"
+        muted_fg = "#9ca3af" if is_dark else "#4b5563"
+
+        style = ttk.Style(self.root)
+        try:
+            style.theme_use("clam")
+        except Exception:
+            pass
+        style.configure(".", background=bg, foreground=fg)
+        style.configure("TFrame", background=bg)
+        style.configure("TLabelframe", background=bg, foreground=fg)
+        style.configure("TLabelframe.Label", background=bg, foreground=fg)
+        style.configure("TLabel", background=bg, foreground=fg)
+        style.configure("TButton", background=bg, foreground=fg)
+        style.configure("TCheckbutton", background=bg, foreground=fg)
+        style.configure("TRadiobutton", background=bg, foreground=fg)
+        style.configure("TCombobox", fieldbackground=input_bg, foreground=input_fg)
+        style.configure("TEntry", fieldbackground=input_bg, foreground=input_fg)
+
+        for widget in [self.root, getattr(self, "main_canvas", None)]:
+            if widget is None:
+                continue
+            try:
+                widget.configure(bg=bg)
+            except Exception:
+                pass
+
+        def walk(node: tk.Misc) -> None:
+            for child in node.winfo_children():
+                if isinstance(child, (tk.Text, tk.Listbox)):
+                    try:
+                        child.configure(
+                            bg=input_bg,
+                            fg=input_fg,
+                            insertbackground=input_fg,
+                            selectbackground=accent,
+                            selectforeground="#ffffff",
+                        )
+                    except Exception:
+                        pass
+                elif isinstance(child, tk.Canvas):
+                    try:
+                        child.configure(bg=bg, highlightbackground=muted_fg)
+                    except Exception:
+                        pass
+                walk(child)
+
+        walk(self.root)
 
     def _apply_language_texts(self) -> None:
         is_zh = self.ui_lang == "zh"
         if is_zh:
             self.root.title("\u5916\u8d38\u52a9\u7406\u684c\u9762\u7248")
             self.notice_label.configure(text="\u6743\u9650\u53ea\u8bfb\uff1a\u4ec5\u626b\u63cf\u4f60\u9009\u62e9\u7684\u6587\u4ef6\u3002")
+            self.version_label.configure(text=f"\u7248\u672c: {APP_VERSION}")
+            self.theme_label.configure(text="\u5916\u89c2")
+            self.theme_mode_box.configure(values=self._theme_mode_display_values())
+            self.theme_mode_var.set(self._theme_mode_to_display(self._get_theme_mode()))
             self.service_section_box.configure(text="1) \u5de5\u4f5c\u5165\u53e3\uff08\u63a8\u8350\uff09")
             self.start_work_button.configure(text="\u4e00\u952e\u542f\u52a8")
             self.open_workbench_button.configure(text="\u6253\u5f00\u7f51\u9875\u770b\u677f")
@@ -285,6 +430,10 @@ class DesktopWindow:
         else:
             self.root.title("Trade Assistant Desktop")
             self.notice_label.configure(text="Read-only: scans selected files only.")
+            self.version_label.configure(text=f"Version: {APP_VERSION}")
+            self.theme_label.configure(text="Theme")
+            self.theme_mode_box.configure(values=self._theme_mode_display_values())
+            self.theme_mode_var.set(self._theme_mode_to_display(self._get_theme_mode()))
             self.service_section_box.configure(text="1) Work Entry (Recommended)")
             self.start_work_button.configure(text="Start Work")
             self.open_workbench_button.configure(text="Open Web Workbench")
@@ -874,8 +1023,7 @@ class DesktopWindow:
         provider = self.api_provider_var.get().strip().lower() or "nvidia"
         if provider != "custom":
             self.api_url_var.set(default_api_url(provider))
-            if not self.api_model_var.get().strip():
-                self.api_model_var.set(default_model(provider))
+            self.api_model_var.set(default_model(provider))
 
     def _collect_api_settings(self) -> ApiChatSettings:
         provider = self.api_provider_var.get().strip().lower() or "nvidia"
@@ -1659,19 +1807,13 @@ class DesktopWindow:
                     messagebox.showinfo("One-click Update", self._tr("当前已是最新版本。", "Already the latest version."))
                     return
 
-                prompt = self._tr(
-                    f"发现新版本：{info.latest_version}\n来源：{info.source_repo}\n\n是否现在一键更新并自动重启？",
-                    f"New version found: {info.latest_version}\nSource: {info.source_repo}\n\nUpdate now and restart automatically?",
+                messagebox.showinfo(
+                    "One-click Update",
+                    self._tr(
+                        f"发现新版本：{info.latest_version}\n来源：{info.source_repo}\n\n已自动开始更新流程，应用将自动重启。",
+                        f"New version found: {info.latest_version}\nSource: {info.source_repo}\n\nUpdate will start now and restart automatically.",
+                    ),
                 )
-                if not messagebox.askyesno("One-click Update", prompt):
-                    if launcher:
-                        open_path(launcher)
-                    else:
-                        messagebox.showinfo(
-                            "One-click Update",
-                            self._tr(f"更新包已准备：\n{prepared_path}", f"Update package prepared:\n{prepared_path}"),
-                        )
-                    return
 
                 try:
                     install_dir = resolve_install_dir(self.config.root_dir)
@@ -3158,6 +3300,7 @@ class DesktopWindow:
             )
         self._append_import_visibility(result, mode=mode)
         self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+        self.refresh_runtime_status()
 
     def _finish_email_import(self, result: dict, retry: bool = False) -> None:
         self._set_import_buttons_busy(False)
@@ -3181,6 +3324,7 @@ class DesktopWindow:
             )
         self._append_import_visibility(result, mode="mail")
         self._append_result(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+        self.refresh_runtime_status()
 
     def _finish_mail_pull(self, pull_result: dict, ingest_result: dict) -> None:
         self._set_import_buttons_busy(False)
@@ -3210,6 +3354,7 @@ class DesktopWindow:
         self._append_result(
             json.dumps({"pull": pull_result, "ingest": ingest_result}, ensure_ascii=False, indent=2) + "\n"
         )
+        self.refresh_runtime_status()
 
     def _mail_login_help(self, raw_error: str) -> str:
         low = raw_error.lower()

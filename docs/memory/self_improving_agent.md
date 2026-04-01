@@ -61,3 +61,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 - Rule: when bumping release build tags, update `app/version.py` and `website/api/release-manifest.json` in mac/windows together before packaging
 - Scope: beta packaging + auto-update pipeline
 - Action: enforce a pre-build checklist item for version constant + manifest consistency
+
+## 2026-04-02 - Provider/Model and Theme UX Guard
+
+- Context: windows desktop settings usability and release-readiness round
+- Signal: provider switch left stale model; update flow required extra confirmation; visual mode lacked system/light/dark options
+- Rule: provider changes must atomically sync URL+model defaults; one-click update should be single-intent flow; theme preference must be persistent and reversible
+- Scope: `外贸助理_windows_内测包/app/desktop_app.py` + `app/user_settings.py`
+- Action: add regression tests for provider-model linkage and theme-mode persistence before syncing to mac
+
+## [2026-04-02 00:59:47] harness-finish
+
+- status: success
+- summary: Changed scope: 8 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.

@@ -24,6 +24,7 @@ class UserSettings:
     mail_password: str = ""
     remember_mail_password: bool = False
     error_reporting_enabled: bool = False
+    theme_mode: str = "system"
     extra: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -47,6 +48,7 @@ class UserSettings:
                 "mail_password": self.mail_password if self.remember_mail_password else "",
                 "remember_mail_password": bool(self.remember_mail_password),
                 "error_reporting_enabled": bool(self.error_reporting_enabled),
+                "theme_mode": self.theme_mode,
             }
         )
         return payload
@@ -84,6 +86,9 @@ class UserSettings:
         remember_mail_password = bool(data.get("remember_mail_password", False))
         mail_password = str(data.get("mail_password", "")).strip() if remember_mail_password else ""
         error_reporting_enabled = bool(data.get("error_reporting_enabled", False))
+        theme_mode = str(data.get("theme_mode", "system")).strip().lower() or "system"
+        if theme_mode not in {"light", "dark", "system"}:
+            theme_mode = "system"
         extra = {
             key: value
             for key, value in data.items()
@@ -106,6 +111,7 @@ class UserSettings:
                 "mail_password",
                 "remember_mail_password",
                 "error_reporting_enabled",
+                "theme_mode",
             }
         }
         return cls(
@@ -126,6 +132,7 @@ class UserSettings:
             mail_password=mail_password,
             remember_mail_password=remember_mail_password,
             error_reporting_enabled=error_reporting_enabled,
+            theme_mode=theme_mode,
             extra=extra,
         )
 
