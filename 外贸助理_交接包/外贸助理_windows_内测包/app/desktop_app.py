@@ -397,6 +397,8 @@ class DesktopWindow:
             self.api_model_label.configure(text="\u6a21\u578b")
             self.api_url_label.configure(text="API \u5730\u5740")
             self.api_use_local_context_check.configure(text="\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587")
+            self.api_use_memory_check.configure(text="\u4f7f\u7528\u4f1a\u8bdd\u8bb0\u5fc6")
+            self.api_memory_turns_label.configure(text="\u8bb0\u5fc6\u8f6e\u6570")
             self.api_input_label.configure(text="\u8f93\u5165")
             self.api_reply_label.configure(text="\u56de\u590d")
             self.api_basis_label.configure(text="\u56de\u7b54\u4f9d\u636e")
@@ -502,6 +504,8 @@ class DesktopWindow:
             self.api_model_label.configure(text="Model")
             self.api_url_label.configure(text="API URL")
             self.api_use_local_context_check.configure(text="Use Local Context")
+            self.api_use_memory_check.configure(text="Use Conversation Memory")
+            self.api_memory_turns_label.configure(text="Memory Turns")
             self.api_input_label.configure(text="Input")
             self.api_reply_label.configure(text="Reply")
             self.api_basis_label.configure(text="Answer Basis")
@@ -953,6 +957,22 @@ class DesktopWindow:
         self.api_use_local_context_var = tk.BooleanVar(value=bool(self.settings.api_use_local_context))
         self.api_use_local_context_check = ttk.Checkbutton(self.api_box, text="\u4f7f\u7528\u672c\u5730\u4e0a\u4e0b\u6587", variable=self.api_use_local_context_var)
         self.api_use_local_context_check.pack(anchor=tk.W, pady=(6, 0))
+        memory_row = ttk.Frame(self.api_box)
+        memory_row.pack(fill=tk.X, pady=(4, 0))
+        self.api_use_memory_var = tk.BooleanVar(value=bool(getattr(self.settings, "api_use_memory", True)))
+        self.api_use_memory_check = ttk.Checkbutton(memory_row, text="\u4f7f\u7528\u4f1a\u8bdd\u8bb0\u5fc6", variable=self.api_use_memory_var)
+        self.api_use_memory_check.pack(side=tk.LEFT)
+        self.api_memory_turns_label = ttk.Label(memory_row, text="\u8bb0\u5fc6\u8f6e\u6570")
+        self.api_memory_turns_label.pack(side=tk.LEFT, padx=(10, 4))
+        self.api_memory_turns_var = tk.StringVar(value=str(int(getattr(self.settings, "api_memory_turns", 12) or 12)))
+        self.api_memory_turns_box = ttk.Combobox(
+            memory_row,
+            width=4,
+            textvariable=self.api_memory_turns_var,
+            values=[str(i) for i in range(2, 25)],
+            state="readonly",
+        )
+        self.api_memory_turns_box.pack(side=tk.LEFT)
 
         self.api_result_pane = tk.PanedWindow(
             self.api_box,
@@ -1050,6 +1070,12 @@ class DesktopWindow:
         self.settings.api_model = settings.model
         self.settings.api_url = settings.api_url
         self.settings.api_use_local_context = bool(self.api_use_local_context_var.get())
+        self.settings.api_use_memory = bool(self.api_use_memory_var.get())
+        try:
+            turns = int(self.api_memory_turns_var.get().strip() or "12")
+        except ValueError:
+            turns = 12
+        self.settings.api_memory_turns = max(2, min(turns, 24))
         self.settings_store.save(self.settings)
         self.api_status_var.set(self._tr("\u5df2\u4fdd\u5b58", "Saved"))
         self.runtime_hint_var.set(self._runtime_mode_hint())
@@ -1186,6 +1212,26 @@ class DesktopWindow:
         pref_instr = preference_instruction(pref_profile, lang=("zh" if self.ui_lang == "zh" else "en"))
         pref_basis = preference_basis_line(pref_profile, lang=("zh" if self.ui_lang == "zh" else "en"))
         self._append_text_content(self.api_basis_text, "\n" + pref_basis + "\n")
+        history_to_send: list[dict[str, str]] | None = None
+        if bool(self.api_use_memory_var.get()):
+            try:
+                turns = int(self.api_memory_turns_var.get().strip() or "12")
+            except ValueError:
+                turns = int(getattr(self.settings, "api_memory_turns", 12))
+            turns = max(2, min(turns, 24))
+            history_to_send = self.api_chat_history[-(turns * 2) :]
+            self._append_text_content(
+                self.api_basis_text,
+                self._tr(
+                    f"\n会话记忆：已启用（最近 {turns} 轮）\n",
+                    f"\nConversation memory: enabled (recent {turns} turns)\n",
+                ),
+            )
+        else:
+            self._append_text_content(
+                self.api_basis_text,
+                self._tr("\n会话记忆：已关闭\n", "\nConversation memory: disabled\n"),
+            )
 
         self.api_send_button.configure(state=tk.DISABLED)
         self.api_learn_edit_button.configure(state=tk.DISABLED)
@@ -1197,7 +1243,7 @@ class DesktopWindow:
                 reply = send_chat_request(
                     settings,
                     prompt,
-                    history=self.api_chat_history,
+                    history=history_to_send,
                     allow_web_fallback=use_local_context and local_context_missing,
                     web_search_query=user_text,
                     preference_instructions=pref_instr,

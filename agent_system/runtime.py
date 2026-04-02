@@ -307,7 +307,8 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
             "guardrail_report": str(paths.guardrail_report),
             "retrieval_trace": str(paths.run_reports_dir / f"retrieval-trace-{run_id}.json"),
             "run_report": str(run_report_file),
-            "rag_db": str(rag_db),
+            "rag_db_facts": str(facts_db),
+            "rag_db_memory": str(memory_db),
         },
     )
     run_report = {
@@ -345,7 +346,8 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
             if effective_audit_level == "full"
             else "",
             "run_report": str(run_report_file),
-            "rag_db": str(rag_db),
+            "rag_db_facts": str(facts_db),
+            "rag_db_memory": str(memory_db),
         },
     )
     run_report["closed_loop"] = verdict

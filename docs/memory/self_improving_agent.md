@@ -87,3 +87,29 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 4 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## [2026-04-02 23:23:28] harness-finish
+
+- status: success
+- summary: Changed scope: 9 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-02 - Runtime Gate Variable Drift Guard
+
+- Context: windows release packaging gate (`runtime --audit-level auto`)
+- Signal: NameError from stale `rag_db` reference after dual-index refactor
+- Rule: when replacing singleton resources with split resources, update all verdict/evidence payload fields in runtime
+- Scope: `agent_system/runtime.py` gate + harness verdict generation
+- Action: enforce compile/runtime gate check before packaging and keep evidence keys aligned (`rag_db_facts`, `rag_db_memory`)
+
+## 2026-04-02 - API Memory Control Guard
+
+- Context: user expects memory continuity even when local context is disabled
+- Signal: conversation continuity expectation not explicit in settings layer
+- Rule: expose memory behavior as explicit user setting (on/off + bounded turns)
+- Scope: windows desktop API panel + `user_settings.py`
+- Action: persist memory switch/turns and pass bounded history window into chat request
+
+## [2026-04-02 23:25:31] harness-finish
+
+- status: success
+- summary: Changed scope: 11 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
