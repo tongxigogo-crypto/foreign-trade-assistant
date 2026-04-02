@@ -37,6 +37,7 @@ from .email_batch_importer import ingest_email_thread_directory, scan_email_thre
 from .email_remote_connector import MailPullConfig, pull_mail_threads_to_dir
 from .history_importer import extract_facts_from_history_file, ingest_history_directory, scan_history_files
 from .local_store import LocalKnowledgeStore
+from .self_improving_preferences import learn_from_edit, preference_basis_line, preference_instruction
 from .state_board import StateBoard
 from .telemetry import capture_exception, init_error_reporting, set_error_reporting_enabled
 from .update_manager import (
@@ -82,6 +83,7 @@ class DesktopWindow:
         self.api_basis_default_zh = "尚未使用本地上下文。"
         self.api_basis_default_en = "No local context used yet."
         self.api_chat_history: list[dict[str, str]] = []
+        self.last_api_reply_text: str = ""
         self.radar_placeholder_zh = "输入关键词后点击检索。\n"
         self.radar_placeholder_en = "Enter keywords then click Search.\n"
         self.import_result_placeholder_zh = "导入结果会显示在这里。\n"
@@ -401,6 +403,7 @@ class DesktopWindow:
             self.api_save_button.configure(text="\u4fdd\u5b58 API")
             self.api_test_button.configure(text="\u8fde\u63a5\u6d4b\u8bd5")
             self.api_send_button.configure(text="\u53d1\u9001")
+            self.api_learn_edit_button.configure(text="\u5b66\u4e60\u6539\u5199")
             self.output_section_box.configure(text="\u8f93\u51fa\u76ee\u5f55")
             self.choose_output_dir_button.configure(text="\u9009\u62e9\u76ee\u5f55")
             self.save_output_dir_button.configure(text="\u4fdd\u5b58")
@@ -505,6 +508,7 @@ class DesktopWindow:
             self.api_save_button.configure(text="Save API")
             self.api_test_button.configure(text="Connection Test")
             self.api_send_button.configure(text="Send")
+            self.api_learn_edit_button.configure(text="Learn Edit")
             self.output_section_box.configure(text="Output Directory")
             self.choose_output_dir_button.configure(text="Choose Folder")
             self.save_output_dir_button.configure(text="Save")
@@ -984,6 +988,8 @@ class DesktopWindow:
         ttk.Label(send_row, textvariable=self.api_status_var).pack(side=tk.LEFT)
         self.api_send_button = ttk.Button(send_row, text="\u53d1\u9001", command=self.send_api_message)
         self.api_send_button.pack(side=tk.RIGHT)
+        self.api_learn_edit_button = ttk.Button(send_row, text="\u5b66\u4e60\u6539\u5199", command=self.learn_api_reply_edit)
+        self.api_learn_edit_button.pack(side=tk.RIGHT, padx=(0, 6))
 
         self.api_reply_frame = ttk.Frame(self.api_result_pane)
         self.api_result_pane.add(self.api_reply_frame, stretch="always", minsize=100)
@@ -1050,6 +1056,7 @@ class DesktopWindow:
 
     def _handle_api_error(self, exc: ApiChatError, *, title: str) -> None:
         self.api_send_button.configure(state=tk.NORMAL)
+        self.api_learn_edit_button.configure(state=tk.NORMAL)
         self.api_status_var.set(self._tr("\u5931\u8d25", "Failed"))
         self._append_text_content(self.api_reply_text, f"\n[ERROR] {exc}\n")
         messagebox.showerror(title, str(exc))
@@ -1117,6 +1124,7 @@ class DesktopWindow:
             messagebox.showwarning("API", "\u8bf7\u5148\u586b\u5199 API Key\u3002")
             return
         self.api_send_button.configure(state=tk.DISABLED)
+        self.api_learn_edit_button.configure(state=tk.DISABLED)
         self.api_status_var.set(self._tr("\u6d4b\u8bd5\u4e2d...", "Testing..."))
 
         def worker() -> None:
@@ -1131,6 +1139,7 @@ class DesktopWindow:
                     0,
                     lambda e=exc: (
                         self.api_send_button.configure(state=tk.NORMAL),
+                        self.api_learn_edit_button.configure(state=tk.NORMAL),
                         self.api_status_var.set(self._tr("\u5931\u8d25", "Failed")),
                         messagebox.showerror("Connection Test", str(e)),
                     ),
@@ -1140,6 +1149,7 @@ class DesktopWindow:
                 0,
                 lambda r=reply: (
                     self.api_send_button.configure(state=tk.NORMAL),
+                    self.api_learn_edit_button.configure(state=tk.NORMAL),
                     self.api_status_var.set(self._tr("API \u6b63\u5e38", "API Ready")),
                     self._append_text_content(self.api_reply_text, r + "\n"),
                 ),
@@ -1172,7 +1182,13 @@ class DesktopWindow:
         else:
             self._set_text_content(self.api_basis_text, "Local context disabled.")
 
+        pref_profile = self.settings.extra.get("self_improving_profile", {})
+        pref_instr = preference_instruction(pref_profile, lang=("zh" if self.ui_lang == "zh" else "en"))
+        pref_basis = preference_basis_line(pref_profile, lang=("zh" if self.ui_lang == "zh" else "en"))
+        self._append_text_content(self.api_basis_text, "\n" + pref_basis + "\n")
+
         self.api_send_button.configure(state=tk.DISABLED)
+        self.api_learn_edit_button.configure(state=tk.DISABLED)
         self.api_status_var.set(self._tr("\u53d1\u9001\u4e2d...", "Sending..."))
         self._append_text_content(self.api_reply_text, "[Sending...]\n")
 
@@ -1184,6 +1200,7 @@ class DesktopWindow:
                     history=self.api_chat_history,
                     allow_web_fallback=use_local_context and local_context_missing,
                     web_search_query=user_text,
+                    preference_instructions=pref_instr,
                 )
             except ApiChatError as exc:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="API Chat"))
@@ -1194,6 +1211,7 @@ class DesktopWindow:
                     0,
                     lambda e=exc: (
                         self.api_send_button.configure(state=tk.NORMAL),
+                        self.api_learn_edit_button.configure(state=tk.NORMAL),
                         self.api_status_var.set(self._tr("\u5931\u8d25", "Failed")),
                         self._append_text_content(self.api_reply_text, f"\n[ERROR] {e}\n"),
                         messagebox.showerror("API Chat", str(e)),
@@ -1204,15 +1222,37 @@ class DesktopWindow:
                 0,
                 lambda r=reply: (
                     self.api_send_button.configure(state=tk.NORMAL),
+                    self.api_learn_edit_button.configure(state=tk.NORMAL),
                     self.api_status_var.set(self._tr("\u5b8c\u6210", "Done")),
                     self._append_text_content(self.api_reply_text, r + "\n"),
                     self._append_api_history("user", user_text),
                     self._append_api_history("assistant", r),
+                    setattr(self, "last_api_reply_text", r),
                     self.api_input_text.delete("1.0", tk.END),
                 ),
             )
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def learn_api_reply_edit(self) -> None:
+        revised = self.api_reply_text.get("1.0", tk.END).strip()
+        original = (self.last_api_reply_text or "").strip()
+        if not original:
+            messagebox.showinfo("Self-Improving", self._tr("暂无可学习的上一条回复。", "No previous reply available for learning."))
+            return
+        if not revised:
+            messagebox.showinfo("Self-Improving", self._tr("当前回复为空，无法学习。", "Current reply is empty; cannot learn."))
+            return
+        result = learn_from_edit(
+            original_reply=original,
+            revised_reply=revised,
+            existing_profile=self.settings.extra.get("self_improving_profile", {}),
+        )
+        self.settings.extra["self_improving_profile"] = result.updated_profile
+        self.settings_store.save(self.settings)
+        basis = preference_basis_line(result.updated_profile, lang=("zh" if self.ui_lang == "zh" else "en"))
+        self._append_text_content(self.api_basis_text, "\n" + basis + "\n")
+        messagebox.showinfo("Self-Improving", self._tr("已学习本次改写偏好。", "Learned preferences from this edit."))
 
     def _append_api_history(self, role: str, content: str) -> None:
         r = role.strip().lower()

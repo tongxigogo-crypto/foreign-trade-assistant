@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Any
+
+from agent_system.adapters.model_adapter import ModelAdapter, ModelAdapterConfig, get_default_provider_profile
 
 
 @dataclass
@@ -94,6 +97,48 @@ def _case_scores(case: EvalCase, answer: str) -> dict[str, Any]:
     }
 
 
+def _score_dataset(
+    *,
+    dataset: list[EvalCase],
+    weights: dict[str, float],
+    answerer: Any,
+) -> dict[str, Any]:
+    agg = {k: 0.0 for k in weights}
+    case_reports: list[dict[str, Any]] = []
+    failed_case_ids: list[str] = []
+    for case in dataset:
+        answer = str(answerer(case))
+        scores = _case_scores(case, answer)
+        case_score = 0.0
+        for key, weight in weights.items():
+            value = float(scores.get(key, 0.0))
+            agg[key] += value
+            case_score += value * weight
+        if case_score < 0.6:
+            failed_case_ids.append(case.id)
+        case_reports.append(
+            {
+                "id": case.id,
+                "scene": case.scene,
+                "difficulty": case.difficulty,
+                "score": round(case_score, 4),
+                "scores": {k: round(float(scores.get(k, 0.0)), 4) for k in weights},
+            }
+        )
+
+    size = len(dataset)
+    dimension_scores = {k: round(v / size, 4) for k, v in agg.items()}
+    overall_score = round(sum(dimension_scores[k] * weights[k] for k in weights), 4)
+    return {
+        "dataset_size": size,
+        "overall_score": overall_score,
+        "dimension_scores": dimension_scores,
+        "failed_case_ids": failed_case_ids,
+        "top_regressions": failed_case_ids[:5],
+        "cases": case_reports,
+    }
+
+
 def run_eval_suite(
     *,
     dataset_path: Path,
@@ -129,45 +174,67 @@ def run_eval_suite(
             "business_tone_safety": 0.1,
         }
 
-    agg = {k: 0.0 for k in weights}
-    case_reports: list[dict[str, Any]] = []
-    failed_case_ids: list[str] = []
-    for case in dataset:
-        answer = _synthesize_answer(case)
-        scores = _case_scores(case, answer)
-        case_score = 0.0
-        for key, weight in weights.items():
-            value = float(scores.get(key, 0.0))
-            agg[key] += value
-            case_score += value * weight
-        if case_score < 0.6:
-            failed_case_ids.append(case.id)
-        case_reports.append(
-            {
-                "id": case.id,
-                "scene": case.scene,
-                "difficulty": case.difficulty,
-                "score": round(case_score, 4),
-                "scores": {k: round(float(scores.get(k, 0.0)), 4) for k in weights},
-            }
+    pass_threshold = float(rubric.get("pass_threshold", 0.75))
+    baseline = _score_dataset(dataset=dataset, weights=weights, answerer=_synthesize_answer)
+    baseline["status"] = "ok"
+    baseline["provider"] = "internal"
+    baseline["model"] = "heuristic-v1"
+    baseline["pass_threshold"] = pass_threshold
+    baseline["pass"] = baseline["overall_score"] >= pass_threshold
+
+    live_eval: dict[str, Any] = {"status": "skipped", "reason": "missing_live_eval_env"}
+    env_key = str(os.getenv("MODEL_EVAL_API_KEY", "")).strip()
+    env_provider = str(os.getenv("MODEL_EVAL_PROVIDER", "")).strip().lower()
+    env_model = str(os.getenv("MODEL_EVAL_MODEL", "")).strip()
+    env_url = str(os.getenv("MODEL_EVAL_API_URL", "")).strip()
+    if env_key and env_provider:
+        profile = get_default_provider_profile(env_provider)
+        live_cfg = ModelAdapterConfig(
+            provider=env_provider,
+            model=env_model or str(profile.get("model", "")),
+            api_url=env_url or str(profile.get("api_url", "")),
+            api_key=env_key,
+            timeout_sec=int(profile.get("timeout_sec", 30)),
         )
 
-    size = len(dataset)
-    dimension_scores = {k: round(v / size, 4) for k, v in agg.items()}
-    overall_score = round(sum(dimension_scores[k] * weights[k] for k in weights), 4)
-    pass_threshold = float(rubric.get("pass_threshold", 0.75))
+        adapter = ModelAdapter(live_cfg)
+
+        def _live_answer(case: EvalCase) -> str:
+            system = "You are a foreign-trade assistant. Provide concise and actionable answer."
+            user = f"Question: {case.user_query}\nLocal facts:\n" + "\n".join(f"- {x}" for x in case.local_facts)
+            return adapter.chat([{"role": "system", "content": system}, {"role": "user", "content": user}])
+
+        try:
+            live_eval = _score_dataset(dataset=dataset, weights=weights, answerer=_live_answer)
+            live_eval.update(
+                {
+                    "status": "ok",
+                    "provider": env_provider,
+                    "model": live_cfg.model,
+                    "pass_threshold": pass_threshold,
+                    "pass": live_eval["overall_score"] >= pass_threshold,
+                }
+            )
+        except Exception as exc:  # pragma: no cover
+            live_eval = {"status": "error", "message": str(exc), "provider": env_provider, "model": live_cfg.model}
 
     return {
         "status": "ok",
         "provider": provider,
         "model": model,
-        "dataset_size": size,
-        "overall_score": overall_score,
+        "dataset_size": baseline["dataset_size"],
+        "overall_score": baseline["overall_score"],
         "pass_threshold": pass_threshold,
-        "pass": overall_score >= pass_threshold,
-        "dimension_scores": dimension_scores,
-        "failed_case_ids": failed_case_ids,
-        "top_regressions": failed_case_ids[:5],
-        "cases": case_reports,
+        "pass": baseline["pass"],
+        "dimension_scores": baseline["dimension_scores"],
+        "failed_case_ids": baseline["failed_case_ids"],
+        "top_regressions": baseline["top_regressions"],
+        "cases": baseline["cases"],
+        "baseline_eval": baseline,
+        "live_eval": live_eval,
+        "comparison": {
+            "live_minus_baseline": round(float(live_eval.get("overall_score", 0.0)) - float(baseline["overall_score"]), 4)
+            if live_eval.get("status") == "ok"
+            else None
+        },
     }
-

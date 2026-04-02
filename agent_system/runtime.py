@@ -39,15 +39,41 @@ def gather_rag_documents(root: Path, rag_sources: list[str]) -> list[dict[str, A
         if not path.exists():
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
+        source_type = "memory" if "memory" in str(path).lower() or "harness" in str(path).lower() else "facts"
         docs.append(
             {
                 "namespace": "workspace",
                 "source_id": str(path.relative_to(root)).replace("\\", "/"),
                 "content": content,
-                "metadata": {"path": str(path)},
+                "metadata": {"path": str(path), "source_type": source_type},
             }
         )
     return docs
+
+
+def split_docs_for_dual_index(docs: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    facts_docs: list[dict[str, Any]] = []
+    memory_docs: list[dict[str, Any]] = []
+    for item in docs:
+        metadata = dict(item.get("metadata", {}))
+        source_type = str(metadata.get("source_type", "facts")).strip().lower()
+        if source_type == "memory":
+            memory_docs.append(item)
+        else:
+            facts_docs.append(item)
+    return facts_docs, memory_docs
+
+
+def merge_dual_hits(facts_hits: list[Any], memory_hits: list[Any], top_k: int = 8) -> list[Any]:
+    merged: list[Any] = []
+    for item in facts_hits:
+        item.score = float(item.score) * 1.0
+        merged.append(item)
+    for item in memory_hits:
+        item.score = float(item.score) * 0.9
+        merged.append(item)
+    merged.sort(key=lambda x: float(getattr(x, "score", 0.0)), reverse=True)
+    return merged[: max(1, top_k)]
 
 
 def build_preflight_agent_plan(required_agents: list[str]) -> list[dict[str, Any]]:
@@ -209,15 +235,26 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
     )
     write_json(paths.guardrail_report, preflight)
 
-    rag_db = root / "agent_system" / "data" / "rag_index.sqlite"
-    index = KnowledgeIndex(rag_db)
-    doc_count = index.bulk_upsert(gather_rag_documents(root, rag_sources=active_rag_sources))
-    hits = index.query(query=query, top_k=8)
+    rag_docs = gather_rag_documents(root, rag_sources=active_rag_sources)
+    facts_docs, memory_docs = split_docs_for_dual_index(rag_docs)
+    facts_db = root / "agent_system" / "data" / "facts_index.sqlite"
+    memory_db = root / "agent_system" / "data" / "memory_index.sqlite"
+    facts_index = KnowledgeIndex(facts_db)
+    memory_index = KnowledgeIndex(memory_db)
+    facts_doc_count = facts_index.bulk_upsert(facts_docs)
+    memory_doc_count = memory_index.bulk_upsert(memory_docs)
+    facts_hits = facts_index.query(query=query, top_k=8)
+    memory_hits = memory_index.query(query=query, top_k=8)
+    hits = merge_dual_hits(facts_hits, memory_hits, top_k=8)
     retrieval_trace = {
         "updated_at": utc_now(),
         "query": query,
         "top_k": 8,
-        "indexed_documents": doc_count,
+        "indexed_documents": facts_doc_count + memory_doc_count,
+        "indexed_documents_facts": facts_doc_count,
+        "indexed_documents_memory": memory_doc_count,
+        "hit_count_facts": len(facts_hits),
+        "hit_count_memory": len(memory_hits),
         "hits": [item.to_dict() for item in hits],
     }
     write_json(paths.run_reports_dir / f"retrieval-trace-{run_id}.json", retrieval_trace)

@@ -170,3 +170,33 @@ def test_send_chat_request_web_fallback_when_answer_insufficient(monkeypatch) ->
     assert reply == "suggestion from web snippets"
     assert len(captured) == 2
     assert "Web search snippets" in captured[1]["messages"][-1]["content"]
+
+
+def test_send_chat_request_includes_preference_instruction(monkeypatch) -> None:
+    captured: list[dict] = []
+
+    class _Resp:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return json.dumps(self._payload, ensure_ascii=False).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # noqa: ANN001
+        body = req.data.decode("utf-8")
+        captured.append(json.loads(body))
+        return _Resp({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr("app.api_chat.urlopen", fake_urlopen)
+
+    settings = ApiChatSettings(provider="openai", api_key="k", model="m", api_url="https://example.test/v1/chat/completions")
+    _ = send_chat_request(settings, "hello", preference_instructions="Preference profile: tone=polite")
+
+    system_content = captured[0]["messages"][0]["content"]
+    assert "Preference profile: tone=polite" in system_content
