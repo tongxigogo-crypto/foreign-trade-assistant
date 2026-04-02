@@ -1,0 +1,44 @@
+{
+  "name": "trade-assistant-eval-rubric-v1",
+  "description": "Scoring rubric for 20 foreign-trade QA evaluation items.",
+  "version": "1.0.0",
+  "pass_threshold": 0.75,
+  "dimensions": [
+    {
+      "id": "must_include_hit_rate",
+      "weight": 0.35,
+      "scoring": "matched_expected_must_include / total_expected_must_include"
+    },
+    {
+      "id": "must_not_violation_rate",
+      "weight": 0.25,
+      "scoring": "1 - (matched_expected_must_not_include / max(1,total_expected_must_not_include))"
+    },
+    {
+      "id": "structure_completeness",
+      "weight": 0.2,
+      "scoring": "binary_or_partial_judge_against_gold_outline"
+    },
+    {
+      "id": "clarification_quality",
+      "weight": 0.1,
+      "scoring": "for missing-info scenes, asks concise key clarifying questions"
+    },
+    {
+      "id": "business_tone_safety",
+      "weight": 0.1,
+      "scoring": "professional tone, no unsafe over-promise, no fabricated facts"
+    }
+  ],
+  "report_fields": [
+    "run_id",
+    "model",
+    "provider",
+    "dataset_size",
+    "overall_score",
+    "pass",
+    "dimension_scores",
+    "failed_case_ids",
+    "top_regressions"
+  ]
+}
