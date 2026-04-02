@@ -13,6 +13,8 @@ class UserSettings:
     api_model: str = ""
     api_url: str = ""
     api_use_local_context: bool = True
+    api_use_memory: bool = True
+    api_memory_turns: int = 12
     api_timeout_sec: int = 30
     auto_open_dashboard_after_wizard: bool = True
     extension_domain_whitelist: list[str] = field(default_factory=list)
@@ -36,6 +38,8 @@ class UserSettings:
                 "api_model": self.api_model,
                 "api_url": self.api_url,
                 "api_use_local_context": bool(self.api_use_local_context),
+                "api_use_memory": bool(self.api_use_memory),
+                "api_memory_turns": int(self.api_memory_turns),
                 "api_timeout_sec": int(self.api_timeout_sec),
                 "auto_open_dashboard_after_wizard": self.auto_open_dashboard_after_wizard,
                 "extension_domain_whitelist": list(self.extension_domain_whitelist),
@@ -59,6 +63,11 @@ class UserSettings:
         api_model = str(data.get("api_model", "")).strip()
         api_url = str(data.get("api_url", "")).strip()
         api_use_local_context = bool(data.get("api_use_local_context", True))
+        api_use_memory = bool(data.get("api_use_memory", True))
+        try:
+            api_memory_turns = int(data.get("api_memory_turns", 12))
+        except (TypeError, ValueError):
+            api_memory_turns = 12
         try:
             api_timeout_sec = int(data.get("api_timeout_sec", 30))
         except (TypeError, ValueError):
@@ -95,6 +104,8 @@ class UserSettings:
                 "api_model",
                 "api_url",
                 "api_use_local_context",
+                "api_use_memory",
+                "api_memory_turns",
                 "api_timeout_sec",
                 "auto_open_dashboard_after_wizard",
                 "extension_domain_whitelist",
@@ -115,6 +126,8 @@ class UserSettings:
             api_model=api_model,
             api_url=api_url,
             api_use_local_context=api_use_local_context,
+            api_use_memory=api_use_memory,
+            api_memory_turns=max(2, min(api_memory_turns, 24)),
             api_timeout_sec=max(5, min(api_timeout_sec, 180)),
             auto_open_dashboard_after_wizard=auto_open,
             extension_domain_whitelist=whitelist,

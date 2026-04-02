@@ -8,7 +8,7 @@
 
 ## Progress
 - preflight status=ok
-- retrieval hits=6
+- retrieval hits=3
 - run status=needs_confirmation
 
 ## Blockers

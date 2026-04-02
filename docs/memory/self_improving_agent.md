@@ -113,3 +113,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 11 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-02 - Cross-Platform Update Channel Guard
+
+- Context: build37 windows-first then mac sync
+- Signal: mac manual dmg packaging depends on macOS-only tooling, while in-app update only depends on `_mac.zip`
+- Rule: prioritize manifest zip assets for one-click update continuity across platforms; treat dmg as secondary manual-install channel
+- Scope: `website/api/release-manifest.json` and release packaging workflow
+- Action: keep build zip artifacts and manifest entries in lockstep (`_windows.zip`, `_mac.zip`) before any optional dmg step
+
+## [2026-04-03 00:11:32] harness-finish
+
+- status: success
+- summary: Changed scope: 11 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
