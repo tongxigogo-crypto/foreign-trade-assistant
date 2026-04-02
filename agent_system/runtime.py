@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .eval.runner import run_eval_suite
 from .executors import ExecutionContext, run_agent
 from .harness.workflow_engine import (
     HarnessPaths,
@@ -195,6 +196,7 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
     planned_outputs = {
         "run_report": str(paths.run_reports_dir / f"run-report-{run_id}.json"),
         "retrieval_trace": str(paths.run_reports_dir / f"retrieval-trace-{run_id}.json"),
+        "eval_report": str(paths.run_reports_dir / f"eval-report-{run_id}.json"),
         "guardrail_report": str(paths.guardrail_report),
         "closed_loop_verdict": str(paths.closed_loop_verdict),
     }
@@ -231,6 +233,20 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
         review_mode=review_mode,
     )
     agent_results = execute_required_agents(required_agents, ctx=exec_ctx)
+    eval_summary: dict[str, Any] = {"status": "skipped", "reason": "audit_level_not_full"}
+    if effective_audit_level == "full":
+        dataset_path = root / "agent_system" / "config" / "eval_trade_20.jsonl"
+        rubric_path = root / "agent_system" / "config" / "eval_rubric_trade.json"
+        try:
+            eval_summary = run_eval_suite(
+                dataset_path=dataset_path,
+                rubric_path=rubric_path,
+                provider="internal",
+                model="heuristic-v1",
+            )
+            write_json(paths.run_reports_dir / f"eval-report-{run_id}.json", eval_summary)
+        except Exception as exc:
+            eval_summary = {"status": "error", "message": str(exc)}
 
     checks = [
         {"name": "preflight_ok", "passed": preflight["status"] == "ok"},
@@ -238,6 +254,7 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
     ]
     if effective_audit_level == "full":
         checks.append({"name": "retrieval_non_empty", "passed": len(hits) > 0})
+        checks.append({"name": "eval_suite_executed", "passed": eval_summary.get("status") == "ok"})
     checks.append(check_review_mode_enforced(review_mode, agent_results))
     run_status = "blocked" if preflight["status"] != "ok" else "done"
     if run_status == "done" and not all(item["passed"] for item in checks):
@@ -267,6 +284,8 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
         "architecture_guardrails": preflight,
         "closed_loop": verdict,
         "retrieval_trace_file": planned_outputs["retrieval_trace"],
+        "eval_report_file": planned_outputs["eval_report"] if effective_audit_level == "full" else "",
+        "eval_summary": eval_summary,
         "timestamp_utc": utc_now(),
     }
     write_json(run_report_file, run_report)
@@ -285,6 +304,9 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
         evidence={
             "guardrail_report": str(paths.guardrail_report),
             "retrieval_trace": str(paths.run_reports_dir / f"retrieval-trace-{run_id}.json"),
+            "eval_report": str(paths.run_reports_dir / f"eval-report-{run_id}.json")
+            if effective_audit_level == "full"
+            else "",
             "run_report": str(run_report_file),
             "rag_db": str(rag_db),
         },
@@ -297,6 +319,10 @@ def run_pipeline(root: Path, run_id: str, query: str, mode: str, audit_level: st
         f"Core logic preserved: {'yes' if preflight['status'] == 'ok' else 'check required'}.",
         f"Core checks pass: {sum(1 for x in checks if x.get('passed'))}/{len(checks)}.",
     ]
+    if effective_audit_level == "full" and eval_summary.get("status") == "ok":
+        run_report["incremental_summary"].append(
+            f"Eval score: {eval_summary.get('overall_score', 0.0)} (pass={eval_summary.get('pass', False)})."
+        )
     write_json(run_report_file, run_report)
     write_json(paths.closed_loop_verdict, verdict)
 
