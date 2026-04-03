@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import ssl
 import subprocess
 import sys
 import zipfile
@@ -12,6 +13,11 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
+
+try:
+    import certifi
+except ImportError:  # pragma: no cover - optional in dev, bundled in release
+    certifi = None
 
 UPDATE_REPO = os.getenv("TRADE_ASSISTANT_UPDATE_REPO", "tongxigogo-crypto/foreign-trade-assistant")
 DEFAULT_UPDATE_MANIFEST_URL = os.getenv(
@@ -162,7 +168,7 @@ def _fetch_json_url(url: str, *, timeout_sec: int = 8) -> Any:
             "User-Agent": "TradeAssistant-Updater/1.0",
         },
     )
-    with urlopen(req, timeout=timeout_sec) as resp:  # noqa: S310
+    with _urlopen_with_ssl(req, timeout_sec=timeout_sec) as resp:  # noqa: S310
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -175,7 +181,7 @@ def _fetch_text_url(url: str, *, timeout_sec: int = 8) -> str:
             "User-Agent": "TradeAssistant-Updater/1.0",
         },
     )
-    with urlopen(req, timeout=timeout_sec) as resp:  # noqa: S310
+    with _urlopen_with_ssl(req, timeout_sec=timeout_sec) as resp:  # noqa: S310
         raw = resp.read()
     try:
         return raw.decode("utf-8-sig")
@@ -327,10 +333,29 @@ def download_zip(update: UpdateInfo, download_dir: Path, *, timeout_sec: int = 1
             "User-Agent": "TradeAssistant-Updater/1.0",
         },
     )
-    with urlopen(req, timeout=timeout_sec) as resp:  # noqa: S310
+    with _urlopen_with_ssl(req, timeout_sec=timeout_sec) as resp:  # noqa: S310
         data = resp.read()
     zip_path.write_bytes(data)
     return zip_path
+
+
+def _build_ssl_context() -> ssl.SSLContext:
+    """
+    Use certifi bundle when available to avoid TLS verification failures in frozen mac app runtimes.
+    Falls back to system default cert store.
+    """
+    if certifi is not None:
+        return ssl.create_default_context(cafile=certifi.where())
+    return ssl.create_default_context()
+
+
+def _urlopen_with_ssl(req: Request, *, timeout_sec: int):
+    ctx = _build_ssl_context()
+    try:
+        return urlopen(req, timeout=timeout_sec, context=ctx)  # noqa: S310
+    except TypeError:
+        # Keep compatibility with mocked urlopen signatures in tests.
+        return urlopen(req, timeout=timeout_sec)  # noqa: S310
 
 
 def extract_zip(zip_path: Path, target_dir: Path) -> Path:
