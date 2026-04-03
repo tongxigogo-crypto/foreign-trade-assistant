@@ -405,9 +405,14 @@ def main() -> int:
     args = parse_args()
     report = run_pipeline(Path(args.root).resolve(), args.run_id, args.query, args.mode, audit_level=args.audit_level)
     if args.pretty:
-        print(json.dumps(report, ensure_ascii=False, indent=2))
+        payload = json.dumps(report, ensure_ascii=False, indent=2)
     else:
-        print(json.dumps(report, ensure_ascii=False))
+        payload = json.dumps(report, ensure_ascii=False)
+    try:
+        print(payload)
+    except UnicodeEncodeError:
+        # Windows CI may use cp1252 console; fallback keeps gate stable.
+        print(payload.encode("ascii", errors="replace").decode("ascii"))
     return 0 if report["status"] in {"done", "needs_confirmation"} else 1
 
 
