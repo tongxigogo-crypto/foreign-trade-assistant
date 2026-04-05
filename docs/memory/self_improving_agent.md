@@ -126,3 +126,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 11 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-05 - Update Manifest Source Decoupling Guard
+
+- Context: build38 release closure across cloud artifacts, website manifest, and in-app one-click update
+- Signal: website download files may be published from a separate pipeline/worktree, while the updater only needs stable public asset URLs
+- Rule: when release binaries are not guaranteed to be published alongside the tracked website files, point `release-manifest.json` assets to GitHub Release URLs instead of repo-local download paths
+- Scope: windows/mac `website/api/release-manifest.json`
+- Action: publish cloud-built zip/dmg artifacts to a GitHub Release first, then deploy only the small manifest change
+
+## [2026-04-05 17:44:04] harness-finish
+
+- status: success
+- summary: Changed scope: 8 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
