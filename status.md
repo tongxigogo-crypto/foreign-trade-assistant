@@ -19,9 +19,9 @@ Branch: `codex/product-manager`
   - run id: `23998170126`
   - result: `windows-latest` success, `macos-latest` success
 - Downloaded cloud-built artifacts and refreshed local release folders:
-  - `澶栬锤鍔╃悊_浜ゆ帴鍖?澶栬锤鍔╃悊_windows_鍐呮祴鍖?release/TA_Beta_v0.1.1-beta2-build38_windows.zip`
-  - `澶栬锤鍔╃悊_浜ゆ帴鍖?澶栬锤鍔╃悊_mac_鍐呮祴鍖?release/TA_Beta_v0.1.1-beta2-build38_mac.zip`
-  - `澶栬锤鍔╃悊_浜ゆ帴鍖?澶栬锤鍔╃悊_mac_鍐呮祴鍖?release/TA_Beta_v0.1.1-beta2-build38_mac.dmg`
+  - `外贸助理_交接包/外贸助理_windows_内测包/release/TA_Beta_v0.1.1-beta2-build38_windows.zip`
+  - `外贸助理_交接包/外贸助理_mac_内测包/release/TA_Beta_v0.1.1-beta2-build38_mac.zip`
+  - `外贸助理_交接包/外贸助理_mac_内测包/release/TA_Beta_v0.1.1-beta2-build38_mac.dmg`
 - Uploaded the same three artifacts to GitHub Release `v0.1.1-beta2-build38`.
 - Switched both update manifests to GitHub Release asset URLs so one-click update no longer depends on separately published site download files.
 - Confirmed this repo does not have GitHub Pages enabled; removed local `deploy-website.yml` to avoid false CI failures.
@@ -29,10 +29,10 @@ Branch: `codex/product-manager`
 
 ## Verification
 - mac updater regression:
-  - `python -m pytest 澶栬锤鍔╃悊_浜ゆ帴鍖匼澶栬锤鍔╃悊_mac_鍐呮祴鍖匼tests\test_update_manager.py -q`
+  - `python -m pytest 外贸助理_交接包\外贸助理_mac_内测包\tests\test_update_manager.py -q`
   - result: `3 passed`
 - windows + agent regression:
-  - `python -m pytest 澶栬锤鍔╃悊_浜ゆ帴鍖匼澶栬锤鍔╃悊_windows_鍐呮祴鍖匼tests\test_api_chat.py 澶栬锤鍔╃悊_浜ゆ帴鍖匼澶栬锤鍔╃悊_windows_鍐呮祴鍖匼tests\test_self_improving_preferences.py tests\test_agent_eval_runner.py -q`
+  - `python -m pytest 外贸助理_交接包\外贸助理_windows_内测包\tests\test_api_chat.py 外贸助理_交接包\外贸助理_windows_内测包\tests\test_self_improving_preferences.py tests\test_agent_eval_runner.py -q`
   - result: `10 passed`
 - runtime gate:
   - `python -m agent_system.runtime --root . --run-id local-build38-gate --mode preview --audit-level auto`
@@ -40,13 +40,13 @@ Branch: `codex/product-manager`
 
 ## Release Artifacts
 - local release:
-  - `澶栬锤鍔╃悊_浜ゆ帴鍖?澶栬锤鍔╃悊_windows_鍐呮祴鍖?release/TA_Beta_v0.1.1-beta2-build38_windows.zip`
-  - `澶栬锤鍔╃悊_浜ゆ帴鍖?澶栬锤鍔╃悊_mac_鍐呮祴鍖?release/TA_Beta_v0.1.1-beta2-build38_mac.zip`
-  - `澶栬锤鍔╃悊_浜ゆ帴鍖?澶栬锤鍔╃悊_mac_鍐呮祴鍖?release/TA_Beta_v0.1.1-beta2-build38_mac.dmg`
+  - `外贸助理_交接包/外贸助理_windows_内测包/release/TA_Beta_v0.1.1-beta2-build38_windows.zip`
+  - `外贸助理_交接包/外贸助理_mac_内测包/release/TA_Beta_v0.1.1-beta2-build38_mac.zip`
+  - `外贸助理_交接包/外贸助理_mac_内测包/release/TA_Beta_v0.1.1-beta2-build38_mac.dmg`
 - cloud artifact cache:
   - `agent_system/output/ci_artifacts_23998170126/`
 
 ## Next Top 3
 1. On real devices, verify old-build -> `build38` one-click update on Windows and mac.
 2. Upgrade conversation memory from raw turn window to summary + recent-turn hybrid memory.
-3. Add涓撻」璇勬祴 for `鏈湴璧勬枡缂哄け鑷姩鑱旂綉鍏滃簳` and `鍏抽棴鏈湴涓婁笅鏂囦絾淇濈暀浼氳瘽璁板繂`.
+3. Add专项评测 for `本地资料缺失自动联网兜底` and `关闭本地上下文但保留会话记忆`.
