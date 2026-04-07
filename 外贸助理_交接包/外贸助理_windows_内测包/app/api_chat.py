@@ -41,7 +41,41 @@ PROVIDER_DEFAULTS: dict[str, dict[str, str]] = {
         "api_url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         "model": "gemini-2.0-flash",
     },
+    "local_ollama": {
+        "api_url": "http://127.0.0.1:11434/v1/chat/completions",
+        "model": "llama3.1:8b",
+    },
+    "local_openai": {
+        "api_url": "http://127.0.0.1:1234/v1/chat/completions",
+        "model": "local-model",
+    },
     "custom": {"api_url": "", "model": ""},
+}
+
+PROVIDER_CHOICES: list[str] = [
+    "nvidia",
+    "openai",
+    "openrouter",
+    "deepseek",
+    "qwen",
+    "doubao",
+    "google",
+    "local_ollama",
+    "local_openai",
+    "custom",
+]
+
+LOCAL_PROVIDER_CANDIDATES: dict[str, list[str]] = {
+    "local_ollama": [
+        "http://127.0.0.1:11434",
+        "http://localhost:11434",
+    ],
+    "local_openai": [
+        "http://127.0.0.1:1234/v1",
+        "http://localhost:1234/v1",
+        "http://127.0.0.1:8000/v1",
+        "http://localhost:8000/v1",
+    ],
 }
 
 
@@ -65,6 +99,14 @@ class ApiChatError(RuntimeError):
         super().__init__(message)
         self.kind = kind
         self.status_code = status_code
+
+
+def is_local_provider(provider: str) -> bool:
+    return provider.strip().lower() in {"local_ollama", "local_openai"}
+
+
+def provider_requires_api_key(provider: str) -> bool:
+    return not is_local_provider(provider)
 
 
 def _normalize_history(history: list[dict[str, str]] | None, *, max_rounds: int = 12) -> list[dict[str, str]]:
@@ -166,14 +208,16 @@ def _request_chat_completion(settings: ApiChatSettings, messages: list[dict[str,
         "model": settings.model.strip(),
         "messages": messages,
     }
+    headers = {
+        "Content-Type": "application/json",
+    }
+    if settings.api_key.strip():
+        headers["Authorization"] = f"Bearer {settings.api_key.strip()}"
     req = Request(
         url=settings.api_url.strip(),
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
         method="POST",
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.api_key.strip()}",
-        },
+        headers=headers,
     )
     try:
         with urlopen(req, timeout=max(5, int(settings.timeout_sec))) as resp:  # noqa: S310
@@ -210,6 +254,90 @@ def default_api_url(provider: str) -> str:
 
 def default_model(provider: str) -> str:
     return PROVIDER_DEFAULTS.get(provider.strip().lower(), PROVIDER_DEFAULTS["custom"]).get("model", "")
+
+
+def _normalize_service_base_url(provider: str, raw_url: str) -> str:
+    value = str(raw_url or "").strip().rstrip("/")
+    if not value:
+        return ""
+    low_provider = provider.strip().lower()
+    if low_provider == "local_ollama":
+        if value.endswith("/v1/chat/completions"):
+            return value[: -len("/v1/chat/completions")]
+        if value.endswith("/api/tags"):
+            return value[: -len("/api/tags")]
+        return value
+    if low_provider == "local_openai":
+        if value.endswith("/chat/completions"):
+            return value[: -len("/chat/completions")]
+        if value.endswith("/models"):
+            return value[: -len("/models")]
+        return value
+    return value
+
+
+def _chat_url_from_service_base(provider: str, base_url: str) -> str:
+    base = str(base_url or "").strip().rstrip("/")
+    if provider.strip().lower() == "local_ollama":
+        return f"{base}/v1/chat/completions"
+    return f"{base}/chat/completions"
+
+
+def _model_discovery_url(provider: str, base_url: str) -> str:
+    base = str(base_url or "").strip().rstrip("/")
+    if provider.strip().lower() == "local_ollama":
+        return f"{base}/api/tags"
+    return f"{base}/models"
+
+
+def _parse_discovered_models(provider: str, payload: dict) -> list[str]:
+    if provider.strip().lower() == "local_ollama":
+        models = payload.get("models", [])
+        if not isinstance(models, list):
+            return []
+        return [str(item.get("name", "")).strip() for item in models if isinstance(item, dict) and str(item.get("name", "")).strip()]
+    data = payload.get("data", [])
+    if not isinstance(data, list):
+        return []
+    return [str(item.get("id", "")).strip() for item in data if isinstance(item, dict) and str(item.get("id", "")).strip()]
+
+
+def discover_local_models(settings: ApiChatSettings) -> tuple[str, list[str]]:
+    provider = settings.provider.strip().lower()
+    if not is_local_provider(provider):
+        return settings.api_url.strip(), []
+
+    candidates: list[str] = []
+    preferred = _normalize_service_base_url(provider, settings.api_url)
+    if preferred:
+        candidates.append(preferred)
+    for item in LOCAL_PROVIDER_CANDIDATES.get(provider, []):
+        norm = _normalize_service_base_url(provider, item)
+        if norm and norm not in candidates:
+            candidates.append(norm)
+
+    last_error: Exception | None = None
+    for base_url in candidates:
+        req = Request(
+            url=_model_discovery_url(provider, base_url),
+            method="GET",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urlopen(req, timeout=max(3, min(int(settings.timeout_sec), 10))) as resp:  # noqa: S310
+                raw = resp.read().decode("utf-8", errors="ignore")
+            payload = json.loads(raw)
+            if not isinstance(payload, dict):
+                continue
+            return _chat_url_from_service_base(provider, base_url), _parse_discovered_models(provider, payload)
+        except (HTTPError, URLError, OSError, TimeoutError, json.JSONDecodeError) as exc:
+            last_error = exc
+            continue
+
+    message = f"Local model service unavailable for provider: {provider}"
+    if last_error:
+        message = f"{message} ({last_error})"
+    raise ApiChatError("network", message)
 
 
 def _is_greeting_only(text: str) -> bool:

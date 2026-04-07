@@ -1,23 +1,24 @@
 # Current Session
 
 ## Active Task
-- agent system runtime execution
+- Windows local model support
 
 ## Current Goal
-- run configured orchestrator/rag/guardrails/self-improving/review pipeline with objective evidence
+- add local providers into the existing desktop API panel without breaking remote API flow
 
 ## Progress
-- preflight status=ok
-- retrieval hits=3
-- run status=needs_confirmation
+- design and implementation plan written
+- local providers added to Windows API panel
+- model discovery added for Ollama and local OpenAI-compatible runtimes
+- targeted tests and compile checks passed
 
 ## Blockers
 - None
 
 ## Next Actions
-- review run report
-- inspect closed-loop verdict
-- decide next architecture iteration
+- complete Windows smoke on real local runtimes
+- package next Windows build after acceptance
+- sync the same capability set to mac after Windows acceptance
 
 ## Summary
-- Runtime executed through single entry with checkpointed harness state and closed-loop evidence.
+- Windows now supports both remote API providers and local model runtimes in one unified conversation entry.

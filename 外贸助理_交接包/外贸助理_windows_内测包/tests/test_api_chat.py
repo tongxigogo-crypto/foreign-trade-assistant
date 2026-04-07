@@ -9,6 +9,9 @@ from app.api_chat import (
     build_local_context,
     classify_http_error,
     default_api_url,
+    discover_local_models,
+    is_local_provider,
+    provider_requires_api_key,
     send_chat_request,
 )
 from app.capsule_builder import CapsuleBuilder
@@ -20,6 +23,13 @@ def test_default_api_url_contains_supported_providers() -> None:
     assert default_api_url("qwen").startswith("https://dashscope.aliyuncs.com/")
     assert default_api_url("doubao").startswith("https://ark.cn-beijing.volces.com/")
     assert default_api_url("google").startswith("https://generativelanguage.googleapis.com/")
+    assert default_api_url("local_ollama").startswith("http://127.0.0.1:11434/")
+    assert default_api_url("local_openai").startswith("http://127.0.0.1:1234/")
+    assert is_local_provider("local_ollama") is True
+    assert is_local_provider("local_openai") is True
+    assert provider_requires_api_key("local_ollama") is False
+    assert provider_requires_api_key("local_openai") is False
+    assert provider_requires_api_key("openai") is True
 
 
 def test_build_local_context_uses_knowledge_base(tmp_path: Path) -> None:
@@ -200,3 +210,91 @@ def test_send_chat_request_includes_preference_instruction(monkeypatch) -> None:
 
     system_content = captured[0]["messages"][0]["content"]
     assert "Preference profile: tone=polite" in system_content
+
+
+def test_discover_local_models_for_ollama(monkeypatch) -> None:
+    class _Resp:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return json.dumps(self._payload, ensure_ascii=False).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # noqa: ANN001
+        assert req.full_url.endswith("/api/tags")
+        return _Resp({"models": [{"name": "gemma3:4b"}, {"name": "qwen2.5:7b"}]})
+
+    monkeypatch.setattr("app.api_chat.urlopen", fake_urlopen)
+
+    settings = ApiChatSettings(provider="local_ollama", api_key="", model="", api_url="")
+    resolved_url, models = discover_local_models(settings)
+
+    assert resolved_url == "http://127.0.0.1:11434/v1/chat/completions"
+    assert models == ["gemma3:4b", "qwen2.5:7b"]
+
+
+def test_discover_local_models_for_openai_compatible(monkeypatch) -> None:
+    class _Resp:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return json.dumps(self._payload, ensure_ascii=False).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # noqa: ANN001
+        assert req.full_url.endswith("/models")
+        return _Resp({"data": [{"id": "gemma-3-12b-it"}, {"id": "qwen2.5-14b-instruct"}]})
+
+    monkeypatch.setattr("app.api_chat.urlopen", fake_urlopen)
+
+    settings = ApiChatSettings(provider="local_openai", api_key="", model="", api_url="")
+    resolved_url, models = discover_local_models(settings)
+
+    assert resolved_url == "http://127.0.0.1:1234/v1/chat/completions"
+    assert models == ["gemma-3-12b-it", "qwen2.5-14b-instruct"]
+
+
+def test_send_chat_request_for_local_provider_omits_authorization(monkeypatch) -> None:
+    seen_headers: list[dict[str, str]] = []
+
+    class _Resp:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return json.dumps(self._payload, ensure_ascii=False).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # noqa: ANN001
+        seen_headers.append(dict(req.header_items()))
+        return _Resp({"choices": [{"message": {"content": "local ok"}}]})
+
+    monkeypatch.setattr("app.api_chat.urlopen", fake_urlopen)
+
+    settings = ApiChatSettings(
+        provider="local_openai",
+        api_key="",
+        model="gemma-3-12b-it",
+        api_url="http://127.0.0.1:1234/v1/chat/completions",
+    )
+    reply = send_chat_request(settings, "hello local")
+
+    assert reply == "local ok"
+    assert "Authorization" not in seen_headers[0]

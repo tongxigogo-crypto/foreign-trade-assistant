@@ -1,6 +1,6 @@
 {
   "status": "preview",
-  "updated_at": "2026-04-05T09:44:04Z",
+  "updated_at": "2026-04-07T08:28:36Z",
   "summary": "7/7 checks passed",
   "checks": [
     {
@@ -34,9 +34,9 @@
   ],
   "evidence": {
     "guardrail_report": "E:\\CodexWorkspace\\Playground-pm\\docs\\harness\\architecture_guardrails.json",
-    "retrieval_trace": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\retrieval-trace-finish-build38-20260405.json",
+    "retrieval_trace": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\retrieval-trace-finish-local-model-win-20260407.json",
     "eval_report": "",
-    "run_report": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\run-report-finish-build38-20260405.json",
+    "run_report": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\run-report-finish-local-model-win-20260407.json",
     "rag_db_facts": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\data\\facts_index.sqlite",
     "rag_db_memory": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\data\\memory_index.sqlite"
   }

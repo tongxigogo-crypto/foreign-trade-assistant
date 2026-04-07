@@ -139,3 +139,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 8 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-07 - Local Runtime Integration Guard
+
+- Context: Windows local model support added into the existing API conversation panel
+- Signal: local runtimes need different discovery behavior but should not fork the chat feature into a second UX path
+- Rule: keep local model support inside the same provider/model/url flow, and reuse existing context, memory, learning, and fallback layers
+- Scope: Windows `api_chat.py` + `desktop_app.py`
+- Action: local providers may skip API key, but remote provider behavior must remain unchanged and discovery should stay isolated from request formatting
+
+## [2026-04-07 16:28:37] harness-finish
+
+- status: success
+- summary: Changed scope: 7 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
