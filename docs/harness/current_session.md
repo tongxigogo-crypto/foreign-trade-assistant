@@ -1,25 +1,25 @@
 ﻿# Current Session
 
 ## Active Task
-- close the Windows local-model support round after acceptance
+- sync mac local-model support and finish cloud build for build39
 
 ## Current Goal
-- checkpoint the accepted `build39` Windows package and keep baseline files aligned with the actual delivery state
+- complete the mac parity round and checkpoint the cloud-built artifacts into local release directories
 
 ## Progress
-- Windows local-model support implemented
-- Windows package `v0.1.1-beta2-build39` built locally
-- acceptance passed
-- unrelated nested repo `vylora-com-site` moved out of the workspace root
+- mac local-model support synced from Windows
+- mac targeted tests passed
+- build39 cloud build completed successfully
+- cloud artifacts downloaded back to local release folders
 - quick harness checkpoint completed
 
 ## Blockers
 - None
 
 ## Next Actions
-- publish Windows `build39` only when instructed
-- sync mac in a separate round when instructed
-- run real-device local-runtime smoke when a local model is available
+- publish build39 only when instructed
+- update release manifests only when instructed
+- run real-device local-runtime smoke when a local model runtime is available
 
 ## Summary
-- This session closed the Windows-first local-model support change set without publishing it yet.
+- This session closed the cross-platform build39 sync by aligning mac behavior and verifying both cloud build jobs.

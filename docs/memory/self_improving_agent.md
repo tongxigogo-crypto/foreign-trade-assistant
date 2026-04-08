@@ -165,3 +165,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 7 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-08 - Cross-Platform Test Copy Guard
+
+- Context: mac local-model sync reused Windows API chat tests
+- Signal: copied test file carried encoding-noisy literals that were tolerated poorly and broke test collection on the mac package tree
+- Rule: when syncing tests across package trees, prefer an ASCII-safe focused test file over blind file copy if the source fixture already contains encoding noise
+- Scope: cross-platform regression test maintenance
+- Action: rebuild the target test file with clean literals when collection fails after direct copy
+
+## [2026-04-08 20:29:24] harness-finish
+
+- status: success
+- summary: Changed scope: 4 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
