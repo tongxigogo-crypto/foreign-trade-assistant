@@ -1,6 +1,6 @@
 {
   "status": "ok",
-  "updated_at": "2026-04-07T08:28:36Z",
+  "updated_at": "2026-04-08T11:36:58Z",
   "required_agents": [
     "orchestrator_agent",
     "rag_agent",

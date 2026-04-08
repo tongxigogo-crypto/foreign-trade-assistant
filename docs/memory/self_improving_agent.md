@@ -1,4 +1,4 @@
-# Self Improving Agent Memory
+﻿# Self Improving Agent Memory
 
 This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
@@ -67,7 +67,7 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 - Context: windows desktop settings usability and release-readiness round
 - Signal: provider switch left stale model; update flow required extra confirmation; visual mode lacked system/light/dark options
 - Rule: provider changes must atomically sync URL+model defaults; one-click update should be single-intent flow; theme preference must be persistent and reversible
-- Scope: `外贸助理_windows_内测包/app/desktop_app.py` + `app/user_settings.py`
+- Scope: `澶栬锤鍔╃悊_windows_鍐呮祴鍖?app/desktop_app.py` + `app/user_settings.py`
 - Action: add regression tests for provider-model linkage and theme-mode persistence before syncing to mac
 
 ## [2026-04-02 00:59:47] harness-finish
@@ -149,6 +149,19 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 - Action: local providers may skip API key, but remote provider behavior must remain unchanged and discovery should stay isolated from request formatting
 
 ## [2026-04-07 16:28:37] harness-finish
+
+- status: success
+- summary: Changed scope: 7 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-08 - Nested Repo Isolation Guard
+
+- Context: an unrelated site project was placed under the main workspace root during build39 closure
+- Signal: `git status --short` showed an unexpected untracked directory that was actually its own Git repository
+- Rule: when an untracked directory has its own `.git`, treat it as a parallel project and isolate it before closure instead of letting it contaminate the current delivery
+- Scope: workspace hygiene and release closure
+- Action: move nested repos out of the main workspace root or explicitly ignore them before commit
+
+## [2026-04-08 19:36:58] harness-finish
 
 - status: success
 - summary: Changed scope: 7 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.

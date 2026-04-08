@@ -1,24 +1,25 @@
-# Current Session
+﻿# Current Session
 
 ## Active Task
-- Windows local model support
+- close the Windows local-model support round after acceptance
 
 ## Current Goal
-- add local providers into the existing desktop API panel without breaking remote API flow
+- checkpoint the accepted `build39` Windows package and keep baseline files aligned with the actual delivery state
 
 ## Progress
-- design and implementation plan written
-- local providers added to Windows API panel
-- model discovery added for Ollama and local OpenAI-compatible runtimes
-- targeted tests and compile checks passed
+- Windows local-model support implemented
+- Windows package `v0.1.1-beta2-build39` built locally
+- acceptance passed
+- unrelated nested repo `vylora-com-site` moved out of the workspace root
+- quick harness checkpoint completed
 
 ## Blockers
 - None
 
 ## Next Actions
-- complete Windows smoke on real local runtimes
-- package next Windows build after acceptance
-- sync the same capability set to mac after Windows acceptance
+- publish Windows `build39` only when instructed
+- sync mac in a separate round when instructed
+- run real-device local-runtime smoke when a local model is available
 
 ## Summary
-- Windows now supports both remote API providers and local model runtimes in one unified conversation entry.
+- This session closed the Windows-first local-model support change set without publishing it yet.

@@ -1,18 +1,20 @@
-{
-  "updated_at": "2026-04-07T16:35:00Z",
-  "active_task": "Windows local model support",
-  "current_goal": "add local providers into the existing desktop API panel without breaking remote API flow",
+﻿{
+  "updated_at": "2026-04-08T12:10:00Z",
+  "active_task": "windows local-model support closure",
+  "current_goal": "checkpoint accepted build39 windows packaging and align harness baseline with actual delivery state",
   "progress": [
-    "design and implementation plan written",
-    "local providers added to Windows API panel",
-    "targeted tests and compile checks passed"
+    "windows local-model support implemented",
+    "build39 windows package built locally",
+    "acceptance passed",
+    "parallel nested repo moved out of workspace root",
+    "quick harness checkpoint completed"
   ],
   "open_questions": [],
   "blockers": [],
   "next_actions": [
-    "complete Windows smoke on real local runtimes",
-    "package next Windows build after acceptance",
-    "sync the same capability set to mac after Windows acceptance"
+    "publish build39 windows only when instructed",
+    "sync mac support in a separate round when instructed",
+    "run real-device local-runtime smoke when a local model is available"
   ],
-  "last_git_status": "M docs/harness/architecture_guardrails.json\n M docs/harness/closed_loop_verdict.json\n M docs/harness/current_session.md\n M docs/harness/session_state.json\n M docs/memory/self_improving_agent.md\n M status.md\n M \"\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_\\344\\272\\244\\346\\216\\245\\345\\214\\205/\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_windows_\\345\\206\\205\\346\\265\\213\\345\\214\\205/app/api_chat.py\"\n M \"\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_\\344\\272\\244\\346\\216\\245\\345\\214\\205/\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_windows_\\345\\206\\205\\346\\265\\213\\345\\214\\205/app/desktop_app.py\"\n M \"\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_\\344\\272\\244\\346\\216\\245\\345\\214\\205/\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_windows_\\345\\206\\205\\346\\265\\213\\345\\214\\205/tests/test_api_chat.py\"\n?? docs/superpowers/plans/2026-04-07-local-model-support.md\n?? docs/superpowers/specs/"
+  "last_git_status": "M docs/harness/architecture_guardrails.json\n M docs/harness/closed_loop_verdict.json\n M docs/harness/current_session.md\n M docs/harness/session_state.json\n M docs/memory/self_improving_agent.md\n M status.md\n M \"\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_\\344\\272\\244\\346\\216\\245\\345\\214\\205/\\345\\244\\226\\350\\264\\270\\345\\212\\251\\347\\220\\206_windows_\\345\\206\\205\\346\\265\\213\\345\\214\\205/app/version.py\"\n?? agent_system/data/facts_index.sqlite\n?? agent_system/data/memory_index.sqlite"
 }
