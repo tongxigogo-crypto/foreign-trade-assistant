@@ -19,11 +19,15 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from .api_chat import (
+    PROVIDER_CHOICES,
     ApiChatError,
     ApiChatSettings,
     build_local_context,
     default_api_url,
     default_model,
+    discover_local_models,
+    is_local_provider,
+    provider_requires_api_key,
     send_chat_request,
 )
 from .capsule_builder import CapsuleBuilder
@@ -301,6 +305,7 @@ class DesktopWindow:
             self.api_input_label.configure(text="\u8f93\u5165")
             self.api_reply_label.configure(text="\u56de\u590d")
             self.api_basis_label.configure(text="\u56de\u7b54\u4f9d\u636e")
+            self.api_refresh_models_button.configure(text="\u5237\u65b0\u6a21\u578b")
             self.api_save_button.configure(text="\u4fdd\u5b58 API")
             self.api_test_button.configure(text="\u8fde\u63a5\u6d4b\u8bd5")
             self.api_send_button.configure(text="\u53d1\u9001")
@@ -403,6 +408,7 @@ class DesktopWindow:
             self.api_input_label.configure(text="Input")
             self.api_reply_label.configure(text="Reply")
             self.api_basis_label.configure(text="Answer Basis")
+            self.api_refresh_models_button.configure(text="Refresh Models")
             self.api_save_button.configure(text="Save API")
             self.api_test_button.configure(text="Connection Test")
             self.api_send_button.configure(text="Send")
@@ -817,24 +823,27 @@ class DesktopWindow:
         self.api_provider_label = ttk.Label(settings_row, text="\u670d\u52a1\u5546")
         self.api_provider_label.pack(side=tk.LEFT)
         self.api_provider_var = tk.StringVar(value=self.settings.api_provider or "nvidia")
-        provider_box = ttk.Combobox(
+        self.api_provider_box = ttk.Combobox(
             settings_row,
-            width=10,
+            width=14,
             textvariable=self.api_provider_var,
-            values=["nvidia", "openai", "openrouter", "deepseek", "qwen", "doubao", "google", "custom"],
+            values=PROVIDER_CHOICES,
             state="readonly",
         )
-        provider_box.pack(side=tk.LEFT, padx=(6, 8))
-        provider_box.bind("<<ComboboxSelected>>", self._on_api_provider_changed)
+        self.api_provider_box.pack(side=tk.LEFT, padx=(6, 8))
+        self.api_provider_box.bind("<<ComboboxSelected>>", self._on_api_provider_changed)
 
         self.api_key_label = ttk.Label(settings_row, text="API Key")
         self.api_key_label.pack(side=tk.LEFT)
         self.api_key_var = tk.StringVar(value=self.settings.api_key or "")
-        ttk.Entry(settings_row, textvariable=self.api_key_var, show="*", width=26).pack(side=tk.LEFT, padx=(6, 8))
+        self.api_key_entry = ttk.Entry(settings_row, textvariable=self.api_key_var, show="*", width=26)
+        self.api_key_entry.pack(side=tk.LEFT, padx=(6, 8))
         self.api_model_label = ttk.Label(settings_row, text="\u6a21\u578b")
         self.api_model_label.pack(side=tk.LEFT)
         self.api_model_var = tk.StringVar(value=self.settings.api_model or default_model(self.api_provider_var.get()))
-        ttk.Entry(settings_row, textvariable=self.api_model_var, width=24).pack(side=tk.LEFT, padx=(6, 0))
+        self.api_model_box = ttk.Combobox(settings_row, textvariable=self.api_model_var, width=24)
+        self.api_model_box.pack(side=tk.LEFT, padx=(6, 0))
+        self.api_model_box.configure(values=[self.api_model_var.get()])
 
         settings_row2 = ttk.Frame(self.api_box)
         settings_row2.pack(fill=tk.X, pady=(6, 0))
@@ -842,6 +851,8 @@ class DesktopWindow:
         self.api_url_label.pack(side=tk.LEFT)
         self.api_url_var = tk.StringVar(value=self.settings.api_url or default_api_url(self.api_provider_var.get()))
         ttk.Entry(settings_row2, textvariable=self.api_url_var).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(6, 8))
+        self.api_refresh_models_button = ttk.Button(settings_row2, text="\u5237\u65b0\u6a21\u578b", command=self.refresh_local_api_models)
+        self.api_refresh_models_button.pack(side=tk.LEFT, padx=(0, 6))
         self.api_save_button = ttk.Button(settings_row2, text="\u4fdd\u5b58 API", command=self.save_api_settings)
         self.api_save_button.pack(side=tk.LEFT, padx=(0, 6))
         self.api_test_button = ttk.Button(settings_row2, text="\u8fde\u63a5\u6d4b\u8bd5", command=self.test_api_connection)
@@ -934,6 +945,7 @@ class DesktopWindow:
         )
         self.api_basis_text.pack(fill=tk.BOTH, expand=True)
         self._set_text_content(self.api_basis_text, self.api_basis_default_zh)
+        self._sync_api_provider_ui(trigger_refresh=is_local_provider(self.api_provider_var.get()))
         self.root.after_idle(self._set_api_result_split_default)
 
     def _on_api_provider_changed(self, _event: tk.Event | None = None) -> None:
@@ -941,6 +953,73 @@ class DesktopWindow:
         if provider != "custom":
             self.api_url_var.set(default_api_url(provider))
             self.api_model_var.set(default_model(provider))
+        self._sync_api_provider_ui(trigger_refresh=is_local_provider(provider))
+
+    def _set_api_model_choices(self, models: list[str]) -> None:
+        cleaned: list[str] = []
+        current = self.api_model_var.get().strip()
+        for item in models:
+            value = str(item).strip()
+            if value and value not in cleaned:
+                cleaned.append(value)
+        if current and current not in cleaned:
+            cleaned.insert(0, current)
+        self.api_model_box.configure(values=cleaned or ([current] if current else []))
+
+    def _sync_api_provider_ui(self, *, trigger_refresh: bool = False) -> None:
+        provider = self.api_provider_var.get().strip().lower() or "nvidia"
+        local = is_local_provider(provider)
+        self.api_refresh_models_button.configure(state=(tk.NORMAL if local else tk.DISABLED))
+        self.api_key_entry.configure(state=("disabled" if local else "normal"))
+        if local:
+            self.api_status_var.set(self._tr("本地模型模式", "Local model mode"))
+        elif self.api_status_var.get().strip() in {"本地模型模式", "Local model mode", "本地服务就绪", "Local service ready"}:
+            self.api_status_var.set(self._tr("\u5f85\u8fde\u63a5", "Waiting for connection"))
+        self._set_api_model_choices([self.api_model_var.get().strip() or default_model(provider)])
+        if trigger_refresh:
+            self.refresh_local_api_models(silent=True)
+
+    def refresh_local_api_models(self, *, silent: bool = False) -> None:
+        settings = self._collect_api_settings()
+        if not is_local_provider(settings.provider):
+            if not silent:
+                self.api_status_var.set(self._tr("当前服务商无需刷新模型", "Current provider does not support local model refresh"))
+            return
+
+        self.api_refresh_models_button.configure(state=tk.DISABLED)
+        self.api_status_var.set(self._tr("探测本地模型中...", "Detecting local models..."))
+
+        def worker() -> None:
+            try:
+                resolved_url, models = discover_local_models(settings)
+            except ApiChatError as exc:
+                def on_error() -> None:
+                    self.api_refresh_models_button.configure(state=tk.NORMAL)
+                    self.api_status_var.set(self._tr("本地服务不可用", "Local service unavailable"))
+                    if not silent:
+                        self._append_text_content(self.api_reply_text, f"\n[ERROR] {exc}\n")
+                self.root.after(0, on_error)
+                return
+
+            def on_success() -> None:
+                provider = self.api_provider_var.get().strip().lower() or "nvidia"
+                self.api_url_var.set(resolved_url)
+                self._set_api_model_choices(models)
+                current = self.api_model_var.get().strip()
+                default_value = default_model(provider)
+                if models and (not current or current == default_value or current not in models):
+                    self.api_model_var.set(models[0])
+                self.api_refresh_models_button.configure(state=tk.NORMAL)
+                if models:
+                    self.api_status_var.set(self._tr("本地服务就绪", "Local service ready"))
+                    if not silent:
+                        self._append_text_content(self.api_basis_text, "\n" + self._tr(f"已发现本地模型：{', '.join(models[:6])}", f"Local models found: {', '.join(models[:6])}") + "\n")
+                else:
+                    self.api_status_var.set(self._tr("已连接，未发现模型", "Connected, no models found"))
+
+            self.root.after(0, on_success)
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _collect_api_settings(self) -> ApiChatSettings:
         provider = self.api_provider_var.get().strip().lower() or "nvidia"
@@ -948,7 +1027,7 @@ class DesktopWindow:
         model = self.api_model_var.get().strip() or default_model(provider)
         return ApiChatSettings(
             provider=provider,
-            api_key=self.api_key_var.get().strip(),
+            api_key=(self.api_key_var.get().strip() if provider_requires_api_key(provider) else ""),
             model=model,
             api_url=api_url,
             timeout_sec=self.settings.api_timeout_sec,
@@ -957,7 +1036,8 @@ class DesktopWindow:
     def save_api_settings(self) -> None:
         settings = self._collect_api_settings()
         self.settings.api_provider = settings.provider
-        self.settings.api_key = settings.api_key
+        if provider_requires_api_key(settings.provider):
+            self.settings.api_key = settings.api_key
         self.settings.api_model = settings.model
         self.settings.api_url = settings.api_url
         self.settings.api_use_local_context = bool(self.api_use_local_context_var.get())
@@ -1072,7 +1152,7 @@ class DesktopWindow:
 
     def test_api_connection(self) -> None:
         settings = self._collect_api_settings()
-        if not settings.api_key:
+        if provider_requires_api_key(settings.provider) and not settings.api_key:
             messagebox.showwarning("API", "\u8bf7\u5148\u586b\u5199 API Key\u3002")
             return
         self.api_send_button.configure(state=tk.DISABLED)
@@ -1080,7 +1160,22 @@ class DesktopWindow:
 
         def worker() -> None:
             try:
-                reply = send_chat_request(settings, "Ping")
+                if is_local_provider(settings.provider):
+                    resolved_url, models = discover_local_models(settings)
+                    reply = self._tr(
+                        f"本地服务可用，发现 {len(models)} 个模型。",
+                        f"Local service available, found {len(models)} models.",
+                    )
+                    self.root.after(
+                        0,
+                        lambda url=resolved_url, discovered=models: (
+                            self.api_url_var.set(url),
+                            self._set_api_model_choices(discovered),
+                            self.api_model_var.set(discovered[0] if discovered and (self.api_model_var.get().strip() not in discovered) else self.api_model_var.get().strip()),
+                        ),
+                    )
+                else:
+                    reply = send_chat_request(settings, "Ping")
             except ApiChatError as exc:
                 self.root.after(0, lambda e=exc: self._handle_api_error(e, title="Connection Test"))
                 return
@@ -1111,7 +1206,7 @@ class DesktopWindow:
         if not user_text:
             return
         settings = self._collect_api_settings()
-        if not settings.api_key:
+        if provider_requires_api_key(settings.provider) and not settings.api_key:
             messagebox.showwarning("API", "\u8bf7\u5148\u586b\u5199 API Key\u3002")
             return
 
