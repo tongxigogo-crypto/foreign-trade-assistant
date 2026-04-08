@@ -62,3 +62,17 @@ For any new conversation in this worktree, read these sources first in this orde
 - Any release-impacting action requires explicit user confirmation first.
 - Writing files under `site_ops/output/` or changing runtime state requires explicit confirmation first.
 
+## Self-Improving Rule
+
+- Do not wait for the user to request memory updates.
+- After any substantial run, actively record reusable learnings, corrected assumptions, and repeated failure patterns into `docs/memory/self_improving_agent.md`.
+- If a rule, workflow, or output pattern proves useful, persist it in the worktree immediately.
+
+
+## Autonomous Parallelism Rule
+
+- Orchestrator should proactively decide when sub-agents are useful for the current task.
+- Do not wait for the user to request sub-agents when the work naturally splits into independent strategy, content, SEO, UI, implementation, QA, release, or analytics tracks.
+- Default behavior for medium or large site tasks is to dispatch the minimum useful set of specialist agents in parallel, then merge their outputs back through the orchestrator.
+- Keep sub-agent work scoped, structured, and auditable.
+- User reminder is not required; proactive sub-agent orchestration is expected behavior in this worktree.

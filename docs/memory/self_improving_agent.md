@@ -23,3 +23,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Windows + Chinese path handling is fragile for Python/Pillow output; use an ASCII directory alias/junction such as `C:\Users\Administrator\Desktop\personal_site_assets` that maps to the real Chinese folder.
   - For image-heavy Figma work, build a simple local HTML page, inject the Figma capture script, serve it with `python -m http.server`, and capture into an existing Figma file with `generate_figma_design`.
   - Keep the capture script in the local HTML until the user explicitly asks to remove it.
+
+## [2026-04-09 13:45:00] proactive-subagent-orchestration
+
+- status: confirmed_rule
+- summary: In this worktree, do not wait for the user to remind about sub-agents. The orchestrator should proactively create the minimum useful set of specialist agents whenever the task can be decomposed into independent tracks.
+- learnings:
+  - Treat proactive sub-agent dispatch as part of the default agent architecture, not an optional optimization.
+  - Use sub-agents especially for parallel strategy, content, UI/Figma, SEO, QA, and release preparation work.
+  - Keep the orchestrator as the only end-to-end coordinator and merge sub-agent outputs back into one execution path.
