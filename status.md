@@ -4,54 +4,41 @@ Workspace: `E:\CodexWorkspace\Playground-pm`
 Branch: `codex/product-manager`
 
 ## Current Release
-- Latest published release remains: `v0.1.1-beta2-build38`
+- Latest published release: `v0.1.1-beta2-build39`
 - Published artifacts:
-  - `TA_Beta_v0.1.1-beta2-build38_windows.zip`
-  - `TA_Beta_v0.1.1-beta2-build38_mac.zip`
-  - `TA_Beta_v0.1.1-beta2-build38_mac.dmg`
+  - `TA_Beta_v0.1.1-beta2-build39_windows.zip`
+  - `TA_Beta_v0.1.1-beta2-build39_mac.zip`
+  - `TA_Beta_v0.1.1-beta2-build39_mac.dmg`
 - GitHub Release:
-  - `https://github.com/tongxigogo-crypto/foreign-trade-assistant/releases/tag/v0.1.1-beta2-build38`
+  - `https://github.com/tongxigogo-crypto/foreign-trade-assistant/releases/tag/v0.1.1-beta2-build39`
+- Online manifest:
+  - `https://tongxigogo-crypto.github.io/foreign-trade-assistant-site/api/release-manifest.json`
 
 ## Current Development Round
-- The Windows local-model support feature set has now been synced to mac.
-- Both package trees now support local providers inside the existing API conversation panel:
+- Windows and mac local-model support have both been synced and cloud-built for `build39`.
+- Release assets are now published and the online update manifest has been switched to `build39`.
+- Local providers remain available inside the existing API conversation panel:
   - `local_ollama`
   - `local_openai`
-- Local providers now support:
-  - auto-detect common local service URLs
-  - refresh installed model list
-  - local requests without API key
-  - reuse of existing local-context, memory, preference-learning, and web-fallback layers
 
-## Cloud Build Result
-- Cloud build workflow: `Build InVault Releases`
-- Run id: `24133793510`
-- Source ref: `codex/product-manager`
-- Requested version: `v0.1.1-beta2-build39`
-- Result:
-  - Windows job passed
-  - macOS job passed
-
-## Local Cloud Artifacts
-- Windows cloud-built artifact stored at:
+## Published Artifacts
+- Windows artifact:
   - `E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_windows_内测包\release\TA_Beta_v0.1.1-beta2-build39_windows.zip`
-- mac cloud-built artifacts stored at:
+- mac artifacts:
   - `E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_mac_内测包\release\TA_Beta_v0.1.1-beta2-build39_mac.zip`
   - `E:\CodexWorkspace\Playground-pm\外贸助理_交接包\外贸助理_mac_内测包\release\TA_Beta_v0.1.1-beta2-build39_mac.dmg`
 
 ## Verification
-- mac tests:
-  - `python -m pytest "外贸助理_交接包/外贸助理_mac_内测包/tests/test_api_chat.py" "外贸助理_交接包/外贸助理_mac_内测包/tests/test_update_manager.py" -q`
-  - result: `10 passed`
-- mac compile check:
-  - `python -m py_compile "外贸助理_交接包/外贸助理_mac_内测包/app/api_chat.py" "外贸助理_交接包/外贸助理_mac_内测包/app/desktop_app.py" "外贸助理_交接包/外贸助理_mac_内测包/app/version.py"`
-  - result: `pass`
-
-## Notes
-- This round completed the mac sync and cloud build for `build39`, but did not yet change the published update manifest from `build38` to `build39`.
-- A parallel project directory `vylora-com-site` remains outside this repo at `E:\CodexWorkspace\vylora-com-site`.
+- Cloud build workflow:
+  - `Build InVault Releases`
+  - run id: `24133793510`
+  - result: `windows + macOS passed`
+- Online manifest check:
+  - result: `build39 returned`
+- GitHub Release assets:
+  - result: `uploaded`
 
 ## Next Top 3
-1. Publish `build39` assets and update both release manifests when release timing is confirmed.
-2. Run real-device local-runtime smoke once `Ollama` or another OpenAI-compatible local runtime is available.
-3. Decide whether to keep the mac regression tests separate from Windows or consolidate shared API chat tests.
+1. Run real-device local-runtime smoke once `Ollama` or another OpenAI-compatible local runtime is available.
+2. Track whether users can update successfully from `build38` to `build39` in-app.
+3. Consolidate or separate cross-platform API chat regression tests deliberately instead of ad-hoc copying.

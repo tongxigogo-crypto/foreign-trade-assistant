@@ -1,6 +1,6 @@
 {
   "status": "preview",
-  "updated_at": "2026-04-08T12:29:24Z",
+  "updated_at": "2026-04-08T13:27:24Z",
   "summary": "7/7 checks passed",
   "checks": [
     {
@@ -34,9 +34,9 @@
   ],
   "evidence": {
     "guardrail_report": "E:\\CodexWorkspace\\Playground-pm\\docs\\harness\\architecture_guardrails.json",
-    "retrieval_trace": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\retrieval-trace-finish-build39-mac-cloud-20260408.json",
+    "retrieval_trace": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\retrieval-trace-finish-build39-release-switch-20260408.json",
     "eval_report": "",
-    "run_report": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\run-report-finish-build39-mac-cloud-20260408.json",
+    "run_report": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\output\\run-report-finish-build39-release-switch-20260408.json",
     "rag_db_facts": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\data\\facts_index.sqlite",
     "rag_db_memory": "E:\\CodexWorkspace\\Playground-pm\\agent_system\\data\\memory_index.sqlite"
   }

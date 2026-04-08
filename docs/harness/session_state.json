@@ -1,20 +1,20 @@
 ﻿{
-  "updated_at": "2026-04-08T20:08:00+08:00",
-  "active_task": "mac local-model sync and cloud build closure",
-  "current_goal": "complete build39 mac parity and checkpoint cloud-built artifacts into local release directories",
+  "updated_at": "2026-04-08T21:35:00+08:00",
+  "active_task": "build39 release switch",
+  "current_goal": "publish build39 assets and move the update manifest from build38 to build39",
   "progress": [
-    "mac local-model support synced from Windows",
-    "mac targeted tests passed",
-    "build39 cloud build completed successfully",
-    "cloud artifacts downloaded into local release directories",
+    "build39 GitHub Release created",
+    "windows and mac assets uploaded",
+    "online manifest switched to build39",
+    "local package manifests updated to build39",
     "quick harness checkpoint completed"
   ],
   "open_questions": [],
   "blockers": [],
   "next_actions": [
-    "publish build39 only when instructed",
-    "update release manifests only when instructed",
-    "run real-device local-runtime smoke when a local runtime is available"
+    "monitor in-app updates from build38 to build39",
+    "run real-device local-runtime smoke when a local runtime is available",
+    "continue product work after release validation"
   ],
-  "last_git_status": "M docs/harness/architecture_guardrails.json\n M docs/harness/closed_loop_verdict.json\n M docs/harness/current_session.md\n M docs/harness/session_state.json\n M docs/memory/self_improving_agent.md\n M status.md"
+  "last_git_status": "M docs/harness/architecture_guardrails.json\n M docs/harness/closed_loop_verdict.json\n M docs/harness/current_session.md\n M docs/harness/session_state.json\n M docs/memory/self_improving_agent.md\n M status.md\n M 外贸助理_交接包/外贸助理_windows_内测包/website/api/release-manifest.json\n M 外贸助理_交接包/外贸助理_mac_内测包/website/api/release-manifest.json"
 }

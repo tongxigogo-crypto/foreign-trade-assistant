@@ -178,3 +178,16 @@ This file stores reusable learnings for `E:\CodexWorkspace\Playground-pm` only.
 
 - status: success
 - summary: Changed scope: 4 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
+
+## 2026-04-08 - Release Asset Before Manifest Guard
+
+- Context: build39 release-channel switch
+- Signal: online manifest was ready to move before release existence and Pages propagation were verified
+- Rule: do not flip the update manifest to a new build until the GitHub Release exists, assets are uploaded, and the site Pages build has finished
+- Scope: release publication and in-app update channel
+- Action: verify release asset presence first, then update manifest, then verify online manifest after Pages reaches `built`
+
+## [2026-04-08 21:27:25] harness-finish
+
+- status: success
+- summary: Changed scope: 6 file(s); audit=quick. | Core logic preserved: yes. | Core checks pass: 7/7.
