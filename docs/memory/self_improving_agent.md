@@ -42,3 +42,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Secondary pages should not become miniature hero scenes; keep them operational, readable, and conversion-oriented.
   - When the homepage is image-led and cinematic, the follow-up pages should use simpler cards and clean grids so the homepage remains the emotional peak.
   - Treat build downloads as site-hosted first, with GitHub Release only as fallback behavior.
+
+## [2026-04-09 20:35:00] homepage-plaza-over-cards
+
+- status: confirmed_rule
+- summary: For the Xiao Q personal site, the homepage should read as one integrated playable plaza. Do not break the first screen into attachment-like feature cards or repeated section blocks.
+- learnings:
+  - The four core functions should be represented as buildings or environmental entrances inside the plaza scene, not as foreground cards stacked under the hero.
+  - Keep homepage copy minimal: brand, short world statement, language switch, and subtle entry affordances. Let the scene carry the structure.
+  - Mouse-responsive character behavior should be implemented as a restrained local motion layer inside the plaza scene, not as a second disconnected mascot composition.
+  - Mobile can use lighter fallback entry buttons if needed for tappability, but desktop should prioritize the cinematic plaza illusion.
