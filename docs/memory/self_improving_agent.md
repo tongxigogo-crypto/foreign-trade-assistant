@@ -63,3 +63,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - If Chinese text is painted into generated images via Python/Pillow in Windows shell flows, avoid terminal encoding corruption by using Unicode escapes (`\uXXXX`) for deterministic rendering.
   - To make a character appear independently cursor-followed in a static scene, split out a transparent cast layer from the same base scene and move that layer, while keeping background parallax subtle.
   - For immersive homepage mode, hide the regular footer on home and compress mobile header nav to avoid breaking first-screen atmosphere.
+
+## [2026-04-09 16:40:00] user-intent-door-sign-vs-overlay
+
+- status: confirmed_rule
+- summary: For this homepage, user intent is not generic hotspot labels. They want building-integrated signage and door-as-entry behavior; overlays should be minimized and only used when visually indistinguishable from original signboards.
+- learnings:
+  - When user says “把门头改成入口”, interpret as “preserve scene realism”: edit facade sign text (or localized scene variant) and keep click target mapped to the actual door/building zone.
+  - For bilingual signage on generated scene art, prefer per-language scene assets (`*-zh.png` / `*-en.png`) and switch by language state, instead of persistent floating chips.
+  - Avoid Chinese path encoding issues in Windows shell flows by using ASCII alias paths (e.g., `C:\\Users\\Administrator\\Desktop\\personal_site_assets`) for all image pipelines.
