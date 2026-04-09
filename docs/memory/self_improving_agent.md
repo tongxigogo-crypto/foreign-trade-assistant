@@ -52,3 +52,14 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Keep homepage copy minimal: brand, short world statement, language switch, and subtle entry affordances. Let the scene carry the structure.
   - Mouse-responsive character behavior should be implemented as a restrained local motion layer inside the plaza scene, not as a second disconnected mascot composition.
   - Mobile can use lighter fallback entry buttons if needed for tappability, but desktop should prioritize the cinematic plaza illusion.
+
+## [2026-04-09 22:20:00] plaza-entry-baked-signs-and-real-pretext
+
+- status: confirmed_rule
+- summary: When the homepage must feel like one game plaza, entrance labels should be baked into the scene image (or visually integrated as facade signage), and clickable regions should map to door zones instead of floating chips.
+- learnings:
+  - Replace floating hotspot pills with facade-level or baked signage; keep DOM entrance elements mostly invisible and use them as hit areas over doors only.
+  - Integrate `@chenglou/pretext` as real ESM vendor modules (`vendor/pretext/*.js`) and use it for title layout computation, not DOM jitter tricks.
+  - If Chinese text is painted into generated images via Python/Pillow in Windows shell flows, avoid terminal encoding corruption by using Unicode escapes (`\uXXXX`) for deterministic rendering.
+  - To make a character appear independently cursor-followed in a static scene, split out a transparent cast layer from the same base scene and move that layer, while keeping background parallax subtle.
+  - For immersive homepage mode, hide the regular footer on home and compress mobile header nav to avoid breaking first-screen atmosphere.
