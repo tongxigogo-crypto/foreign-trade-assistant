@@ -1,14 +1,13 @@
-﻿{
-  "name": "Trade Assistant",
-  "name_zh": "外贸助理",
-  "description": "Local-first AI assistant for foreign trade workflow memory and cross-model continuity.",
+{
+  "name": "Tongxi Fairy Lab",
+  "name_zh": "童兮个人网站",
+  "description": "Personal site profile covering Pet IP, Trade Assistant, pet supplies international trade, and mini-program development.",
   "url": "https://tongxigogo-crypto.github.io/foreign-trade-assistant-site/",
-  "version": "v0.1.1-beta1-build4",
+  "version": "site-rebuild-2026-04-12",
   "capabilities": [
-    "memory-import",
-    "quote-draft",
-    "followup-suggestion",
-    "model-switch"
+    "site-profile",
+    "release-discovery",
+    "contact-entry"
   ],
   "endpoints": {
     "openapi": "/api/openapi.json",
@@ -18,4 +17,3 @@
     "type": "none"
   }
 }
-

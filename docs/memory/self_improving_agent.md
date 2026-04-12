@@ -82,3 +82,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Keep the homepage as alternating media/text rows (`左右交叉`) and make the IP + tool -> pet trade relationship explicit in copy; do not rely on users to infer the business link.
   - Apply `pretext` only to the hero title and major section headings, and use it to compute balanced widths rather than decorative jitter.
   - In this Windows desktop environment, local browser verification is more reliable through HTML structure tests plus module import checks than through long-lived ad-hoc background HTTP servers.
+
+## [2026-04-12 21:35:00] utf8-source-vs-console-mojibake
+
+- status: confirmed_working
+- summary: In this Windows worktree, browser screenshots and PowerShell output can hide a real source-encoding problem; verify UTF-8 page content from file bytes or decoded HTTP responses before assuming the Chinese copy is healthy.
+- learnings:
+  - If page text contains markers like `瀹`, `鍥`, `棣`, `鑱`, or stray `€`, treat it as a real mojibake regression and fix the source files, not just the terminal rendering.
+  - For local preview verification, use Python to fetch the served page and decode as UTF-8 with Unicode escapes in the script when the shell path or console encoding is unreliable.
+  - Keep homepage HTML, secondary page HTML, and `app.js` i18n content aligned so SEO metadata, no-JS fallback text, and runtime language switching stay consistent.
+  - When the site broadens from a single product page to a personal-site profile, update `llms.txt`, `/.well-known/agent.json`, and `/api/openapi.json` together so discovery metadata does not lag behind the visible site.

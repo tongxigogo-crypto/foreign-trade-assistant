@@ -25,6 +25,23 @@ class PersonalSiteRebuildTests(unittest.TestCase):
 
         self.assertIn("为后续宠物用品国际贸易做准备", index_html)
 
+    def test_pages_and_i18n_do_not_contain_mojibake(self) -> None:
+        suspicious_markers = ["瀹", "鍥", "棣", "鑱", "€"]
+        expected_zh = ["宠物", "联系我", "外贸助理", "国际贸易", "小程序开发"]
+
+        for relative_path in [
+            "index.html",
+            "download.html",
+            "docs.html",
+            "privacy.html",
+            "app.js",
+        ]:
+            content = (SITE_DIR / relative_path).read_text(encoding="utf-8")
+            for marker in suspicious_markers:
+                self.assertNotIn(marker, content, msg=f"{relative_path} still contains mojibake marker {marker!r}")
+            for needle in expected_zh:
+                self.assertIn(needle, content, msg=f"{relative_path} is missing expected Chinese text {needle!r}")
+
     def test_pretext_is_loaded_for_key_headings(self) -> None:
         index_html = (SITE_DIR / "index.html").read_text(encoding="utf-8")
 
@@ -37,6 +54,16 @@ class PersonalSiteRebuildTests(unittest.TestCase):
 
         self.assertIn("http.server", script)
         self.assertIn("8123", script)
+
+    def test_site_discovery_files_match_rebuild_scope(self) -> None:
+        llms = (SITE_DIR / "llms.txt").read_text(encoding="utf-8")
+        agent = (SITE_DIR / ".well-known" / "agent.json").read_text(encoding="utf-8")
+        openapi = (SITE_DIR / "api" / "openapi.json").read_text(encoding="utf-8")
+
+        self.assertIn("Tongxi Fairy Lab", llms)
+        self.assertIn("个人网站", llms)
+        self.assertIn("Tongxi Fairy Lab", agent)
+        self.assertIn("site profile", openapi.lower())
 
 
 if __name__ == "__main__":

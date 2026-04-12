@@ -1,8 +1,12 @@
-﻿# Trade Assistant LLM Access Notes
+# Tongxi Fairy Lab LLM Access Notes
 
-- Product: Trade Assistant (外贸助理)
-- Purpose: Local-first assistant for foreign trade workflow memory and model switching.
-- Human docs: /docs.html
-- Privacy policy: /privacy.html
+- Site type: 个人网站 / personal website
+- Core entries: 宠物 IP, 外贸助理, 宠物用品国际贸易, 小程序开发
+- Home: /
+- Trade Assistant downloads: /download.html
+- Pet trade direction: /docs.html
+- Mini-program capability: /privacy.html
+- Contact entry: /#contact-me
 - Agent metadata: /.well-known/agent.json
-- API contract stub: /api/openapi.json
+- API discovery stub: /api/openapi.json
+- Release manifest: /api/release-manifest.json

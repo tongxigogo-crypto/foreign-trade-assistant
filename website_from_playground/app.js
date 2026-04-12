@@ -31,7 +31,7 @@ const I18N = {
     pet_ip_link: "继续浏览首页叙事",
     trade_assistant_label: "02 · Trade Assistant",
     trade_assistant_title: "外贸助理把品牌想法变成实际业务能力",
-    trade_assistant_body: "它不是孤立的软件下载页，而是整个个人网站里最务实的一环：帮助我验证真实业务流程、积累效率工具和后续贸易能力。",
+    trade_assistant_body: "它不是孤立的软件下载页，而是整个个人网站里最务实的一环：帮助我验证真实业务流程，积累效率工具和后续贸易能力。",
     trade_assistant_point_1: "本地优先、可持续成长、多模型兼容。",
     trade_assistant_point_2: "为未来宠物用品国际贸易提供运营与客户处理基础。",
     trade_assistant_point_3: "也是网站当前最直接的产品转化入口。",
