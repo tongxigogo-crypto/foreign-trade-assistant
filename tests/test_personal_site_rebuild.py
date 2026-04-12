@@ -18,6 +18,7 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertEqual(index_html.count('data-entry="pet-ip"'), 1)
         self.assertIn('id="contact-me"', index_html)
         self.assertIn('href="#contact-me"', index_html)
+        self.assertIn('favicon.svg', index_html)
 
     def test_homepage_states_ip_trade_relationship(self) -> None:
         index_html = (SITE_DIR / "index.html").read_text(encoding="utf-8")
@@ -30,6 +31,12 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('type="module"', index_html)
         self.assertIn("./vendor/pretext/layout.js", index_html)
         self.assertIn('data-pretext="hero-title"', index_html)
+
+    def test_local_preview_script_exists(self) -> None:
+        script = (SITE_DIR / "start-local.bat").read_text(encoding="utf-8")
+
+        self.assertIn("http.server", script)
+        self.assertIn("8123", script)
 
 
 if __name__ == "__main__":
