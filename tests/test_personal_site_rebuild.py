@@ -15,6 +15,9 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('data-entry="trade-assistant"', index_html)
         self.assertIn('data-entry="pet-trade"', index_html)
         self.assertIn('data-entry="mini-program"', index_html)
+        self.assertEqual(index_html.count('data-entry="pet-ip"'), 1)
+        self.assertIn('id="contact-me"', index_html)
+        self.assertIn('href="#contact-me"', index_html)
 
     def test_homepage_states_ip_trade_relationship(self) -> None:
         index_html = (SITE_DIR / "index.html").read_text(encoding="utf-8")

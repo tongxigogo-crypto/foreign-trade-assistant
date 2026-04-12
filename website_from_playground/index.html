@@ -34,6 +34,7 @@
             <a class="site-nav__link" href="./download.html" data-i18n="nav_download">外贸助理</a>
             <a class="site-nav__link" href="./docs.html" data-i18n="nav_pet_trade">国际贸易</a>
             <a class="site-nav__link" href="./privacy.html" data-i18n="nav_mini_program">小程序开发</a>
+            <a class="site-nav__link" href="#contact-me" data-i18n="nav_contact">联系我</a>
           </nav>
           <button id="lang-toggle" class="lang-toggle" type="button">EN</button>
         </div>
@@ -42,7 +43,7 @@
 
     <main class="section" data-home-layout="alternating-story">
       <section class="hero fade-in">
-        <div class="hero__visual">
+        <div class="hero__visual" id="pet-ip" data-entry="pet-ip">
           <div class="hero__figure">
             <img src="./assets/pet-ip-hero.svg" alt="宠物 IP 主视觉插画" />
             <div class="hero__chips">
@@ -69,25 +70,6 @@
       </section>
 
       <section class="story-grid">
-        <article id="pet-ip" class="story-row fade-in">
-          <div class="story-row__media" data-entry="pet-ip">
-            <img src="./assets/pet-ip-hero.svg" alt="宠物 IP 图片" loading="eager" />
-          </div>
-          <div class="story-row__copy">
-            <span class="story-row__label" data-i18n="pet_ip_label">01 · Pet IP</span>
-            <h2 class="section-title" data-pretext="section-title" data-i18n="pet_ip_title">宠物 IP 是整个网站的情感入口</h2>
-            <p data-i18n="pet_ip_body">它负责建立温度、审美和记忆点，让站点不只是工具展示，而是一个有长期品牌潜力的个人项目体系。</p>
-            <ul class="feature-list">
-              <li data-i18n="pet_ip_point_1">保持温暖、童话感的视觉记忆，但不过度幼态。</li>
-              <li data-i18n="pet_ip_point_2">为后续宠物用品国际贸易提供自然的品牌起点。</li>
-              <li data-i18n="pet_ip_point_3">为内容、产品包装和小程序体验提供统一形象。</li>
-            </ul>
-            <div class="story-links">
-              <a class="pill-link" href="#pet-ip" data-i18n="pet_ip_link">继续浏览首页叙事</a>
-            </div>
-          </div>
-        </article>
-
         <article class="story-row story-row--reverse fade-in">
           <div class="story-row__copy">
             <span class="story-row__label" data-i18n="trade_assistant_label">02 · Trade Assistant</span>
@@ -144,6 +126,23 @@
             <img src="./assets/mini-program.svg" alt="小程序开发视觉" loading="lazy" />
           </div>
         </article>
+      </section>
+
+      <section id="contact-me" class="contact-panel fade-in">
+        <div class="contact-panel__copy">
+          <span class="story-row__label" data-i18n="contact_label">05 · Contact</span>
+          <h2 class="section-title" data-pretext="section-title" data-i18n="contact_title">如果你想聊合作、产品或后续上线，直接联系我</h2>
+          <p data-i18n="contact_body">这里保留为最终上线前的联系入口。当前先把结构固定下来，后续会补入正式邮箱、微信或表单方式。</p>
+          <ul class="meta-list">
+            <li data-i18n="contact_point_1">适合沟通宠物 IP、产品合作和国际贸易准备。</li>
+            <li data-i18n="contact_point_2">也适合咨询小程序开发和定制化轻工具。</li>
+            <li data-i18n="contact_point_3">上线前会统一替换为正式联系方式。</li>
+          </ul>
+          <div class="cta-row">
+            <a class="button" href="#contact-me" data-i18n="contact_cta_primary">联系我</a>
+            <span class="contact-panel__note" data-i18n="contact_note">正式联系方式将在上线前确认</span>
+          </div>
+        </div>
       </section>
     </main>
 
