@@ -1,77 +1,90 @@
-﻿<!doctype html>
-<html class="dark" lang="zh-CN">
+<!doctype html>
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>下载 - 外贸助理 Trade Assistant</title>
-  <meta name="description" content="下载外贸助理 Trade Assistant 的 Windows 与 macOS 内测版本。" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>外贸助理下载 | Tongxi Fairy Lab</title>
+  <meta name="description" content="下载外贸助理，了解它如何成为宠物用品国际贸易准备阶段的核心工具能力。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body data-page="download" class="min-h-screen bg-black text-white antialiased">
-  <div class="pointer-events-none fixed inset-0 overflow-hidden">
-    <div class="absolute -left-24 -top-20 h-96 w-96 rounded-full bg-cyan-300/15 blur-3xl"></div>
-    <div class="absolute -right-24 top-24 h-[32rem] w-[32rem] rounded-full bg-violet-400/15 blur-3xl"></div>
+<body data-page="download">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand-lockup" href="./index.html">
+          <span class="brand-mark">T</span>
+          <span class="brand-copy">
+            <span class="brand-copy__title" data-i18n="brand_name">Tongxi Fairy Lab</span>
+            <span class="brand-copy__note" data-i18n="brand_tagline">宠物 IP · 工具产品 · 国际贸易准备</span>
+          </span>
+        </a>
+        <div class="site-nav">
+          <nav class="site-nav__links" aria-label="Primary navigation">
+            <a class="site-nav__link" href="./index.html" data-i18n="nav_home">首页</a>
+            <a class="site-nav__link" href="./index.html#pet-ip" data-i18n="nav_pet_ip">宠物 IP</a>
+            <a class="site-nav__link" href="./download.html" aria-current="page" data-i18n="nav_download">外贸助理</a>
+            <a class="site-nav__link" href="./docs.html" data-i18n="nav_pet_trade">国际贸易</a>
+            <a class="site-nav__link" href="./privacy.html" data-i18n="nav_mini_program">小程序开发</a>
+          </nav>
+          <button id="lang-toggle" class="lang-toggle" type="button">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="section">
+      <section class="subhero fade-in">
+        <span class="subhero__label" data-i18n="download_kicker">Trade Assistant</span>
+        <h1 class="section-title" data-pretext="section-title" data-i18n="download_title">外贸助理下载</h1>
+        <p data-i18n="download_intro">这是当前最可直接体验的产品入口。它承担“效率工具 + 业务流程验证”的职责，也是未来宠物用品国际贸易准备阶段最重要的能力底座。</p>
+        <div class="subhero__actions">
+          <span><strong data-i18n="release_label">当前版本</strong>: <span id="version-tag">loading...</span></span>
+        </div>
+      </section>
+
+      <section class="download-grid fade-in">
+        <article class="card-panel">
+          <span class="story-row__label" data-i18n="download_card_win_title">Windows</span>
+          <h3 data-i18n="download_card_win_headline">桌面端内测包</h3>
+          <p data-i18n="download_card_win_desc">适合日常业务使用与流程验证，优先读取站内发布清单，失败时回退到 GitHub Release。</p>
+          <p class="card-panel__meta" id="win-asset-name">-</p>
+          <div class="cta-row">
+            <a id="win-download" class="button" href="#" aria-disabled="true" data-i18n="download_button_win">下载 Windows 包</a>
+          </div>
+        </article>
+
+        <article class="card-panel">
+          <span class="story-row__label" data-i18n="download_card_mac_title">macOS</span>
+          <h3 data-i18n="download_card_mac_headline">适合轻办公与演示</h3>
+          <p data-i18n="download_card_mac_desc">macOS 版本面向更轻的移动办公场景，保留站点优先分发与回退机制。</p>
+          <p class="card-panel__meta" id="mac-asset-name">-</p>
+          <div class="cta-row">
+            <a id="mac-download" class="button" href="#" aria-disabled="true" data-i18n="download_button_mac">下载 macOS 包</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="note-panel fade-in">
+        <h3 data-i18n="download_notice_title">为什么它会出现在这个网站里</h3>
+        <ul class="meta-list">
+          <li data-i18n="download_notice_1">它是当前最成熟、最接近真实业务使用的一环。</li>
+          <li data-i18n="download_notice_2">它为未来宠物用品国际贸易提供客户处理、资料管理和工作流基础。</li>
+          <li data-i18n="download_notice_3">它和宠物 IP 不是并列项目，而是同一长期方向里的“工具能力层”。</li>
+        </ul>
+        <p class="card-panel__meta" data-i18n="download_fallback_note">如果按钮显示 unavailable，表示发布资产还在同步。</p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© <span id="year"></span> Tongxi Fairy Lab</p>
+        <p data-i18n="footer_note">更轻的首页，更长的业务准备周期。</p>
+      </div>
+    </footer>
   </div>
 
-  <header class="fixed left-1/2 top-4 z-50 w-[96%] max-w-7xl -translate-x-1/2 rounded-sm border border-zinc-700/60 bg-black/75 px-4 py-3 backdrop-blur-xl md:px-6">
-    <div class="flex items-center justify-between gap-3">
-      <a href="./index.html" class="flex items-center gap-3">
-        <span class="grid h-8 w-8 place-items-center rounded-sm bg-cyan-300 text-xs font-black text-black">TA</span>
-        <div>
-          <p class="text-sm font-bold tracking-tight text-white" data-i18n="brand_name">外贸助理 Trade Assistant</p>
-          <p class="text-[10px] text-zinc-300" data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
-        </div>
-      </a>
-      <nav class="flex items-center gap-2 text-xs text-white md:gap-5 md:text-sm">
-        <a href="./index.html" class="hover:text-cyan-300" data-i18n="nav_home">首页</a>
-        <a href="./download.html" class="hover:text-cyan-300" data-i18n="nav_download">下载</a>
-        <a href="./docs.html" class="hover:text-cyan-300" data-i18n="nav_docs">文档</a>
-        <a href="./privacy.html" class="hover:text-cyan-300" data-i18n="nav_privacy">隐私</a>
-        <button id="lang-toggle" type="button" class="rounded-sm border border-zinc-500 px-2 py-1 text-xs text-white hover:border-cyan-300">EN</button>
-      </nav>
-    </div>
-  </header>
-
-  <main class="relative mx-auto max-w-7xl px-4 pb-16 pt-28 md:px-6 md:pt-32">
-    <section class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-      <p class="text-xs uppercase tracking-[0.2em] text-violet-300" data-i18n="download_kicker">发布渠道</p>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-white md:text-6xl" data-i18n="download_title">内测版本下载</h1>
-      <p class="mt-3 max-w-3xl text-sm text-zinc-300 md:text-base" data-i18n="download_subtitle">优先读取站内发布清单，失败时回退到 GitHub Release。</p>
-      <p class="mt-4 text-sm text-zinc-300"><span data-i18n="release_label">当前版本</span>: <strong id="version-tag" class="text-white">loading...</strong></p>
-    </section>
-
-    <section class="mt-8 grid gap-4 md:grid-cols-2">
-      <article class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-        <h2 class="text-xl font-bold text-white" data-i18n="download_card_win_title">Windows</h2>
-        <p id="win-asset-name" class="mt-2 text-sm text-zinc-300">-</p>
-        <a id="win-download" class="mt-5 inline-block rounded-sm bg-cyan-300 px-5 py-3 text-sm font-semibold text-black shadow-[0_0_24px_rgba(103,232,249,0.25)]" href="#" aria-disabled="true" data-i18n="download_button_win">下载 Windows 包</a>
-      </article>
-      <article class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-        <h2 class="text-xl font-bold text-white" data-i18n="download_card_mac_title">macOS</h2>
-        <p id="mac-asset-name" class="mt-2 text-sm text-zinc-300">-</p>
-        <a id="mac-download" class="mt-5 inline-block rounded-sm bg-cyan-300 px-5 py-3 text-sm font-semibold text-black shadow-[0_0_24px_rgba(103,232,249,0.25)]" href="#" aria-disabled="true" data-i18n="download_button_mac">下载 macOS 包</a>
-      </article>
-    </section>
-
-    <section class="mt-8 rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-      <h2 class="text-lg font-bold text-white" data-i18n="download_notice_title">安装提示</h2>
-      <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-zinc-300">
-        <li data-i18n="download_notice_1">先看新手文档，再开始安装。</li>
-        <li data-i18n="download_notice_2">macOS 首次可能出现“未验证开发者”，按文档流程放行。</li>
-        <li data-i18n="download_notice_3">建议保留上一个稳定包，出现问题可快速回滚。</li>
-      </ul>
-      <p class="mt-4 text-xs text-zinc-300" data-i18n="download_fallback_note">如果下载按钮显示 unavailable，表示发布资产还在同步。</p>
-    </section>
-  </main>
-
-  <footer class="relative border-t border-zinc-700/60 bg-black/70 px-4 py-6 backdrop-blur-xl md:px-6">
-    <div class="mx-auto flex max-w-7xl items-center justify-between text-xs text-zinc-400">
-      <p>© <span id="year"></span> Trade Assistant</p>
-      <p data-i18n="home_footer_note">数据不搬家 · 能力不绑平台</p>
-    </div>
-  </footer>
-
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

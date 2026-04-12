@@ -1,0 +1,27 @@
+<svg width="960" height="760" viewBox="0 0 960 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="760" rx="80" fill="url(#bg)"/>
+  <circle cx="740" cy="146" r="82" fill="#FFF3D6" fill-opacity=".8"/>
+  <circle cx="170" cy="124" r="44" fill="#FFFFFF" fill-opacity=".65"/>
+  <circle cx="808" cy="608" r="54" fill="#E5F2FB" fill-opacity=".7"/>
+  <path d="M236 306C236 231.441 296.441 171 371 171H587C661.559 171 722 231.441 722 306V466C722 540.559 661.559 601 587 601H371C296.441 601 236 540.559 236 466V306Z" fill="#FFF8EC"/>
+  <path d="M286 246L354 132L424 248" fill="#F3C68B"/>
+  <path d="M674 246L606 132L536 248" fill="#F3C68B"/>
+  <path d="M324 253C324 200.533 366.533 158 419 158H541C593.467 158 636 200.533 636 253V486C636 538.467 593.467 581 541 581H419C366.533 581 324 538.467 324 486V253Z" fill="#FFF3D6"/>
+  <ellipse cx="424" cy="336" rx="34" ry="40" fill="#2C241C"/>
+  <ellipse cx="538" cy="336" rx="34" ry="40" fill="#2C241C"/>
+  <ellipse cx="424" cy="346" rx="12" ry="14" fill="#FFF"/>
+  <ellipse cx="538" cy="346" rx="12" ry="14" fill="#FFF"/>
+  <ellipse cx="481" cy="424" rx="40" ry="28" fill="#D78267"/>
+  <path d="M433 400C463.936 381.475 498.064 381.475 529 400" stroke="#D78267" stroke-width="18" stroke-linecap="round"/>
+  <path d="M416 468C447.856 492.648 514.144 492.648 546 468" stroke="#AD6848" stroke-width="16" stroke-linecap="round"/>
+  <path d="M388 535C438.462 560.949 523.538 560.949 574 535" stroke="#F0D7A7" stroke-width="22" stroke-linecap="round"/>
+  <rect x="106" y="512" width="196" height="86" rx="36" fill="#FFFFFF" fill-opacity=".78"/>
+  <text x="144" y="565" fill="#5D4C39" font-family="Georgia, serif" font-size="36" font-weight="700">Pet IP</text>
+  <defs>
+    <linearGradient id="bg" x1="88" y1="60" x2="866" y2="684" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7E8"/>
+      <stop offset=".55" stop-color="#FBE9D2"/>
+      <stop offset="1" stop-color="#EAF4FB"/>
+    </linearGradient>
+  </defs>
+</svg>

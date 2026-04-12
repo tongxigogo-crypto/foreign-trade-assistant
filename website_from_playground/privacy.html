@@ -1,81 +1,77 @@
-﻿<!doctype html>
-<html class="dark" lang="zh-CN">
+<!doctype html>
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>隐私 - 外贸助理 Trade Assistant</title>
-  <meta name="description" content="外贸助理 Trade Assistant 的隐私与数据主权说明。" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            'surface-lowest': '#000000',
-            'surface-low': '#131313',
-            'on-surface': '#ffffff',
-            'on-surface-variant': '#ababab',
-            'outline-variant': '#484848',
-            primary: '#8ff5ff',
-            secondary: '#bf81ff'
-          }
-        }
-      }
-    }
-  </script>
+  <title>小程序开发 | Tongxi Fairy Lab</title>
+  <meta name="description" content="小程序开发页面，说明如何把宠物 IP、工具能力与轻产品场景转成真实用户可用的数字入口。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body data-page="privacy" class="bg-surface-lowest text-on-surface antialiased">
-  <div class="fixed inset-0 pointer-events-none overflow-hidden">
-    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl"></div>
-    <div class="absolute top-28 -right-28 h-[28rem] w-[28rem] rounded-full bg-secondary/10 blur-3xl"></div>
+<body data-page="mini-program">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand-lockup" href="./index.html">
+          <span class="brand-mark">T</span>
+          <span class="brand-copy">
+            <span class="brand-copy__title" data-i18n="brand_name">Tongxi Fairy Lab</span>
+            <span class="brand-copy__note" data-i18n="brand_tagline">宠物 IP · 工具产品 · 国际贸易准备</span>
+          </span>
+        </a>
+        <div class="site-nav">
+          <nav class="site-nav__links" aria-label="Primary navigation">
+            <a class="site-nav__link" href="./index.html" data-i18n="nav_home">首页</a>
+            <a class="site-nav__link" href="./index.html#pet-ip" data-i18n="nav_pet_ip">宠物 IP</a>
+            <a class="site-nav__link" href="./download.html" data-i18n="nav_download">外贸助理</a>
+            <a class="site-nav__link" href="./docs.html" data-i18n="nav_pet_trade">国际贸易</a>
+            <a class="site-nav__link" href="./privacy.html" aria-current="page" data-i18n="nav_mini_program">小程序开发</a>
+          </nav>
+          <button id="lang-toggle" class="lang-toggle" type="button">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="section">
+      <section class="subhero fade-in">
+        <span class="subhero__label" data-i18n="mini_program_page_kicker">Mini Program Capability</span>
+        <h1 class="section-title" data-pretext="section-title" data-i18n="mini_program_page_title">小程序开发</h1>
+        <p data-i18n="mini_program_page_intro">小程序开发是这个网站里的执行层能力。它能把宠物 IP、贸易场景和工具能力变成更靠近真实用户的轻产品与轻运营入口。</p>
+      </section>
+
+      <section class="utility-grid fade-in">
+        <article class="card-panel">
+          <span class="story-row__label" data-i18n="mini_program_page_card_1_label">体验端</span>
+          <h3 data-i18n="mini_program_page_card_1_title">把内容变成可互动入口</h3>
+          <p data-i18n="mini_program_page_card_1_body">适合承接宠物 IP 展示、活动互动、轻内容分发和品牌触点，降低用户进入门槛。</p>
+        </article>
+        <article class="card-panel">
+          <span class="story-row__label" data-i18n="mini_program_page_card_2_label">业务端</span>
+          <h3 data-i18n="mini_program_page_card_2_title">把工具能力变成可用产品</h3>
+          <p data-i18n="mini_program_page_card_2_body">适合验证小范围业务流程、客户交互和轻运营场景，是从网站展示走向实际服务的重要桥梁。</p>
+        </article>
+      </section>
+
+      <section class="note-panel fade-in">
+        <h3 data-i18n="mini_program_page_note_title">这个入口在整体重建里的角色</h3>
+        <ul class="meta-list">
+          <li data-i18n="mini_program_page_note_1">它证明网站不仅有审美和方向，也有落地执行能力。</li>
+          <li data-i18n="mini_program_page_note_2">它能连接宠物品牌表达与未来业务工具化需求。</li>
+          <li data-i18n="mini_program_page_note_3">它适合成为后续贸易相关轻服务和展示模块的承载层。</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© <span id="year"></span> Tongxi Fairy Lab</p>
+        <p data-i18n="footer_note">更轻的首页，更长的业务准备周期。</p>
+      </div>
+    </footer>
   </div>
 
-  <header class="fixed top-4 left-1/2 z-50 w-[96%] max-w-7xl -translate-x-1/2 rounded-sm border border-outline-variant/20 bg-black/70 px-4 py-3 backdrop-blur-xl md:px-6">
-    <div class="flex items-center justify-between gap-3">
-      <a href="./index.html" class="flex items-center gap-3">
-        <span class="grid h-8 w-8 place-items-center rounded-sm bg-primary text-black text-xs font-black">TA</span>
-        <div>
-          <p class="text-sm font-bold tracking-tight" data-i18n="brand_name">外贸助理 Trade Assistant</p>
-          <p class="text-[10px] text-on-surface-variant" data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
-        </div>
-      </a>
-      <nav class="flex items-center gap-2 text-xs md:gap-5 md:text-sm">
-        <a href="./index.html" data-i18n="nav_home" class="hover:text-primary">首页</a>
-        <a href="./download.html" data-i18n="nav_download" class="hover:text-primary">下载</a>
-        <a href="./docs.html" data-i18n="nav_docs" class="hover:text-primary">文档</a>
-        <a href="./privacy.html" data-i18n="nav_privacy" class="hover:text-primary">隐私</a>
-        <button id="lang-toggle" type="button" class="rounded-sm border border-outline-variant/40 px-2 py-1 text-xs hover:border-primary">EN</button>
-      </nav>
-    </div>
-  </header>
-
-  <main class="relative mx-auto max-w-7xl px-4 pb-16 pt-28 md:px-6 md:pt-32">
-    <section class="rounded-sm border border-outline-variant/20 bg-surface-low p-6">
-      <p class="text-xs uppercase tracking-[0.2em] text-secondary" data-i18n="privacy_kicker">Privacy Charter</p>
-      <h1 class="mt-3 text-4xl font-black tracking-tight md:text-6xl" data-i18n="privacy_title">隐私与数据主权</h1>
-      <p class="mt-3 max-w-3xl text-sm text-on-surface-variant md:text-base" data-i18n="privacy_intro">外贸助理采用本地优先策略：业务资料、偏好和成长记录默认保留在你的设备中。</p>
-    </section>
-
-    <section class="mt-8 rounded-sm border border-outline-variant/20 bg-surface-low p-6">
-      <h2 class="text-lg font-bold" data-i18n="privacy_principles_title">核心原则</h2>
-      <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-on-surface-variant">
-        <li data-i18n="privacy_1">默认不上传原始历史资料到云端存储。</li>
-        <li data-i18n="privacy_2">敏感配置可在本地系统能力下加密保存。</li>
-        <li data-i18n="privacy_3">你可以导出并迁移自己的数据，不被单一平台绑定。</li>
-        <li data-i18n="privacy_4">若调用第三方模型 API，请遵守对应厂商的数据政策。</li>
-      </ul>
-    </section>
-  </main>
-
-  <footer class="relative border-t border-outline-variant/20 bg-black/60 px-4 py-6 backdrop-blur-xl md:px-6">
-    <div class="mx-auto flex max-w-7xl items-center justify-between text-xs text-on-surface-variant">
-      <p>© <span id="year"></span> Trade Assistant</p>
-      <p data-i18n="home_footer_note">数据不搬家 · 能力不绑平台</p>
-    </div>
-  </footer>
-
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

@@ -72,3 +72,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - When user says “把门头改成入口”, interpret as “preserve scene realism”: edit facade sign text (or localized scene variant) and keep click target mapped to the actual door/building zone.
   - For bilingual signage on generated scene art, prefer per-language scene assets (`*-zh.png` / `*-en.png`) and switch by language state, instead of persistent floating chips.
   - Avoid Chinese path encoding issues in Windows shell flows by using ASCII alias paths (e.g., `C:\\Users\\Administrator\\Desktop\\personal_site_assets`) for all image pipelines.
+
+## [2026-04-12 20:30:00] lightweight-rebuild-with-local-pretext
+
+- status: confirmed_working
+- summary: For the personal-site rebuild direction, a lighter Apple-led layout with small fairytale accents works better than a heavy scene homepage, and `@chenglou/pretext` should be vendored locally into `website_from_playground/vendor/pretext/`.
+- learnings:
+  - Use lightweight local SVG illustrations for Pet IP, Trade Assistant, pet trade, and mini-program sections instead of large raster hero scenes when the user prioritizes fast loading.
+  - Keep the homepage as alternating media/text rows (`左右交叉`) and make the IP + tool -> pet trade relationship explicit in copy; do not rely on users to infer the business link.
+  - Apply `pretext` only to the hero title and major section headings, and use it to compute balanced widths rather than decorative jitter.
+  - In this Windows desktop environment, local browser verification is more reliable through HTML structure tests plus module import checks than through long-lived ad-hoc background HTTP servers.

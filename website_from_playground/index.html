@@ -1,187 +1,160 @@
-﻿<!doctype html>
-<html class="dark" lang="zh-CN"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Tongxi Dev Site | 个人开发网站</title>
-<meta name="description" content="Tongxi 个人开发网站：展示 AI 应用、自动化工具与外贸助理等产品。" />
-<meta property="og:title" content="Tongxi Dev Site" />
-<meta property="og:description" content="个人开发作品集：外贸助理、工作流工具、小程序项目。" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://tongxigogo-crypto.github.io/foreign-trade-assistant-site/" />
-<meta name="twitter:card" content="summary_large_image" />
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-  tailwind.config = {
-    darkMode: "class",
-    theme: {
-      extend: {
-        colors: {
-          "surface-container-lowest": "#000000",
-          "on-surface": "#ffffff",
-          "surface": "#0e0e0e",
-          "primary": "#8ff5ff",
-          "secondary": "#bf81ff",
-          "surface-container": "#191919",
-          "surface-container-low": "#131313",
-          "surface-container-high": "#1f1f1f",
-          "surface-container-highest": "#262626",
-          "on-surface-variant": "#ababab",
-          "outline-variant": "#484848"
-        },
-        fontFamily: {
-          "headline": ["Inter"],
-          "body": ["Inter"],
-          "label": ["Inter"]
-        }
-      }
-    }
-  }
-</script>
-<style>
-  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-  .violet-glow { box-shadow: 0 0 80px 10px rgba(191, 129, 255, 0.15); }
-  body { background-color: #000000; color: #ffffff; -webkit-font-smoothing: antialiased; }
-</style>
-<link rel="stylesheet" href="./styles.css" />
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tongxi Fairy Lab | 宠物 IP 与国际贸易准备</title>
+  <meta name="description" content="Tongxi 个人网站：以宠物 IP、外贸助理、宠物用品国际贸易与小程序开发四个入口，构建轻量而清晰的个人品牌与业务路径。" />
+  <meta property="og:title" content="Tongxi Fairy Lab" />
+  <meta property="og:description" content="宠物 IP + 外贸助理 + 宠物用品国际贸易 + 小程序开发，面向未来的个人品牌站。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tongxigogo-crypto.github.io/foreign-trade-assistant-site/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="modulepreload" href="./vendor/pretext/layout.js" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
-<body data-page="home" class="font-body selection:bg-secondary selection:text-on-surface overflow-x-hidden">
-<nav class="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-sm bg-black/70 backdrop-blur-xl z-50 shadow-[0px_20px_40px_rgba(143,245,255,0.05)] flex justify-between items-center px-8 py-4 border border-outline-variant/20">
-<a class="text-xl font-black tracking-tighter text-white" href="./index.html" data-i18n="brand_short">TONGXI_DEV</a>
-<div class="hidden md:flex items-center space-x-12">
-<a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-white after:content-[''] after:block after:w-1 after:h-1 after:bg-cyan-400 after:rounded-full after:mx-auto after:mt-1" href="./index.html" data-i18n="nav_home">首页</a>
-<a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-gray-400 hover:text-white transition-colors duration-300" href="./download.html" data-i18n="nav_download">外贸助理下载</a>
-<a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-gray-400 hover:text-white transition-colors duration-300" href="./docs.html" data-i18n="nav_docs">外贸助理文档</a>
-<a class="font-inter tracking-tighter uppercase text-[11px] font-bold text-gray-400 hover:text-white transition-colors duration-300" href="./privacy.html" data-i18n="nav_privacy">外贸助理隐私</a>
-</div>
-<div class="flex items-center space-x-4">
-<button id="lang-toggle" class="rounded-sm border border-outline-variant px-3 py-1 text-xs font-bold text-white hover:border-primary" type="button">EN</button>
-</div>
-</nav>
+<body data-page="home">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand-lockup" href="./index.html" aria-label="Tongxi Fairy Lab home">
+          <span class="brand-mark">T</span>
+          <span class="brand-copy">
+            <span class="brand-copy__title" data-i18n="brand_name">Tongxi Fairy Lab</span>
+            <span class="brand-copy__note" data-i18n="brand_tagline">宠物 IP · 工具产品 · 国际贸易准备</span>
+          </span>
+        </a>
+        <div class="site-nav">
+          <nav class="site-nav__links" aria-label="Primary navigation">
+            <a class="site-nav__link" href="./index.html" aria-current="page" data-i18n="nav_home">首页</a>
+            <a class="site-nav__link" href="#pet-ip" data-i18n="nav_pet_ip">宠物 IP</a>
+            <a class="site-nav__link" href="./download.html" data-i18n="nav_download">外贸助理</a>
+            <a class="site-nav__link" href="./docs.html" data-i18n="nav_pet_trade">国际贸易</a>
+            <a class="site-nav__link" href="./privacy.html" data-i18n="nav_mini_program">小程序开发</a>
+          </nav>
+          <button id="lang-toggle" class="lang-toggle" type="button">EN</button>
+        </div>
+      </div>
+    </header>
 
-<div class="fixed right-3 md:right-8 top-1/2 -translate-y-1/2 hidden lg:flex flex-col space-y-6 items-center z-50">
-  <div class="flex flex-col items-center space-y-4">
-    <span class="text-cyan-400 text-[10px] font-semibold">01</span>
-    <span class="text-gray-600 text-[10px] font-semibold">02</span>
-    <span class="text-gray-600 text-[10px] font-semibold">03</span>
-    <span class="text-gray-600 text-[10px] font-semibold">04</span>
+    <main class="section" data-home-layout="alternating-story">
+      <section class="hero fade-in">
+        <div class="hero__visual">
+          <div class="hero__figure">
+            <img src="./assets/pet-ip-hero.svg" alt="宠物 IP 主视觉插画" />
+            <div class="hero__chips">
+              <span class="hero__chip" data-i18n="hero_chip_1">轻童话气质</span>
+              <span class="hero__chip" data-i18n="hero_chip_2">Apple 式秩序</span>
+              <span class="hero__chip" data-i18n="hero_chip_3">快速加载</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero__content">
+          <span class="eyebrow" data-i18n="home_kicker">Personal Site Rebuild</span>
+          <h1 class="display-title" data-pretext="hero-title" data-i18n="hero_title">Tongxi Fairy Lab</h1>
+          <p class="lead" data-i18n="hero_intro">这是一个围绕宠物 IP、外贸助理、宠物用品国际贸易与小程序开发展开的个人网站，用更轻的结构表达更长的业务路线。</p>
+          <p class="lead" data-i18n="hero_bridge">宠物 IP 提供品牌记忆，外贸助理提供实际能力，它们共同为后续宠物用品国际贸易做准备。</p>
+          <div class="cta-row">
+            <a class="button" href="./download.html" data-i18n="hero_cta_primary">查看外贸助理</a>
+            <a class="button-secondary" href="#pet-ip" data-i18n="hero_cta_secondary">了解宠物 IP</a>
+          </div>
+          <div class="hero__summary">
+            <strong data-i18n="hero_summary_title">四个入口，一条更清晰的业务主线</strong>
+            <p data-i18n="hero_summary_body">首页不再把所有内容堆成一个重场景，而是用左右交叉的节奏，让用户快速看懂“品牌、工具、贸易、开发”之间的关系。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="story-grid">
+        <article id="pet-ip" class="story-row fade-in">
+          <div class="story-row__media" data-entry="pet-ip">
+            <img src="./assets/pet-ip-hero.svg" alt="宠物 IP 图片" loading="eager" />
+          </div>
+          <div class="story-row__copy">
+            <span class="story-row__label" data-i18n="pet_ip_label">01 · Pet IP</span>
+            <h2 class="section-title" data-pretext="section-title" data-i18n="pet_ip_title">宠物 IP 是整个网站的情感入口</h2>
+            <p data-i18n="pet_ip_body">它负责建立温度、审美和记忆点，让站点不只是工具展示，而是一个有长期品牌潜力的个人项目体系。</p>
+            <ul class="feature-list">
+              <li data-i18n="pet_ip_point_1">保持温暖、童话感的视觉记忆，但不过度幼态。</li>
+              <li data-i18n="pet_ip_point_2">为后续宠物用品国际贸易提供自然的品牌起点。</li>
+              <li data-i18n="pet_ip_point_3">为内容、产品包装和小程序体验提供统一形象。</li>
+            </ul>
+            <div class="story-links">
+              <a class="pill-link" href="#pet-ip" data-i18n="pet_ip_link">继续浏览首页叙事</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="story-row story-row--reverse fade-in">
+          <div class="story-row__copy">
+            <span class="story-row__label" data-i18n="trade_assistant_label">02 · Trade Assistant</span>
+            <h2 class="section-title" data-pretext="section-title" data-i18n="trade_assistant_title">外贸助理把品牌想法变成实际业务能力</h2>
+            <p data-i18n="trade_assistant_body">它不是孤立的软件下载页，而是整个个人网站里最务实的一环：帮助我验证真实业务流程、积累效率工具和后续贸易能力。</p>
+            <ul class="feature-list">
+              <li data-i18n="trade_assistant_point_1">本地优先、可持续成长、多模型兼容。</li>
+              <li data-i18n="trade_assistant_point_2">为未来宠物用品国际贸易提供运营与客户处理基础。</li>
+              <li data-i18n="trade_assistant_point_3">也是网站当前最直接的产品转化入口。</li>
+            </ul>
+            <div class="story-links">
+              <a class="pill-link" href="./download.html" data-i18n="trade_assistant_link">查看下载入口</a>
+            </div>
+          </div>
+          <div class="story-row__media" data-entry="trade-assistant">
+            <img src="./assets/trade-assistant.svg" alt="外贸助理下载卡片视觉" loading="lazy" />
+          </div>
+        </article>
+
+        <article class="story-row fade-in">
+          <div class="story-row__media" data-entry="pet-trade">
+            <img src="./assets/pet-trade.svg" alt="宠物用品国际贸易视觉" loading="lazy" />
+          </div>
+          <div class="story-row__copy">
+            <span class="story-row__label" data-i18n="pet_trade_label">03 · Pet Trade</span>
+            <h2 class="section-title" data-pretext="section-title" data-i18n="pet_trade_title">宠物用品国际贸易是后续真正要落地的方向</h2>
+            <p data-i18n="pet_trade_body">这个入口解释为什么首页同时出现宠物 IP 和外贸助理。前者提供产品想象力与品牌感，后者提供效率与流程能力，最终都汇聚到宠物用品国际贸易。</p>
+            <ul class="feature-list">
+              <li data-i18n="pet_trade_point_1">围绕品牌、产品表达、跨境场景和交付能力形成闭环。</li>
+              <li data-i18n="pet_trade_point_2">先做好内容与工具，再逐步推进商品与渠道。</li>
+              <li data-i18n="pet_trade_point_3">这是连接个人网站与未来业务的主线页面。</li>
+            </ul>
+            <div class="story-links">
+              <a class="pill-link" href="./docs.html" data-i18n="pet_trade_link">查看国际贸易方向</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="story-row story-row--reverse fade-in">
+          <div class="story-row__copy">
+            <span class="story-row__label" data-i18n="mini_program_label">04 · Mini Program</span>
+            <h2 class="section-title" data-pretext="section-title" data-i18n="mini_program_title">小程序开发负责把体验和业务落到可用产品里</h2>
+            <p data-i18n="mini_program_body">无论是品牌展示、宠物 IP 周边互动，还是贸易相关的轻量工具，小程序开发都提供了更贴近真实用户场景的产品化能力。</p>
+            <ul class="feature-list">
+              <li data-i18n="mini_program_point_1">适合做展示、互动、轻运营和业务试验。</li>
+              <li data-i18n="mini_program_point_2">能把宠物品牌内容与工具能力连接到更轻的入口。</li>
+              <li data-i18n="mini_program_point_3">是网站未来服务化和产品化的重要支撑。</li>
+            </ul>
+            <div class="story-links">
+              <a class="pill-link" href="./privacy.html" data-i18n="mini_program_link">查看小程序开发</a>
+            </div>
+          </div>
+          <div class="story-row__media" data-entry="mini-program">
+            <img src="./assets/mini-program.svg" alt="小程序开发视觉" loading="lazy" />
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© <span id="year"></span> Tongxi Fairy Lab</p>
+        <p data-i18n="footer_note">更轻的首页，更长的业务准备周期。</p>
+      </div>
+    </footer>
   </div>
-</div>
 
-<main class="relative min-h-screen pt-32 pb-24 px-6 md:px-16 lg:px-24">
-<div class="fixed top-0 right-0 w-full md:w-[72%] xl:w-[60%] h-screen opacity-70 z-0 pointer-events-none">
-  <div class="absolute inset-0 bg-gradient-to-l from-black via-transparent to-black z-10"></div>
-  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-secondary/10 blur-[120px] violet-glow"></div>
-  <img class="absolute inset-0 w-full h-full object-cover grayscale brightness-75 contrast-125" alt="Futuristic robot profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDU9r3JCByb3cCLXqmX70u6E1-LkcELXeNeLQD0X8s_KL4t3eYC2mC3Q1IMH4msMmacNcRNUa_BM36Z6fCdu7zf6Kn2edc0iF-ffpYOxrH3XncMJgkukj40Cs5sT_bz2dOFaCKzm1jDdTuvSaKKP3hLMrv_Bg5y9TPR_AtytuxiRhHdnwyfKFaShBG-MLO5BvnvAvQ9zJ7tdJsv2bEqzHyqIzI9F3lL6W2lCGhfTspYOqqGu3PqVW9exEp5G3J_DcBIGBTJtxlDGGP"/>
-</div>
-
-<div class="relative z-10 max-w-7xl mx-auto">
-<div class="mb-20">
-<span class="font-inter text-[11px] font-bold tracking-[0.3em] text-secondary uppercase mb-4 block" data-i18n="home_kicker">PERSONAL DEV PORTFOLIO</span>
-<h1 class="text-[2.4rem] sm:text-[3.4rem] md:text-[8rem] font-black tracking-tighter leading-[0.92] md:leading-[0.85] text-white" data-i18n="home_big_title">TONGXI<br/>LAB</h1>
-<p class="max-w-xl text-sm text-on-surface-variant mt-4" data-i18n="home_subtitle">这是我的个人开发网站，用于展示我持续迭代的应用与自动化产品。外贸助理是当前主推项目，后续会陆续上架更多作品。</p>
-<div class="mt-6 flex gap-3">
-<a href="./download.html" class="rounded-sm bg-primary text-black px-4 py-2 text-sm font-bold" data-i18n="home_cta_download">体验外贸助理</a>
-<a href="./docs.html" class="rounded-sm border border-outline-variant text-white px-4 py-2 text-sm font-bold" data-i18n="home_cta_docs">查看项目文档</a>
-</div>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-12 gap-12 mb-24">
-<div class="md:col-span-5 space-y-16">
-<section>
-<h2 class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-6 flex items-center">
-<span class="w-8 h-px bg-outline-variant mr-4"></span>
-<span data-i18n="feature_section_1_title">网站定位</span>
-</h2>
-<p class="text-lg md:text-xl text-on-surface-variant leading-relaxed font-light" data-i18n="feature_section_1_desc">一个可持续更新的个人产品站：展示能力、沉淀案例、连接用户反馈，并持续发布新版本。</p>
-</section>
-
-<section>
-<h2 class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-6 flex items-center">
-<span class="w-8 h-px bg-outline-variant mr-4"></span>
-<span data-i18n="feature_section_2_title">当前主线</span>
-</h2>
-<div class="text-[10px] tracking-[0.2em] uppercase text-primary mb-2" data-i18n="feature_section_2_label">CURRENT FOCUS · 当前主推产品</div>
-<div class="flex items-baseline space-x-4">
-<span class="text-3xl font-bold text-primary" data-i18n="feature_section_2_headline">外贸助理 Trade Assistant</span>
-</div>
-<p class="mt-4 text-sm text-on-surface-variant max-w-sm" data-i18n="feature_section_2_desc">聚焦“自动成长 + 可追溯 + 跨模型复用”，服务不懂技术的一线业务用户。</p>
-<div class="mt-3 space-y-1.5 text-xs text-on-surface-variant">
-  <div data-i18n="feature_section_2_point_1">• 本地优先：业务数据默认在用户设备</div>
-  <div data-i18n="feature_section_2_point_2">• 自动成长：基于编辑反馈持续优化</div>
-  <div data-i18n="feature_section_2_point_3">• 模型可切换：减少平台绑定</div>
-</div>
-</section>
-
-<section>
-<h2 class="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase mb-8 flex items-center">
-<span class="w-8 h-px bg-outline-variant mr-4"></span>
-<span data-i18n="feature_section_3_title">已开发应用</span>
-</h2>
-<div class="grid grid-cols-1 gap-6">
-<div class="flex items-start space-x-6 p-6 rounded-sm bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-all duration-300">
-<span class="material-symbols-outlined text-secondary text-3xl">trending_up</span>
-<div>
-<h4 class="text-white font-bold text-sm uppercase tracking-tight mb-1" data-i18n="feature_1_title">外贸助理</h4>
-<p class="text-xs text-on-surface-variant" data-i18n="feature_1_desc">本地优先的外贸 AI 参谋，支持历史导入、动作注入、偏好成长和多模型 API。</p>
-</div>
-</div>
-<div class="flex items-start space-x-6 p-6 rounded-sm bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-all duration-300">
-<span class="material-symbols-outlined text-primary text-3xl">movie</span>
-<div>
-<h4 class="text-white font-bold text-sm uppercase tracking-tight mb-1" data-i18n="feature_2_title">Video Workflow Test Beta</h4>
-<p class="text-xs text-on-surface-variant" data-i18n="feature_2_desc">面向视频生产流程的自动化实验项目，用于验证多步骤智能工作流。</p>
-</div>
-</div>
-<div class="flex items-start space-x-6 p-6 rounded-sm bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-all duration-300">
-<span class="material-symbols-outlined text-secondary text-3xl">code_blocks</span>
-<div>
-<h4 class="text-white font-bold text-sm uppercase tracking-tight mb-1" data-i18n="feature_3_title">MiniProgram Recovered</h4>
-<p class="text-xs text-on-surface-variant" data-i18n="feature_3_desc">小程序项目恢复与工程化重构实践，保留业务结构并重建可维护开发链路。</p>
-</div>
-</div>
-</div>
-</section>
-</div>
-</div>
-
-<section class="mt-12">
-<div class="flex justify-between items-end mb-10">
-<h3 class="text-2xl font-bold tracking-tight text-white" data-i18n="home_flow_title">下一批上架计划</h3>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<div class="group rounded-sm border border-outline-variant/20 bg-surface-container-low p-5">
-<div class="text-[10px] font-bold text-white tracking-widest uppercase">01 / Product</div>
-<h4 class="text-sm font-bold text-white uppercase tracking-wider mt-3" data-i18n="home_flow_1_title">Agent 协作工具</h4>
-<p class="text-xs text-on-surface-variant mt-2 leading-relaxed" data-i18n="home_flow_1_desc">面向多模型协同工作的轻量调度与日志管理工具。</p>
-</div>
-<div class="group rounded-sm border border-outline-variant/20 bg-surface-container-low p-5">
-<div class="text-[10px] font-bold text-white tracking-widest uppercase">02 / Product</div>
-<h4 class="text-sm font-bold text-white uppercase tracking-wider mt-3" data-i18n="home_flow_2_title">自动化运营面板</h4>
-<p class="text-xs text-on-surface-variant mt-2 leading-relaxed" data-i18n="home_flow_2_desc">统一查看反馈、版本、指标和发布状态，提升个人开发效率。</p>
-</div>
-<div class="group rounded-sm border border-outline-variant/20 bg-surface-container-low p-5">
-<div class="text-[10px] font-bold text-white tracking-widest uppercase">03 / Product</div>
-<h4 class="text-sm font-bold text-white uppercase tracking-wider mt-3" data-i18n="home_flow_3_title">跨端发布工具链</h4>
-<p class="text-xs text-on-surface-variant mt-2 leading-relaxed" data-i18n="home_flow_3_desc">继续强化 Windows / macOS 双端打包与更新体验。</p>
-</div>
-</div>
-</section>
-</div>
-</main>
-
-<footer class="mt-20 py-12 px-6 md:px-16 border-t border-outline-variant/20 bg-surface-container-lowest relative z-10">
-<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center opacity-70">
-<div class="text-[10px] font-bold tracking-[0.4em] uppercase text-white mb-6 md:mb-0">© <span id="year"></span> TONGXI DEV</div>
-<div class="text-[10px] font-bold tracking-[0.4em] uppercase text-white" data-i18n="home_footer_note">持续构建 · 持续交付 · 持续进化</div>
-</div>
-</footer>
-
-<div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[1] overflow-hidden opacity-30">
-<div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px]"></div>
-<div class="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[180px]"></div>
-</div>
-
-<script src="./app.js"></script>
-</body></html>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

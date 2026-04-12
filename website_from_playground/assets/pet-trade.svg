@@ -1,0 +1,18 @@
+<svg width="960" height="700" viewBox="0 0 960 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="700" rx="72" fill="url(#bg)"/>
+  <circle cx="210" cy="146" r="74" fill="#FFF0CF" fill-opacity=".9"/>
+  <circle cx="768" cy="552" r="84" fill="#E4F1FA" fill-opacity=".85"/>
+  <rect x="118" y="164" width="724" height="394" rx="48" fill="#FFFDF8" stroke="#E8DCC5" stroke-width="8"/>
+  <path d="M242 440C242 366.49 301.49 307 375 307H579C652.51 307 712 366.49 712 440V441C712 471.928 686.928 497 656 497H298C267.072 497 242 471.928 242 441V440Z" fill="#D9B06B"/>
+  <rect x="292" y="232" width="128" height="104" rx="28" fill="#FFFFFF"/>
+  <rect x="470" y="232" width="184" height="104" rx="28" fill="#F4F7FB"/>
+  <path d="M360 260C360 230.177 384.177 206 414 206H530C559.823 206 584 230.177 584 260V302H360V260Z" fill="#E6A553"/>
+  <text x="292" y="555" fill="#5B4B39" font-family="Georgia, serif" font-size="34" font-weight="700">Pet Trade</text>
+  <defs>
+    <linearGradient id="bg" x1="66" y1="54" x2="860" y2="648" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8EB"/>
+      <stop offset=".52" stop-color="#F6EBDD"/>
+      <stop offset="1" stop-color="#E8F1FA"/>
+    </linearGradient>
+  </defs>
+</svg>

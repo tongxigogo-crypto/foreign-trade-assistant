@@ -1,80 +1,77 @@
-﻿<!doctype html>
-<html class="dark" lang="zh-CN">
+<!doctype html>
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>文档 - 外贸助理 Trade Assistant</title>
-  <meta name="description" content="外贸助理 Trade Assistant 新手安装与使用文档。" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>宠物用品国际贸易 | Tongxi Fairy Lab</title>
+  <meta name="description" content="解释宠物 IP 与外贸助理为何会共同汇聚到宠物用品国际贸易这一长期方向。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body data-page="docs" class="min-h-screen bg-black text-white antialiased">
-  <div class="pointer-events-none fixed inset-0 overflow-hidden">
-    <div class="absolute -left-24 -top-20 h-96 w-96 rounded-full bg-cyan-300/15 blur-3xl"></div>
-    <div class="absolute -right-24 top-24 h-[32rem] w-[32rem] rounded-full bg-violet-400/15 blur-3xl"></div>
+<body data-page="pet-trade">
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand-lockup" href="./index.html">
+          <span class="brand-mark">T</span>
+          <span class="brand-copy">
+            <span class="brand-copy__title" data-i18n="brand_name">Tongxi Fairy Lab</span>
+            <span class="brand-copy__note" data-i18n="brand_tagline">宠物 IP · 工具产品 · 国际贸易准备</span>
+          </span>
+        </a>
+        <div class="site-nav">
+          <nav class="site-nav__links" aria-label="Primary navigation">
+            <a class="site-nav__link" href="./index.html" data-i18n="nav_home">首页</a>
+            <a class="site-nav__link" href="./index.html#pet-ip" data-i18n="nav_pet_ip">宠物 IP</a>
+            <a class="site-nav__link" href="./download.html" data-i18n="nav_download">外贸助理</a>
+            <a class="site-nav__link" href="./docs.html" aria-current="page" data-i18n="nav_pet_trade">国际贸易</a>
+            <a class="site-nav__link" href="./privacy.html" data-i18n="nav_mini_program">小程序开发</a>
+          </nav>
+          <button id="lang-toggle" class="lang-toggle" type="button">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="section">
+      <section class="subhero fade-in">
+        <span class="subhero__label" data-i18n="pet_trade_page_kicker">Pet Trade Strategy</span>
+        <h1 class="section-title" data-pretext="section-title" data-i18n="pet_trade_page_title">宠物用品国际贸易</h1>
+        <p data-i18n="pet_trade_page_intro">这不是一个突然出现的新方向，而是整个网站从宠物 IP 到外贸助理再到小程序能力逐步汇聚出来的长期业务路径。</p>
+      </section>
+
+      <section class="utility-grid fade-in">
+        <article class="card-panel">
+          <span class="story-row__label" data-i18n="pet_trade_page_card_1_label">品牌端</span>
+          <h3 data-i18n="pet_trade_page_card_1_title">宠物 IP 提供产品想象力</h3>
+          <p data-i18n="pet_trade_page_card_1_body">宠物 IP 让未来的商品不只是单纯上架，而是天然拥有品牌气质、故事入口和更友好的表达方式。</p>
+        </article>
+        <article class="card-panel">
+          <span class="story-row__label" data-i18n="pet_trade_page_card_2_label">能力端</span>
+          <h3 data-i18n="pet_trade_page_card_2_title">外贸助理提供业务基础</h3>
+          <p data-i18n="pet_trade_page_card_2_body">通过真实流程中的资料整理、客户处理和效率优化，先把“做生意的能力层”准备好，再谈商品和渠道放大。</p>
+        </article>
+      </section>
+
+      <section class="note-panel fade-in">
+        <h3 data-i18n="pet_trade_page_note_title">为什么这个方向适合放在个人网站里</h3>
+        <ul class="meta-list">
+          <li data-i18n="pet_trade_page_note_1">它把视觉品牌、产品工具和真实业务连接成一条清晰主线。</li>
+          <li data-i18n="pet_trade_page_note_2">它允许先轻量验证，再逐步进入商品、渠道和交付。</li>
+          <li data-i18n="pet_trade_page_note_3">它让网站既保留表达力，也保留未来商业化的可解释性。</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© <span id="year"></span> Tongxi Fairy Lab</p>
+        <p data-i18n="footer_note">更轻的首页，更长的业务准备周期。</p>
+      </div>
+    </footer>
   </div>
 
-  <header class="fixed left-1/2 top-4 z-50 w-[96%] max-w-7xl -translate-x-1/2 rounded-sm border border-zinc-700/60 bg-black/75 px-4 py-3 backdrop-blur-xl md:px-6">
-    <div class="flex items-center justify-between gap-3">
-      <a href="./index.html" class="flex items-center gap-3">
-        <span class="grid h-8 w-8 place-items-center rounded-sm bg-cyan-300 text-xs font-black text-black">TA</span>
-        <div>
-          <p class="text-sm font-bold tracking-tight text-white" data-i18n="brand_name">外贸助理 Trade Assistant</p>
-          <p class="text-[10px] text-zinc-300" data-i18n="brand_tagline">让 AI 继承你的外贸工作习惯</p>
-        </div>
-      </a>
-      <nav class="flex items-center gap-2 text-xs text-white md:gap-5 md:text-sm">
-        <a href="./index.html" class="hover:text-cyan-300" data-i18n="nav_home">首页</a>
-        <a href="./download.html" class="hover:text-cyan-300" data-i18n="nav_download">下载</a>
-        <a href="./docs.html" class="hover:text-cyan-300" data-i18n="nav_docs">文档</a>
-        <a href="./privacy.html" class="hover:text-cyan-300" data-i18n="nav_privacy">隐私</a>
-        <button id="lang-toggle" type="button" class="rounded-sm border border-zinc-500 px-2 py-1 text-xs text-white hover:border-cyan-300">EN</button>
-      </nav>
-    </div>
-  </header>
-
-  <main class="relative mx-auto max-w-7xl px-4 pb-16 pt-28 md:px-6 md:pt-32">
-    <section class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-      <p class="text-xs uppercase tracking-[0.2em] text-violet-300" data-i18n="docs_kicker">快速上手</p>
-      <h1 class="mt-3 text-4xl font-black tracking-tight text-white md:text-6xl" data-i18n="docs_title">新手安装与使用</h1>
-      <p class="mt-3 max-w-3xl text-sm text-zinc-300 md:text-base" data-i18n="docs_intro">先安装，再配置 API，最后导入历史资料并开始让 AI 学习你的习惯。</p>
-    </section>
-
-    <section class="mt-8 grid gap-4 md:grid-cols-3">
-      <article class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-        <h2 class="text-lg font-bold text-white" data-i18n="docs_quickstart_title">新手三步</h2>
-        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-300">
-          <li data-i18n="docs_quickstart_1">下载并解压对应系统的内测包（Windows 或 macOS）。</li>
-          <li data-i18n="docs_quickstart_2">启动桌面助手，在 API Settings 填入你的模型 API 信息。</li>
-          <li data-i18n="docs_quickstart_3">点击一键启动，导入历史资料和邮件线程开始使用。</li>
-        </ol>
-      </article>
-      <article class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-        <h2 class="text-lg font-bold text-white" data-i18n="docs_windows_title">Windows 安装</h2>
-        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-300">
-          <li data-i18n="docs_windows_1">先解压到本地目录，不要在压缩包内直接运行。</li>
-          <li data-i18n="docs_windows_2">双击 Launch_InVault_Windows.bat。</li>
-          <li data-i18n="docs_windows_3">若出现安全提示，选择“更多信息 -> 仍要运行”。</li>
-        </ol>
-      </article>
-      <article class="rounded-sm border border-zinc-700/60 bg-zinc-950/80 p-6">
-        <h2 class="text-lg font-bold text-white" data-i18n="docs_mac_title">macOS 安装</h2>
-        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-300">
-          <li data-i18n="docs_mac_1">首次被拦截时，打开“系统设置 -> 隐私与安全性”。</li>
-          <li data-i18n="docs_mac_2">在底部找到应用拦截提示，点击“仍要打开”。</li>
-          <li data-i18n="docs_mac_3">若仍提示损坏，在终端执行：xattr -dr com.apple.quarantine /Applications/InVault.app。</li>
-        </ol>
-      </article>
-    </section>
-  </main>
-
-  <footer class="relative border-t border-zinc-700/60 bg-black/70 px-4 py-6 backdrop-blur-xl md:px-6">
-    <div class="mx-auto flex max-w-7xl items-center justify-between text-xs text-zinc-400">
-      <p>© <span id="year"></span> Trade Assistant</p>
-      <p data-i18n="home_footer_note">数据不搬家 · 能力不绑平台</p>
-    </div>
-  </footer>
-
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

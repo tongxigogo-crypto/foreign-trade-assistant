@@ -1,0 +1,20 @@
+<svg width="960" height="700" viewBox="0 0 960 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="700" rx="72" fill="url(#bg)"/>
+  <rect x="172" y="100" width="616" height="500" rx="48" fill="#FFFDF9" stroke="#E8DCC5" stroke-width="8"/>
+  <rect x="224" y="156" width="512" height="72" rx="24" fill="#F4F7FB"/>
+  <rect x="224" y="264" width="196" height="258" rx="28" fill="#FFF3D6"/>
+  <rect x="450" y="264" width="286" height="116" rx="28" fill="#FFFFFF"/>
+  <rect x="450" y="406" width="286" height="116" rx="28" fill="#EAF3FB"/>
+  <circle cx="274" cy="194" r="12" fill="#E6A553"/>
+  <circle cx="314" cy="194" r="12" fill="#8CB8D9"/>
+  <circle cx="354" cy="194" r="12" fill="#D78267"/>
+  <rect x="306" y="560" width="352" height="36" rx="18" fill="#FFFFFF" fill-opacity=".86"/>
+  <text x="336" y="585" fill="#584837" font-family="Arial, sans-serif" font-size="30" font-weight="700">Mini Program</text>
+  <defs>
+    <linearGradient id="bg" x1="82" y1="56" x2="844" y2="646" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF9EC"/>
+      <stop offset=".5" stop-color="#F9EDDF"/>
+      <stop offset="1" stop-color="#EAF3FB"/>
+    </linearGradient>
+  </defs>
+</svg>
