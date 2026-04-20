@@ -124,3 +124,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - The visual direction should be bright, soft-gradient, product-polished, and technological without using dark oppressive cyberpunk styling.
   - Use scrollytelling for page progression and pain-point trajectories, and reserve HyperFrames for screen-contained product motion assets.
   - Pet IP remains later in the story as brand identity, while the final conversion still centers on the Trade Assistant APP.
+
+## [2026-04-21 02:20:00] v5-scene-boundaries-and-ip-layout
+
+- status: confirmed_working
+- summary: For the rewritten external `indexV5.html`, scene boundaries need explicit non-overlapping `autoAlpha` timing, and the Pet IP scene must use dedicated layout columns instead of overlaying an absolute copy block on top of character cards.
+- learnings:
+  - In this scrollytelling build, starting Scene N+1 before Scene N is fully hidden reads as a bug, not as cinematic overlap; keep the transitions sequential unless the user explicitly asks for blending.
+  - The modules scene becomes too airy when copy and console columns are spaced like a marketing hero; tighten the grid, reduce gaps, and give the feature explanation a denser system-dashboard feel.
+  - If the user asks to add a line like “换模型不用重头学习”, place it in the system-process or feature-logic layer, not as decorative marketing copy.
+  - For IP scenes with large portraits, never combine an absolutely positioned headline block with the same visual region as the image cards; split text and image into separate columns first, then style within those boundaries.
