@@ -91,4 +91,36 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - If page text contains markers like `瀹`, `鍥`, `棣`, `鑱`, or stray `€`, treat it as a real mojibake regression and fix the source files, not just the terminal rendering.
   - For local preview verification, use Python to fetch the served page and decode as UTF-8 with Unicode escapes in the script when the shell path or console encoding is unreliable.
   - Keep homepage HTML, secondary page HTML, and `app.js` i18n content aligned so SEO metadata, no-JS fallback text, and runtime language switching stay consistent.
-  - When the site broadens from a single product page to a personal-site profile, update `llms.txt`, `/.well-known/agent.json`, and `/api/openapi.json` together so discovery metadata does not lag behind the visible site.
+- When the site broadens from a single product page to a personal-site profile, update `llms.txt`, `/.well-known/agent.json`, and `/api/openapi.json` together so discovery metadata does not lag behind the visible site.
+
+## [2026-04-18 00:00:00] scrollytelling-homepage-and-admin-v1
+
+- status: confirmed_working
+- summary: For this rebuild, the homepage should use a desktop-first scrollytelling structure with five scenes, while the backend should start as a practical admin console focused on submissions and basic traffic data.
+- learnings:
+  - Use the Mochi-style storytelling reference as the visual and pacing anchor, but replace the content with the user's own pet-trade narrative.
+  - Keep `Q` and `Douzi` as recurring characters across all scenes; do not treat them as isolated mascots.
+  - The opening scene should combine a sharp pain-point headline with dispersed pain visuals that physically overwhelm the characters.
+  - Backend v1 should prioritize submission handling and analytics visibility over decorative admin features.
+  - Plan the admin area in the same project first, but leave a clean boundary for later separation into an independent management system.
+
+## [2026-04-20 00:00:00] karpathy-style-engineering-global-constraint
+
+- status: confirmed_rule
+- summary: This worktree now treats `karpathy-style-engineering` as a global engineering constraint for implementation, debugging, and code review.
+- learnings:
+  - Restate the requested outcome before editing, then identify the smallest change that can achieve it.
+  - Prefer simple, local fixes over broad cleanup or speculative abstraction.
+  - Keep changes precise and avoid refactoring adjacent code unless it directly blocks the requested result.
+  - Verify against a concrete success condition before claiming completion; if verification is partial, state the risk clearly.
+
+## [2026-04-21 01:40:00] v5-laptop-first-screen-reset
+
+- status: confirmed_rule
+- summary: The V5 rebuild should keep the existing multi-scene architecture, but the first screen is no longer mascot-centered; it is now a real-feeling laptop that absorbs trade pain points and converts into the Trade Assistant UI.
+- learnings:
+  - Keep the V5 page structure, but replace the opening narrative from “Q and Douzi getting overwhelmed” to “laptop screen under pressure -> system response -> UI conversion”.
+  - The main headline belongs inside the laptop screen, not outside it.
+  - The visual direction should be bright, soft-gradient, product-polished, and technological without using dark oppressive cyberpunk styling.
+  - Use scrollytelling for page progression and pain-point trajectories, and reserve HyperFrames for screen-contained product motion assets.
+  - Pet IP remains later in the story as brand identity, while the final conversion still centers on the Trade Assistant APP.
