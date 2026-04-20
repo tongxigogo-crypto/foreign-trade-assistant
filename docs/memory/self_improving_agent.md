@@ -143,3 +143,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - For user-owned desktop HTML prototypes, default to `indexVx.y_refined.html` so the original Gemini/other-AI draft remains available for comparison.
   - In these V6-style concept pages, the highest-value changes are usually brand/product truth corrections and interaction-safe mascot integration, not large structural rewrites.
   - If a floating global core changes from a circle to a mascot-shaped badge, update the obstacle physics from circular to elliptical instead of keeping a stale radius approximation.
+
+## [2026-04-21 03:35:00] v6-refined-mascot-core-and-truth-pass
+
+- status: confirmed_working
+- summary: For external V6 concept pages, the best upgrade path is to preserve the interaction scaffold, replace generic AI-brand language with real product/brand facts, and swap abstract mascot placeholders for actual local IP assets.
+- learnings:
+  - When a floating obstacle becomes a mascot-driven core, prefer using the real local character asset instead of drawing a synthetic mascot face in CSS.
+  - Once the obstacle silhouette changes away from a circle, keep the text-flow physics aligned with an ellipse or shape approximation so the Pretext demo still feels intentional.
+  - On these concept pages, hero support strips carrying version, privacy model, and compatibility are more valuable than extra slogan copy because they anchor the concept to a believable product.
+  - Pet IP sections become materially stronger when they show the real local XiaoQ/Douzi images and runway art instead of initial-letter placeholders.
