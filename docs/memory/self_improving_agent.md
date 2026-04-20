@@ -134,3 +134,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - The modules scene becomes too airy when copy and console columns are spaced like a marketing hero; tighten the grid, reduce gaps, and give the feature explanation a denser system-dashboard feel.
   - If the user asks to add a line like “换模型不用重头学习”, place it in the system-process or feature-logic layer, not as decorative marketing copy.
   - For IP scenes with large portraits, never combine an absolutely positioned headline block with the same visual region as the image cards; split text and image into separate columns first, then style within those boundaries.
+
+## [2026-04-21 03:10:00] external-v6-refined-variant-pattern
+
+- status: confirmed_working
+- summary: When the user iterates local homepage files such as `indexV6.html` or `indexV6.1.html`, preserve the source draft and write changes into a sibling refined variant instead of editing the original directly.
+- learnings:
+  - For user-owned desktop HTML prototypes, default to `indexVx.y_refined.html` so the original Gemini/other-AI draft remains available for comparison.
+  - In these V6-style concept pages, the highest-value changes are usually brand/product truth corrections and interaction-safe mascot integration, not large structural rewrites.
+  - If a floating global core changes from a circle to a mascot-shaped badge, update the obstacle physics from circular to elliptical instead of keeping a stale radius approximation.
