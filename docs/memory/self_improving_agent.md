@@ -153,3 +153,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Once the obstacle silhouette changes away from a circle, keep the text-flow physics aligned with an ellipse or shape approximation so the Pretext demo still feels intentional.
   - On these concept pages, hero support strips carrying version, privacy model, and compatibility are more valuable than extra slogan copy because they anchor the concept to a believable product.
   - Pet IP sections become materially stronger when they show the real local XiaoQ/Douzi images and runway art instead of initial-letter placeholders.
+
+## [2026-04-21 04:20:00] v6-laptop-workspace-productization
+
+- status: confirmed_working
+- summary: For the external V6 homepage direction, the next high-value iteration after brand-truth correction is to turn the laptop interior from a concept input/output demo into a denser desktop-first Trade Assistant workspace with real operational panels.
+- learnings:
+  - Keep the existing scrollytelling shell, mascot-core interaction, and hero meta anchors; upgrade the laptop internals locally instead of rewriting the whole first scene.
+  - A three-column workspace works well here: left for customer context recovery, center for inquiry console plus real product anchor, right for quote/task/action outputs.
+  - Using the real local `APP.png` screenshot as one panel inside the laptop materially increases product credibility without needing to replace the whole scene with a raw screenshot.
+  - The brighter glass-tech direction survives higher information density if panels stay soft, rounded, and operational rather than turning into dark dashboard-card clutter.
