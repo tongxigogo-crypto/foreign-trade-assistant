@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.parse import urlsplit
 from wsgiref.util import setup_testing_defaults
 
 from site_backend.app import create_app
@@ -12,8 +13,10 @@ from site_backend.app import create_app
 def _request(app, method: str, path: str, body: bytes = b"", headers: dict[str, str] | None = None) -> tuple[int, dict[str, str], bytes]:
     environ: dict[str, object] = {}
     setup_testing_defaults(environ)
+    parsed = urlsplit(path)
     environ["REQUEST_METHOD"] = method
-    environ["PATH_INFO"] = path
+    environ["PATH_INFO"] = parsed.path
+    environ["QUERY_STRING"] = parsed.query
     environ["wsgi.input"] = io.BytesIO(body)
     environ["CONTENT_LENGTH"] = str(len(body))
     for key, value in (headers or {}).items():
@@ -63,7 +66,7 @@ class SiteBackendTests(unittest.TestCase):
             body=body,
             headers={"Content-Type": "application/json"},
         )
-        self.assertEqual(status, 204)
+        self.assertEqual(status, 200)
         self.assertIn("Set-Cookie", headers)
         return headers["Set-Cookie"].split(";", 1)[0]
 
@@ -82,9 +85,9 @@ class SiteBackendTests(unittest.TestCase):
         status, _, _ = _request(self.app, "GET", "/admin/api/content")
         self.assertEqual(status, 401)
 
-    def test_login_sets_session_cookie(self) -> None:
+    def test_login_sets_session_cookie_and_token(self) -> None:
         body = json.dumps({"password": "secret-pass"}).encode("utf-8")
-        status, headers, _ = _request(
+        status, headers, payload = _request(
             self.app,
             "POST",
             "/admin/api/login",
@@ -92,9 +95,46 @@ class SiteBackendTests(unittest.TestCase):
             headers={"Content-Type": "application/json"},
         )
 
-        self.assertEqual(status, 204)
+        self.assertEqual(status, 200)
         self.assertIn("Set-Cookie", headers)
         self.assertIn("site_admin_session=", headers["Set-Cookie"])
+        data = json.loads(payload.decode("utf-8"))
+        self.assertTrue(data["ok"])
+        self.assertTrue(data["token"])
+
+    def test_token_auth_can_open_admin_and_save_content(self) -> None:
+        body = json.dumps({"password": "secret-pass"}).encode("utf-8")
+        status, _, payload = _request(
+            self.app,
+            "POST",
+            "/admin/api/login",
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(status, 200)
+        token = json.loads(payload.decode("utf-8"))["token"]
+
+        status, _, body = _request(self.app, "GET", f"/admin?token={token}")
+        self.assertEqual(status, 200)
+        self.assertIn("Site Content Admin", body.decode("utf-8"))
+
+        update = {
+            "strings": {"en": {"hero_intro": "Token update"}},
+            "images": {"home.hero": "./assets/uploads/token.png"},
+        }
+        status, _, body = _request(
+            self.app,
+            "PUT",
+            "/admin/api/content",
+            body=json.dumps(update).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
+        )
+        self.assertEqual(status, 200)
+        saved = json.loads(body.decode("utf-8"))
+        self.assertEqual(saved["strings"]["en"]["hero_intro"], "Token update")
 
     def test_authenticated_content_update_persists_json(self) -> None:
         cookie = self._login_cookie()

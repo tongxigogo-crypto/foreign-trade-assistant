@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+from urllib.parse import parse_qs
 from http import HTTPStatus
 from pathlib import Path
 from typing import Callable, Iterable
 
-from .auth import COOKIE_NAME, build_session_value, is_authenticated
+from .auth import COOKIE_NAME, build_session_value, is_authenticated, is_token_authenticated
 from .content_store import ContentStore
 
 StartResponse = Callable[[str, list[tuple[str, str]]], None]
@@ -41,8 +42,30 @@ def _read_json(environ: dict) -> dict:
     return json.loads(raw.decode("utf-8"))
 
 
-def _authed(cookie_header: object, admin_password: str, session_secret: str) -> bool:
-    return is_authenticated(cookie_header if isinstance(cookie_header, str) else None, admin_password, session_secret)
+def _get_bearer_token(environ: dict) -> str | None:
+    auth_header = environ.get("HTTP_AUTHORIZATION")
+    if not isinstance(auth_header, str):
+        return None
+    if not auth_header.startswith("Bearer "):
+        return None
+    return auth_header[7:].strip() or None
+
+
+def _get_query_token(environ: dict) -> str | None:
+    query = environ.get("QUERY_STRING")
+    if not isinstance(query, str) or not query:
+        return None
+    parsed = parse_qs(query, keep_blank_values=False)
+    values = parsed.get("token")
+    return values[0] if values else None
+
+
+def _authed(environ: dict, admin_password: str, session_secret: str) -> bool:
+    cookie_header = environ.get("COOKIE")
+    if is_authenticated(cookie_header if isinstance(cookie_header, str) else None, admin_password, session_secret):
+        return True
+    token = _get_bearer_token(environ) or _get_query_token(environ)
+    return is_token_authenticated(token, admin_password, session_secret)
 
 
 def _login_page() -> str:
@@ -96,6 +119,13 @@ def _login_page() -> str:
             status.textContent = "Invalid password.";
             return;
           }
+          const payload = await response.json();
+          if (payload && payload.token) {
+            window.localStorage.setItem("site_admin_token", payload.token);
+            status.textContent = "Login successful. Redirecting...";
+            window.location.assign(`/admin?token=${encodeURIComponent(payload.token)}`);
+            return;
+          }
           status.textContent = "Login successful. Redirecting...";
           window.location.assign("/admin");
         } catch (error) {
@@ -109,8 +139,9 @@ def _login_page() -> str:
 </html>"""
 
 
-def _editor_page(content: dict) -> str:
+def _editor_page(content: dict, auth_token: str | None = None) -> str:
     serialized = json.dumps(content, ensure_ascii=False, indent=2)
+    safe_token = json.dumps(auth_token or "")
     return f"""<!doctype html>
 <html lang="en">
   <head>
@@ -145,13 +176,21 @@ def _editor_page(content: dict) -> str:
       </section>
     </main>
     <script>
+      const adminToken = {safe_token} || window.localStorage.getItem("site_admin_token") || "";
+
+      function buildHeaders() {{
+        const headers = {{ "Content-Type": "application/json" }};
+        if (adminToken) headers.Authorization = `Bearer ${{adminToken}}`;
+        return headers;
+      }}
+
       async function saveContent() {{
         const status = document.getElementById("save-status");
         try {{
           const payload = JSON.parse(document.getElementById("content-editor").value);
           const response = await fetch("/admin/api/content", {{
             method: "PUT",
-            headers: {{ "Content-Type": "application/json" }},
+            headers: buildHeaders(),
             body: JSON.stringify(payload),
           }});
           if (!response.ok) throw new Error("save_failed");
@@ -177,7 +216,7 @@ def _editor_page(content: dict) -> str:
         bytes.forEach((value) => {{ binary += String.fromCharCode(value); }});
         const response = await fetch("/admin/api/assets", {{
           method: "POST",
-          headers: {{ "Content-Type": "application/json" }},
+          headers: buildHeaders(),
           body: JSON.stringify({{
             filename: file.name,
             content_base64: btoa(binary),
@@ -205,7 +244,6 @@ def create_app(root_dir: Path, admin_password: str, session_secret: str):
     def app(environ: dict, start_response: StartResponse) -> Iterable[bytes]:
         method = str(environ.get("REQUEST_METHOD", "GET")).upper()
         path = str(environ.get("PATH_INFO", "/"))
-        cookie_header = environ.get("COOKIE")
 
         if method == "GET" and path == "/api/content":
             return _json_response(start_response, HTTPStatus.OK, store.load())
@@ -218,13 +256,14 @@ def create_app(root_dir: Path, admin_password: str, session_secret: str):
                 cookie_value = build_session_value(admin_password, session_secret)
                 return _json_response(
                     start_response,
-                    HTTPStatus.NO_CONTENT,
+                    HTTPStatus.OK,
+                    payload={"ok": True, "token": cookie_value},
                     headers=[
                         ("Set-Cookie", f"{COOKIE_NAME}={cookie_value}; Path=/; HttpOnly; SameSite=Lax"),
                     ],
                 )
 
-            if not _authed(cookie_header, admin_password, session_secret):
+            if not _authed(environ, admin_password, session_secret):
                 return _json_response(start_response, HTTPStatus.UNAUTHORIZED, {"error": "auth_required"})
 
             if path == "/admin/api/content" and method == "GET":
@@ -247,9 +286,13 @@ def create_app(root_dir: Path, admin_password: str, session_secret: str):
                 return _json_response(start_response, HTTPStatus.OK, {"path": relative_path})
 
         if method == "GET" and path == "/admin":
-            if not _authed(cookie_header, admin_password, session_secret):
+            if not _authed(environ, admin_password, session_secret):
                 return _html_response(start_response, HTTPStatus.OK, _login_page())
-            return _html_response(start_response, HTTPStatus.OK, _editor_page(store.load()))
+            return _html_response(
+                start_response,
+                HTTPStatus.OK,
+                _editor_page(store.load(), _get_query_token(environ) or _get_bearer_token(environ)),
+            )
 
         return _json_response(start_response, HTTPStatus.NOT_FOUND, {"error": "not_found"})
 

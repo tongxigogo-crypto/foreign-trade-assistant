@@ -15,14 +15,25 @@ def build_session_value(password: str, session_secret: str) -> str:
     ).hexdigest()
 
 
-def is_authenticated(cookie_header: str | None, password: str, session_secret: str) -> bool:
+def _extract_cookie_value(cookie_header: str | None) -> str:
     if not cookie_header:
-        return False
-    expected = build_session_value(password, session_secret)
+        return ""
     cookies = {}
     for item in cookie_header.split(";"):
         if "=" not in item:
             continue
         key, value = item.strip().split("=", 1)
         cookies[key] = value
-    return hmac.compare_digest(cookies.get(COOKIE_NAME, ""), expected)
+    return cookies.get(COOKIE_NAME, "")
+
+
+def is_authenticated(cookie_header: str | None, password: str, session_secret: str) -> bool:
+    expected = build_session_value(password, session_secret)
+    return hmac.compare_digest(_extract_cookie_value(cookie_header), expected)
+
+
+def is_token_authenticated(token: str | None, password: str, session_secret: str) -> bool:
+    if not token:
+        return False
+    expected = build_session_value(password, session_secret)
+    return hmac.compare_digest(token, expected)
