@@ -81,18 +81,28 @@ def _login_page() -> str:
       document.getElementById("login-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         const status = document.getElementById("login-status");
+        const submit = event.submitter || document.querySelector('#login-form button[type="submit"]');
         status.textContent = "";
+        if (submit) submit.disabled = true;
+        status.textContent = "Signing in...";
         const password = document.getElementById("site_admin_password").value;
-        const response = await fetch("/admin/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password }),
-        });
-        if (!response.ok) {
-          status.textContent = "Invalid password.";
-          return;
+        try {
+          const response = await fetch("/admin/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          if (!response.ok) {
+            status.textContent = "Invalid password.";
+            return;
+          }
+          status.textContent = "Login successful. Redirecting...";
+          window.location.assign("/admin");
+        } catch (error) {
+          status.textContent = "Login failed. Check the local server and try again.";
+        } finally {
+          if (submit) submit.disabled = false;
         }
-        window.location.reload();
       });
     </script>
   </body>
