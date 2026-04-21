@@ -173,3 +173,14 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - The hero support cards read better as a fixed three-column strip on desktop than as loose pills once the laptop interior becomes denser.
   - The mascot core becomes more brand-like when the image is cropped tighter with glow and a cleaner chip label, while keeping the existing elliptical collision model unchanged.
   - For stable desktop verification of scroll-activated states in single-file HTML prototypes, generate a temporary preview variant that forces the active panel visible instead of relying on automated scrolling in headless capture.
+
+## [2026-04-22 00:10:00] static-site-admin-v1-with-stdlib-backend
+
+- status: confirmed_working
+- summary: For this worktree, the smallest reliable backend v1 is a Python-stdlib admin layer that serves a JSON content document, image uploads, and a simple authenticated editor while leaving the existing static frontend intact.
+- learnings:
+  - When the frontend already exists as static HTML/CSS/JS, prefer adding a narrow content API plus admin editor over rebuilding the site into a framework just to get content management.
+  - In this environment, do not assume FastAPI or other web dependencies are installed; verify first, and fall back to WSGI/stdlib when the dependency cost is not justified.
+  - Keep homepage text and homepage image overrides in one shared `website_from_playground/content/site-content.json` document, and make the frontend merge that data into its existing i18n object at boot.
+  - Backend v1 should be useful on first open: provide a default content skeleton with keys like `hero_intro` and the managed image slots so the editor is not an empty JSON shell.
+  - A minimal `site_backend/server.py` wrapper that serves both static files and `/admin` routes is enough for local operation and easier to verify than introducing a heavier deployment shape too early.

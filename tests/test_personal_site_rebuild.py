@@ -49,6 +49,18 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("./vendor/pretext/layout.js", index_html)
         self.assertIn('data-pretext="hero-title"', index_html)
 
+    def test_homepage_is_ready_for_backend_managed_content(self) -> None:
+        index_html = (SITE_DIR / "index.html").read_text(encoding="utf-8")
+        app_js = (SITE_DIR / "app.js").read_text(encoding="utf-8")
+        content_json = (SITE_DIR / "content" / "site-content.json").read_text(encoding="utf-8")
+
+        self.assertIn('data-managed-image="home.hero"', index_html)
+        self.assertIn('data-managed-image="home.trade_assistant"', index_html)
+        self.assertIn('data-managed-image="home.pet_trade"', index_html)
+        self.assertIn('data-managed-image="home.mini_program"', index_html)
+        self.assertIn("/api/content", app_js)
+        self.assertIn("hero_intro", content_json)
+
     def test_local_preview_script_exists(self) -> None:
         script = (SITE_DIR / "start-local.bat").read_text(encoding="utf-8")
 

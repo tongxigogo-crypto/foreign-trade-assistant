@@ -1,4 +1,4 @@
-import { measureLineStats, measureNaturalWidth, prepareWithSegments } from "./vendor/pretext/layout.js";
+import { layoutNextLineRange, materializeLineRange, measureLineStats, measureNaturalWidth, prepareWithSegments } from "./vendor/pretext/layout.js";
 
 const I18N = {
   zh: {
@@ -205,7 +205,57 @@ const I18N = {
   },
 };
 
+const MANAGED_CONTENT = {
+  strings: {
+    zh: {},
+    en: {},
+  },
+  images: {},
+};
+
 const byId = (id) => document.getElementById(id);
+
+function mergeManagedContent(payload) {
+  if (!payload || typeof payload !== "object") return;
+  const strings = payload.strings && typeof payload.strings === "object" ? payload.strings : {};
+  ["zh", "en"].forEach((lang) => {
+    if (strings[lang] && typeof strings[lang] === "object") {
+      Object.assign(MANAGED_CONTENT.strings[lang], strings[lang]);
+      Object.assign(I18N[lang], strings[lang]);
+    }
+  });
+  if (payload.images && typeof payload.images === "object") {
+    Object.assign(MANAGED_CONTENT.images, payload.images);
+  }
+}
+
+function applyManagedImages() {
+  document.querySelectorAll("[data-managed-image]").forEach((node) => {
+    const key = node.getAttribute("data-managed-image");
+    const src = key ? MANAGED_CONTENT.images[key] : "";
+    if (!src) return;
+    if (node.tagName === "IMG") {
+      node.src = src;
+      return;
+    }
+    node.style.backgroundImage = `url("${src}")`;
+  });
+}
+
+async function loadManagedContent() {
+  const sources = ["/api/content", "./content/site-content.json"];
+  for (const source of sources) {
+    try {
+      const response = await fetch(source, { cache: "no-store" });
+      if (!response.ok) continue;
+      mergeManagedContent(await response.json());
+      return true;
+    } catch (error) {
+      // Keep the static site usable when the backend is unavailable.
+    }
+  }
+  return false;
+}
 
 function applyLang(lang) {
   const dict = I18N[lang] || I18N.zh;
@@ -217,6 +267,7 @@ function applyLang(lang) {
   });
   const toggle = byId("lang-toggle");
   if (toggle) toggle.textContent = lang === "zh" ? "EN" : "中文";
+  applyManagedImages();
 }
 
 function setFooterYear() {
@@ -316,7 +367,8 @@ function applyPretextBalance(element) {
   const prepared = prepareWithSegments(text, font);
   const natural = measureNaturalWidth(prepared);
   const available = element.parentElement?.clientWidth || natural;
-  const targetLines = 2;
+  const parsedTargetLines = Number.parseInt(element.dataset.pretextLines || "", 10);
+  const targetLines = Number.isFinite(parsedTargetLines) && parsedTargetLines > 0 ? parsedTargetLines : 2;
   let low = Math.min(available, natural * 0.45);
   let high = Math.min(available, natural);
   let best = high;
@@ -335,11 +387,141 @@ function applyPretextBalance(element) {
   element.style.minHeight = `${lineHeight * targetLines}px`;
 }
 
+function renderLiquidIntro(element) {
+  const text = element.textContent?.trim();
+  if (!text) return;
+  const style = window.getComputedStyle(element);
+  const lineHeight = Number.parseFloat(style.lineHeight) || Number.parseFloat(style.fontSize) * 1.7;
+  const font = getFontShorthand(element);
+  const prepared = prepareWithSegments(text, font);
+  const width = Math.max(220, Math.floor(element.clientWidth));
+  const maxLines = 14;
+  const exclusionRadius = Math.max(48, Math.min(92, width * 0.22));
+  const side = element.closest(".story-row--reverse") ? "right" : "left";
+  const centerX = side === "right" ? width - exclusionRadius * 0.62 : exclusionRadius * 0.62;
+  const centerY = lineHeight * 3.1;
+  const exclusionGap = 12;
+
+  const cursor = { segmentIndex: 0, graphemeIndex: 0 };
+  const lines = [];
+  for (let lineIndex = 0; lineIndex < maxLines; lineIndex += 1) {
+    const yCenter = lineIndex * lineHeight + lineHeight * 0.52;
+    const dy = Math.abs(yCenter - centerY);
+    let cutout = 0;
+    if (dy < exclusionRadius) {
+      cutout = Math.sqrt(exclusionRadius * exclusionRadius - dy * dy) + exclusionGap;
+    }
+    const lineX = side === "left" ? cutout : 0;
+    const lineWidth = Math.max(56, width - cutout);
+    const range = layoutNextLineRange(prepared, cursor, lineWidth);
+    if (!range) break;
+    const line = materializeLineRange(prepared, range);
+    if (!line.text.trim()) break;
+    lines.push({ x: lineX, y: lineIndex * lineHeight, text: line.text, width: line.width });
+    cursor.segmentIndex = range.end.segmentIndex;
+    cursor.graphemeIndex = range.end.graphemeIndex;
+  }
+
+  if (!lines.length) return;
+  element.textContent = "";
+  const fragment = document.createDocumentFragment();
+  lines.forEach((line, index) => {
+    const span = document.createElement("span");
+    span.className = "pretext-liquid__line";
+    span.textContent = line.text;
+    span.style.left = `${line.x.toFixed(2)}px`;
+    span.style.top = `${line.y.toFixed(2)}px`;
+    span.dataset.liquidIndex = String(index);
+    fragment.appendChild(span);
+  });
+  element.appendChild(fragment);
+  element.style.minHeight = `${lineHeight * (lines.length + 0.3)}px`;
+  initLiquidMotion(element);
+}
+
+function initLiquidMotion(element) {
+  if (!window.matchMedia("(pointer: fine)").matches) return;
+  const lines = [...element.querySelectorAll(".pretext-liquid__line")];
+  if (!lines.length) return;
+
+  if (typeof element.__liquidCleanup === "function") {
+    element.__liquidCleanup();
+  }
+
+  let currentX = 0;
+  let currentY = 0;
+  let targetX = 0;
+  let targetY = 0;
+  let rafId = 0;
+
+  const tick = (time) => {
+    currentX += (targetX - currentX) * 0.16;
+    currentY += (targetY - currentY) * 0.16;
+    const energy = Math.abs(targetX) + Math.abs(targetY);
+    lines.forEach((line, idx) => {
+      const depth = lines.length <= 1 ? 0 : idx / (lines.length - 1) - 0.5;
+      const wobble = Math.sin(time / 220 + idx * 0.85) * energy * 0.08;
+      const x = currentX * (1 - Math.abs(depth) * 0.55) + wobble;
+      const y = currentY * depth * 0.7;
+      line.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+    });
+    if (Math.abs(currentX - targetX) > 0.08 || Math.abs(currentY - targetY) > 0.08 || energy > 0.1) {
+      rafId = window.requestAnimationFrame(tick);
+    } else {
+      rafId = 0;
+    }
+  };
+
+  const ensureTick = () => {
+    if (!rafId) rafId = window.requestAnimationFrame(tick);
+  };
+
+  const onMove = (event) => {
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const nx = (event.clientX - rect.left) / rect.width - 0.5;
+    const ny = (event.clientY - rect.top) / rect.height - 0.5;
+    targetX = nx * 10;
+    targetY = ny * 7;
+    element.classList.add("is-liquid-active");
+    ensureTick();
+  };
+
+  const onLeave = () => {
+    targetX = 0;
+    targetY = 0;
+    element.classList.remove("is-liquid-active");
+    ensureTick();
+  };
+
+  element.addEventListener("pointermove", onMove);
+  element.addEventListener("pointerleave", onLeave);
+  element.addEventListener("pointerenter", ensureTick);
+
+  element.__liquidCleanup = () => {
+    if (rafId) {
+      window.cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+    element.removeEventListener("pointermove", onMove);
+    element.removeEventListener("pointerleave", onLeave);
+    element.removeEventListener("pointerenter", ensureTick);
+  };
+}
+
 async function initPretext() {
   const targets = [...document.querySelectorAll("[data-pretext]")];
   if (!targets.length) return;
   if (document.fonts?.ready) await document.fonts.ready;
-  const run = () => targets.forEach((target) => applyPretextBalance(target));
+  const run = () => {
+    targets.forEach((target) => {
+      if (target.dataset.pretext === "liquid-intro") {
+        renderLiquidIntro(target);
+        return;
+      }
+      applyPretextBalance(target);
+    });
+  };
   run();
   let resizeTimer;
   window.addEventListener("resize", () => {
@@ -348,7 +530,8 @@ async function initPretext() {
   });
 }
 
-function init() {
+async function init() {
+  await loadManagedContent();
   const lang = localStorage.getItem("ta_lang") || "zh";
   applyLang(lang);
   setFooterYear();
@@ -362,7 +545,7 @@ function init() {
     });
   }
   initDownloadPage();
-  initPretext();
+  await initPretext();
 }
 
 init();
