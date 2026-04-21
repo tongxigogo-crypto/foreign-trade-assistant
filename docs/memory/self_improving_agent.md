@@ -163,3 +163,13 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - A three-column workspace works well here: left for customer context recovery, center for inquiry console plus real product anchor, right for quote/task/action outputs.
   - Using the real local `APP.png` screenshot as one panel inside the laptop materially increases product credibility without needing to replace the whole scene with a raw screenshot.
   - The brighter glass-tech direction survives higher information density if panels stay soft, rounded, and operational rather than turning into dark dashboard-card clutter.
+
+## [2026-04-21 05:05:00] v6-content-polish-and-core-identity
+
+- status: confirmed_working
+- summary: After the V6 laptop workspace is productized, the next useful refinement is not more modules but sharper Chinese-first utility copy, tighter hero spacing, and a more intentional mascot-core crop/glow treatment.
+- learnings:
+  - On these external personal-site prototypes, the best copy tone is product-operator language rather than explanatory prototype language; reduce "concept demo" phrasing and describe workflow outcomes directly.
+  - The hero support cards read better as a fixed three-column strip on desktop than as loose pills once the laptop interior becomes denser.
+  - The mascot core becomes more brand-like when the image is cropped tighter with glow and a cleaner chip label, while keeping the existing elliptical collision model unchanged.
+  - For stable desktop verification of scroll-activated states in single-file HTML prototypes, generate a temporary preview variant that forces the active panel visible instead of relying on automated scrolling in headless capture.
