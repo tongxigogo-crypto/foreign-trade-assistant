@@ -86,7 +86,7 @@ class ContentStore:
         tmp_path = self.content_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         tmp_path.replace(self.content_path)
-        self._write_meta(now)
+        self._write_meta(now, "content_saved", "内容已保存")
         return data
 
     def load_meta(self) -> dict[str, Any]:
@@ -102,21 +102,27 @@ class ContentStore:
             "history": list(data.get("history", [])),
         }
 
-    def _write_meta(self, updated_at: str) -> None:
+    def publish(self) -> dict[str, Any]:
+        updated_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+        self._write_meta(updated_at, "content_published", "内容已发布")
+        return self.load_meta()
+
+    def _write_meta(self, updated_at: str, event: str, label: str) -> None:
         meta = self.load_meta()
         history = list(meta.get("history", []))
         history.insert(
             0,
             {
                 "timestamp": updated_at,
-                "event": "content_saved",
-                "label": "内容已保存",
+                "event": event,
+                "label": label,
             },
         )
         payload = {
             "updated_at": updated_at,
             "history": history[:12],
         }
+        self.content_dir.mkdir(parents=True, exist_ok=True)
         tmp_path = self.meta_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         tmp_path.replace(self.meta_path)

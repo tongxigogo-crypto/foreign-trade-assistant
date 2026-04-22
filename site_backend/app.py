@@ -649,10 +649,84 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         color: #7c5300;
         margin-bottom: 4px;
       }
+      .diff-list {
+        display: grid;
+        gap: 10px;
+      }
+      .diff-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(15, 111, 255, 0.08);
+        border: 1px solid rgba(15, 111, 255, 0.14);
+        color: #18437b;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .diff-item strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #102f57;
+      }
       .ok-note {
         color: var(--success);
         font-size: 13px;
         line-height: 1.7;
+      }
+      .field-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .field-counter {
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.06);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .field-counter.is-over {
+        background: rgba(245, 158, 11, 0.14);
+        color: #9a6700;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(10, 18, 34, 0.38);
+        backdrop-filter: blur(8px);
+        z-index: 20;
+      }
+      .modal.is-open {
+        display: flex;
+      }
+      .modal-card {
+        width: min(520px, 100%);
+        padding: 24px;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 30px 80px rgba(20, 32, 58, 0.18);
+      }
+      .modal-card h3 {
+        margin: 0 0 10px;
+        font-size: 24px;
+      }
+      .modal-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
       }
       #save-status {
         min-height: 24px;
@@ -728,6 +802,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
               <button id="preview-home" type="button" class="ghost-button">预览首页</button>
               <button id="preflight-check" type="button" class="ghost-button">发布前检查</button>
               <button id="save-content" type="button" class="button">保存当前改动</button>
+              <button id="publish-content" type="button" class="button">正式发布</button>
               <button id="reset-content" type="button" class="ghost-button">恢复最近保存版本</button>
             </div>
             <div id="save-status">当前没有未保存改动。</div>
@@ -751,6 +826,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             <p id="warning-ok" class="ok-note" hidden>当前内容没有发现明显的发布风险。</p>
           </div>
           <div class="inspector-panel">
+            <h3>首页预览差异提示</h3>
+            <div id="preview-diff" class="diff-list"></div>
+            <p id="preview-diff-ok" class="ok-note" hidden>当前草稿与最近保存版本一致，直接预览即可。</p>
+          </div>
+          <div class="inspector-panel">
             <h3>运营建议</h3>
             <ul>
               <li>中文和英文内容分开维护，避免互相覆盖。</li>
@@ -761,6 +841,16 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         </aside>
       </div>
     </main>
+    <div id="publish-modal" class="modal" aria-hidden="true">
+      <div class="modal-card">
+        <h3>确认正式发布</h3>
+        <p>正式发布会记录一条发布时间，适合在你确认首页内容与预览结果一致后执行。这个动作不会自动部署外部环境，但会留下后台发布记录。</p>
+        <div class="modal-actions">
+          <button id="cancel-publish" type="button" class="ghost-button">取消</button>
+          <button id="confirm-publish" type="button" class="button">确认发布</button>
+        </div>
+      </div>
+    </div>
     <script>
       const initialContent = __CONTENT_JSON__;
       const editorSchema = __EDITOR_SCHEMA__;
@@ -886,6 +976,35 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         return warnings;
       }
 
+      function collectDiffs() {
+        const diffs = [];
+        for (const lang of ["zh", "en"]) {
+          for (const section of editorSchema) {
+            for (const field of section.fields) {
+              const before = savedContent.strings?.[lang]?.[field.key] || "";
+              const after = workingContent.strings?.[lang]?.[field.key] || "";
+              if (before !== after) {
+                diffs.push({
+                  title: `${section.label} / ${field.label}`,
+                  detail: `${lang === "zh" ? "中文" : "英文"} 已修改，预览首页时会显示草稿内容。`,
+                });
+              }
+            }
+          }
+        }
+        imageSchema.forEach((image) => {
+          const before = savedContent.images?.[image.key] || "";
+          const after = workingContent.images?.[image.key] || "";
+          if (before !== after) {
+            diffs.push({
+              title: image.label,
+              detail: "图片资源已变更，预览首页会优先展示草稿图片路径。",
+            });
+          }
+        });
+        return diffs;
+      }
+
       function renderWarnings() {
         const warnings = collectWarnings();
         const warningList = document.getElementById("warning-list");
@@ -900,6 +1019,24 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           <div class="warning-item">
             <strong>${warning.title}</strong>
             <span>${warning.detail}</span>
+          </div>
+        `).join("");
+      }
+
+      function renderDiffs() {
+        const diffs = collectDiffs();
+        const diffRoot = document.getElementById("preview-diff");
+        const okNote = document.getElementById("preview-diff-ok");
+        if (!diffs.length) {
+          diffRoot.innerHTML = "";
+          okNote.hidden = false;
+          return;
+        }
+        okNote.hidden = true;
+        diffRoot.innerHTML = diffs.map((diff) => `
+          <div class="diff-item">
+            <strong>${diff.title}</strong>
+            <span>${diff.detail}</span>
           </div>
         `).join("");
       }
@@ -940,10 +1077,16 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const fields = section.fields.map((field) => {
           const value = workingContent.strings[currentLang][field.key] || "";
           const placeholder = field.placeholder || "";
+          const limit = recommendLength(field.key);
+          const currentLength = measureLength(value);
+          const counterClass = currentLength > limit ? "field-counter is-over" : "field-counter";
           if (field.type === "textarea") {
             return `
               <div class="field-card">
-                <label for="${field.key}">${field.label}</label>
+                <div class="field-head">
+                  <label for="${field.key}">${field.label}</label>
+                  <span class="${counterClass}">${currentLength}/${limit}</span>
+                </div>
                 <small>${fieldHint(field)}</small>
                 <textarea id="${field.key}" rows="${field.rows || 4}" data-field="${field.key}" placeholder="${placeholder}">${value}</textarea>
               </div>
@@ -951,7 +1094,10 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           }
           return `
             <div class="field-card">
-              <label for="${field.key}">${field.label}</label>
+              <div class="field-head">
+                <label for="${field.key}">${field.label}</label>
+                <span class="${counterClass}">${currentLength}/${limit}</span>
+              </div>
               <small>${fieldHint(field)}</small>
               <input id="${field.key}" type="text" data-field="${field.key}" value="${value.replace(/"/g, "&quot;")}" placeholder="${placeholder}">
             </div>
@@ -1019,6 +1165,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         renderWorkspace();
         updateStats();
         renderWarnings();
+        renderDiffs();
         renderMeta();
       }
 
@@ -1089,7 +1236,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       }
 
       function previewHome() {
+        const diffs = collectDiffs();
         window.localStorage.setItem("site_content_preview", JSON.stringify(workingContent));
+        if (diffs.length) {
+          setDirty(dirty, `预览首页将带上 ${diffs.length} 处草稿变更。`);
+        }
         window.open("/?preview=1", "_blank");
       }
 
@@ -1101,6 +1252,40 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           return;
         }
         setDirty(dirty, `发布前检查发现 ${warnings.length} 项需要关注的问题。`);
+      }
+
+      async function publishContent() {
+        const status = document.getElementById("save-status");
+        status.textContent = "正在记录正式发布时间...";
+        const response = await fetch("/admin/api/publish", {
+          method: "POST",
+          headers: buildHeaders(),
+          body: JSON.stringify({}),
+        });
+        if (!response.ok) {
+          status.textContent = "正式发布记录失败，请先确认保存状态。";
+          return;
+        }
+        adminMeta = await response.json();
+        closePublishModal();
+        setDirty(false, "已记录正式发布时间。");
+        renderMeta();
+      }
+
+      function openPublishModal() {
+        const warnings = collectWarnings();
+        if (warnings.length) {
+          setDirty(dirty, `正式发布前还有 ${warnings.length} 项风险，建议先处理。`);
+        }
+        const modal = document.getElementById("publish-modal");
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closePublishModal() {
+        const modal = document.getElementById("publish-modal");
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
       }
 
       function resetContent() {
@@ -1164,6 +1349,9 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       document.getElementById("reset-content").addEventListener("click", resetContent);
       document.getElementById("preview-home").addEventListener("click", previewHome);
       document.getElementById("preflight-check").addEventListener("click", runPreflightCheck);
+      document.getElementById("publish-content").addEventListener("click", openPublishModal);
+      document.getElementById("cancel-publish").addEventListener("click", closePublishModal);
+      document.getElementById("confirm-publish").addEventListener("click", publishContent);
 
       renderAll();
     </script>
@@ -1213,6 +1401,9 @@ def create_app(root_dir: Path, admin_password: str, session_secret: str):
 
             if path == "/admin/api/meta" and method == "GET":
                 return _json_response(start_response, HTTPStatus.OK, store.load_meta())
+
+            if path == "/admin/api/publish" and method == "POST":
+                return _json_response(start_response, HTTPStatus.OK, store.publish())
 
             if path == "/admin/api/content" and method == "PUT":
                 payload = _read_json(environ)

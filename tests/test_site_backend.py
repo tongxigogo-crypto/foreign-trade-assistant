@@ -89,6 +89,17 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("updated_at", data)
         self.assertIn("history", data)
 
+    def test_publish_endpoint_records_publish_history(self) -> None:
+        cookie = self._login_cookie()
+        status, _, payload = _request(self.app, "POST", "/admin/api/publish", body=b"{}", headers={
+            "Content-Type": "application/json",
+            "Cookie": cookie,
+        })
+        self.assertEqual(status, 200)
+        data = json.loads(payload.decode("utf-8"))
+        self.assertTrue(data["updated_at"])
+        self.assertEqual(data["history"][0]["event"], "content_published")
+
     def test_admin_content_requires_auth(self) -> None:
         status, _, _ = _request(self.app, "GET", "/admin/api/content")
         self.assertEqual(status, 401)
@@ -225,6 +236,9 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("保存当前改动", html)
         self.assertIn("预览首页", html)
         self.assertIn("发布前检查", html)
+        self.assertIn("publish-content", html)
+        self.assertIn("publish-modal", html)
+        self.assertIn("preview-diff", html)
 
 
 if __name__ == "__main__":
