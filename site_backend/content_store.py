@@ -4,6 +4,7 @@ import base64
 import copy
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,7 @@ class ContentStore:
         self.content_dir = site_dir / "content"
         self.content_path = self.content_dir / "site-content.json"
         self.backup_path = self.content_dir / "site-content.backup.json"
+        self.meta_path = self.content_dir / "site-content.meta.json"
         self.upload_dir = site_dir / "assets" / "uploads"
 
     def load(self) -> dict[str, Any]:
@@ -76,6 +78,7 @@ class ContentStore:
         data = copy.deepcopy(DEFAULT_CONTENT)
         data["strings"].update(payload.get("strings", {}))
         data["images"].update(payload.get("images", {}))
+        now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
         self.content_dir.mkdir(parents=True, exist_ok=True)
         if self.content_path.exists():
@@ -83,7 +86,40 @@ class ContentStore:
         tmp_path = self.content_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         tmp_path.replace(self.content_path)
+        self._write_meta(now)
         return data
+
+    def load_meta(self) -> dict[str, Any]:
+        if not self.meta_path.exists():
+            return {
+                "updated_at": None,
+                "history": [],
+            }
+        with self.meta_path.open("r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        return {
+            "updated_at": data.get("updated_at"),
+            "history": list(data.get("history", [])),
+        }
+
+    def _write_meta(self, updated_at: str) -> None:
+        meta = self.load_meta()
+        history = list(meta.get("history", []))
+        history.insert(
+            0,
+            {
+                "timestamp": updated_at,
+                "event": "content_saved",
+                "label": "内容已保存",
+            },
+        )
+        payload = {
+            "updated_at": updated_at,
+            "history": history[:12],
+        }
+        tmp_path = self.meta_path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        tmp_path.replace(self.meta_path)
 
     def save_asset(self, filename: str, content_base64: str) -> str:
         safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(filename).name).strip("-")

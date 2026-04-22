@@ -257,6 +257,18 @@ async function loadManagedContent() {
   return false;
 }
 
+function applyPreviewDraft() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("preview") !== "1") return;
+  const raw = window.localStorage.getItem("site_content_preview");
+  if (!raw) return;
+  try {
+    mergeManagedContent(JSON.parse(raw));
+  } catch (error) {
+    // Ignore malformed preview data and keep the published content.
+  }
+}
+
 function applyLang(lang) {
   const dict = I18N[lang] || I18N.zh;
   document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
@@ -532,6 +544,7 @@ async function initPretext() {
 
 async function init() {
   await loadManagedContent();
+  applyPreviewDraft();
   const lang = localStorage.getItem("ta_lang") || "zh";
   applyLang(lang);
   setFooterYear();

@@ -81,6 +81,14 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("zh", data["strings"])
         self.assertIn("en", data["strings"])
 
+    def test_admin_meta_endpoint_returns_history_shape(self) -> None:
+        cookie = self._login_cookie()
+        status, _, payload = _request(self.app, "GET", "/admin/api/meta", headers={"Cookie": cookie})
+        self.assertEqual(status, 200)
+        data = json.loads(payload.decode("utf-8"))
+        self.assertIn("updated_at", data)
+        self.assertIn("history", data)
+
     def test_admin_content_requires_auth(self) -> None:
         status, _, _ = _request(self.app, "GET", "/admin/api/content")
         self.assertEqual(status, 401)
@@ -167,6 +175,11 @@ class SiteBackendTests(unittest.TestCase):
         self.assertTrue(content_file.exists())
         persisted = json.loads(content_file.read_text(encoding="utf-8"))
         self.assertEqual(persisted["strings"]["en"]["hero_intro"], "Updated home intro")
+        meta_file = self.site_dir / "content" / "site-content.meta.json"
+        self.assertTrue(meta_file.exists())
+        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        self.assertTrue(meta["updated_at"])
+        self.assertGreaterEqual(len(meta["history"]), 1)
 
     def test_asset_upload_writes_file_and_returns_relative_path(self) -> None:
         cookie = self._login_cookie()
@@ -210,6 +223,8 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("content-navigator", html.lower().replace("_", "-"))
         self.assertIn("图片资源", html)
         self.assertIn("保存当前改动", html)
+        self.assertIn("预览首页", html)
+        self.assertIn("发布前检查", html)
 
 
 if __name__ == "__main__":

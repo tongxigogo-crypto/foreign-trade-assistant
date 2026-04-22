@@ -82,10 +82,10 @@ EDITOR_SCHEMA = [
 
 
 IMAGE_SCHEMA = [
-    {"key": "home.hero", "label": "首屏主视觉", "description": "首页第一屏的主插画或主图。"},
-    {"key": "home.trade_assistant", "label": "外贸助理配图", "description": "外贸助理模块展示图。"},
-    {"key": "home.pet_trade", "label": "国际贸易配图", "description": "国际贸易模块展示图。"},
-    {"key": "home.mini_program", "label": "小程序开发配图", "description": "小程序模块展示图。"},
+    {"key": "home.hero", "label": "首屏主视觉", "description": "首页第一屏的主插画或主图。", "ratio": "4:3"},
+    {"key": "home.trade_assistant", "label": "外贸助理配图", "description": "外贸助理模块展示图。", "ratio": "4:3"},
+    {"key": "home.pet_trade", "label": "国际贸易配图", "description": "国际贸易模块展示图。", "ratio": "4:3"},
+    {"key": "home.mini_program", "label": "小程序开发配图", "description": "小程序模块展示图。", "ratio": "4:3"},
 ]
 
 
@@ -216,7 +216,7 @@ def _login_page() -> str:
 </html>"""
 
 
-def _editor_page(content: dict, auth_token: str | None = None) -> str:
+def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict | None = None) -> str:
     template = """<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -551,9 +551,13 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
         color: var(--muted);
         line-height: 1.7;
       }
-      .action-stack {
+        .action-stack {
+          display: grid;
+          gap: 12px;
+        }
+      .inspector-actions {
         display: grid;
-        gap: 12px;
+        gap: 10px;
       }
       .status-chip {
         display: inline-flex;
@@ -588,15 +592,67 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
         font-size: 16px;
       }
       .inspector-panel p,
-      .inspector-panel li {
+      .inspector-panel li,
+      .inspector-panel dt,
+      .inspector-panel dd {
         margin: 0;
         color: var(--muted);
         font-size: 13px;
         line-height: 1.7;
       }
+      .inspector-panel dl {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+      }
+      .inspector-panel dt {
+        font-weight: 700;
+        color: var(--text);
+      }
+      .inspector-panel dd + dt {
+        margin-top: 8px;
+      }
       .inspector-panel ul {
         margin: 10px 0 0;
         padding-left: 18px;
+      }
+      .history-list {
+        display: grid;
+        gap: 10px;
+      }
+      .history-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.74);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+      .history-item strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+      .warning-list {
+        display: grid;
+        gap: 10px;
+      }
+      .warning-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(245, 158, 11, 0.10);
+        border: 1px solid rgba(245, 158, 11, 0.18);
+        color: #9a6700;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+      .warning-item strong {
+        display: block;
+        color: #7c5300;
+        margin-bottom: 4px;
+      }
+      .ok-note {
+        color: var(--success);
+        font-size: 13px;
+        line-height: 1.7;
       }
       #save-status {
         min-height: 24px;
@@ -668,14 +724,31 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
           <p class="inspector-copy">这里用于查看当前编辑状态、执行保存、恢复最近内容，以及确认图片是否已替换。</p>
           <div class="action-stack">
             <span id="dirty-chip" class="status-chip">已同步</span>
-            <button id="save-content" type="button" class="button">保存当前改动</button>
-            <button id="reset-content" type="button" class="ghost-button">恢复最近保存版本</button>
+            <div class="inspector-actions">
+              <button id="preview-home" type="button" class="ghost-button">预览首页</button>
+              <button id="preflight-check" type="button" class="ghost-button">发布前检查</button>
+              <button id="save-content" type="button" class="button">保存当前改动</button>
+              <button id="reset-content" type="button" class="ghost-button">恢复最近保存版本</button>
+            </div>
             <div id="save-status">当前没有未保存改动。</div>
           </div>
           <div class="stats" id="inspector-stats"></div>
           <div class="inspector-panel">
             <h3>当前区块提示</h3>
             <p id="section-description">选择左侧区块开始编辑。</p>
+          </div>
+          <div class="inspector-panel">
+            <h3>发布记录 / 最近修改时间</h3>
+            <dl>
+              <dt>最近修改时间</dt>
+              <dd id="last-updated">尚未保存内容</dd>
+            </dl>
+            <div id="publish-history" class="history-list" style="margin-top: 14px;"></div>
+          </div>
+          <div class="inspector-panel">
+            <h3>发布前检查</h3>
+            <div id="warning-list" class="warning-list"></div>
+            <p id="warning-ok" class="ok-note" hidden>当前内容没有发现明显的发布风险。</p>
           </div>
           <div class="inspector-panel">
             <h3>运营建议</h3>
@@ -692,6 +765,7 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
       const initialContent = __CONTENT_JSON__;
       const editorSchema = __EDITOR_SCHEMA__;
       const imageSchema = __IMAGE_SCHEMA__;
+      const initialMeta = __META_JSON__;
       const adminToken = __TOKEN_JSON__ || window.localStorage.getItem("site_admin_token") || "";
 
       const sections = [...editorSchema, {
@@ -705,6 +779,7 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
       let currentLang = "zh";
       let savedContent = JSON.parse(JSON.stringify(initialContent));
       let workingContent = JSON.parse(JSON.stringify(initialContent));
+      let adminMeta = initialMeta || { updated_at: null, history: [] };
       let dirty = false;
 
       function ensureShape() {
@@ -754,6 +829,97 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
         `;
       }
 
+      function formatTime(value) {
+        if (!value) return "尚未保存内容";
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return value;
+        return parsed.toLocaleString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function measureLength(text) {
+        return (text || "").replace(/\\s+/g, "").length;
+      }
+
+      function recommendLength(key) {
+        if (key.includes("title")) return 26;
+        if (key.includes("intro") || key.includes("bridge")) return 90;
+        return 120;
+      }
+
+      function fieldHint(field) {
+        const limit = recommendLength(field.key);
+        return `建议 ${currentLang === "zh" ? "中文" : "英文"} 控制在 ${limit} 字以内`;
+      }
+
+      function collectWarnings() {
+        const warnings = [];
+        for (const lang of ["zh", "en"]) {
+          for (const section of editorSchema) {
+            for (const field of section.fields) {
+              const value = workingContent.strings?.[lang]?.[field.key] || "";
+              const currentLength = measureLength(value);
+              const limit = recommendLength(field.key);
+              if (currentLength > limit) {
+                warnings.push({
+                  title: `${section.label} / ${field.label}`,
+                  detail: `${lang === "zh" ? "中文" : "英文"} 当前约 ${currentLength} 字，建议控制在 ${limit} 字以内，避免首页排版过满。`,
+                });
+              }
+            }
+          }
+        }
+        imageSchema.forEach((image) => {
+          const path = workingContent.images?.[image.key] || "";
+          if (!path) {
+            warnings.push({
+              title: `${image.label}`,
+              detail: "当前未设置图片路径，发布后该区块可能失去视觉锚点。",
+            });
+          }
+        });
+        return warnings;
+      }
+
+      function renderWarnings() {
+        const warnings = collectWarnings();
+        const warningList = document.getElementById("warning-list");
+        const okNote = document.getElementById("warning-ok");
+        if (!warnings.length) {
+          warningList.innerHTML = "";
+          okNote.hidden = false;
+          return;
+        }
+        okNote.hidden = true;
+        warningList.innerHTML = warnings.map((warning) => `
+          <div class="warning-item">
+            <strong>${warning.title}</strong>
+            <span>${warning.detail}</span>
+          </div>
+        `).join("");
+      }
+
+      function renderMeta() {
+        document.getElementById("last-updated").textContent = formatTime(adminMeta.updated_at);
+        const historyRoot = document.getElementById("publish-history");
+        const history = Array.isArray(adminMeta.history) ? adminMeta.history : [];
+        if (!history.length) {
+          historyRoot.innerHTML = `<div class="history-item"><strong>暂无记录</strong><span>首次保存后会在这里留下最近修改时间。</span></div>`;
+          return;
+        }
+        historyRoot.innerHTML = history.map((item) => `
+          <div class="history-item">
+            <strong>${item.label || "内容已保存"}</strong>
+            <span>${formatTime(item.timestamp)}</span>
+          </div>
+        `).join("");
+      }
+
       function renderNav() {
         const nav = document.getElementById("content-navigator");
         nav.innerHTML = sections.map((section) => `
@@ -778,7 +944,7 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
             return `
               <div class="field-card">
                 <label for="${field.key}">${field.label}</label>
-                <small>当前编辑 ${currentLang === "zh" ? "中文" : "英文"} 内容</small>
+                <small>${fieldHint(field)}</small>
                 <textarea id="${field.key}" rows="${field.rows || 4}" data-field="${field.key}" placeholder="${placeholder}">${value}</textarea>
               </div>
             `;
@@ -786,7 +952,7 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
           return `
             <div class="field-card">
               <label for="${field.key}">${field.label}</label>
-              <small>当前编辑 ${currentLang === "zh" ? "中文" : "英文"} 内容</small>
+              <small>${fieldHint(field)}</small>
               <input id="${field.key}" type="text" data-field="${field.key}" value="${value.replace(/"/g, "&quot;")}" placeholder="${placeholder}">
             </div>
           `;
@@ -812,7 +978,7 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
               <div class="image-preview">${preview}</div>
               <div class="image-meta">
                 <h3>${image.label}</h3>
-                <p>${image.description}</p>
+                <p>${image.description} 建议比例：${image.ratio || "4:3"}。</p>
                 <div class="image-tools">
                   <input type="text" data-image-field="${image.key}" value="${path.replace(/"/g, "&quot;")}" placeholder="./assets/example.png">
                   <div class="image-actions">
@@ -852,6 +1018,8 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
         renderLangSwitch();
         renderWorkspace();
         updateStats();
+        renderWarnings();
+        renderMeta();
       }
 
       function updateTextField(key, value) {
@@ -906,8 +1074,33 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
         savedContent = JSON.parse(JSON.stringify(saved));
         workingContent = JSON.parse(JSON.stringify(saved));
         ensureShape();
+        await refreshMeta();
         setDirty(false, "已保存到内容文件。");
         renderAll();
+      }
+
+      async function refreshMeta() {
+        const response = await fetch("/admin/api/meta", {
+          method: "GET",
+          headers: buildHeaders(),
+        });
+        if (!response.ok) return;
+        adminMeta = await response.json();
+      }
+
+      function previewHome() {
+        window.localStorage.setItem("site_content_preview", JSON.stringify(workingContent));
+        window.open("/?preview=1", "_blank");
+      }
+
+      function runPreflightCheck() {
+        renderWarnings();
+        const warnings = collectWarnings();
+        if (!warnings.length) {
+          setDirty(dirty, "发布前检查通过，可以先预览首页再发布。");
+          return;
+        }
+        setDirty(dirty, `发布前检查发现 ${warnings.length} 项需要关注的问题。`);
       }
 
       function resetContent() {
@@ -969,6 +1162,8 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
 
       document.getElementById("save-content").addEventListener("click", saveContent);
       document.getElementById("reset-content").addEventListener("click", resetContent);
+      document.getElementById("preview-home").addEventListener("click", previewHome);
+      document.getElementById("preflight-check").addEventListener("click", runPreflightCheck);
 
       renderAll();
     </script>
@@ -979,6 +1174,7 @@ def _editor_page(content: dict, auth_token: str | None = None) -> str:
         .replace("__CONTENT_JSON__", json.dumps(content, ensure_ascii=False))
         .replace("__EDITOR_SCHEMA__", json.dumps(EDITOR_SCHEMA, ensure_ascii=False))
         .replace("__IMAGE_SCHEMA__", json.dumps(IMAGE_SCHEMA, ensure_ascii=False))
+        .replace("__META_JSON__", json.dumps(admin_meta or {"updated_at": None, "history": []}, ensure_ascii=False))
         .replace("__TOKEN_JSON__", json.dumps(auth_token or "", ensure_ascii=False))
     )
 
@@ -1015,6 +1211,9 @@ def create_app(root_dir: Path, admin_password: str, session_secret: str):
             if path == "/admin/api/content" and method == "GET":
                 return _json_response(start_response, HTTPStatus.OK, store.load())
 
+            if path == "/admin/api/meta" and method == "GET":
+                return _json_response(start_response, HTTPStatus.OK, store.load_meta())
+
             if path == "/admin/api/content" and method == "PUT":
                 payload = _read_json(environ)
                 saved = store.save(payload)
@@ -1037,7 +1236,11 @@ def create_app(root_dir: Path, admin_password: str, session_secret: str):
             return _html_response(
                 start_response,
                 HTTPStatus.OK,
-                _editor_page(store.load(), _get_query_token(environ) or _get_bearer_token(environ)),
+                _editor_page(
+                    store.load(),
+                    _get_query_token(environ) or _get_bearer_token(environ),
+                    store.load_meta(),
+                ),
             )
 
         return _json_response(start_response, HTTPStatus.NOT_FOUND, {"error": "not_found"})
