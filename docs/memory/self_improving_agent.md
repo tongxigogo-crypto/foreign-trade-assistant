@@ -238,3 +238,11 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - For unfinished content systems, replace fake detail links with clear `敬请期待` states so the homepage does not imply missing pages already exist.
   - A new image-led module needs the same `use-pretext` hooks as the rest of V6.6, otherwise it reads as bolted-on even if the layout is visually consistent.
   - Using real local mascot/pet imagery as temporary covers is preferable to abstract gradients when the business already has recognizable brand assets and the backend content system will come later.
+
+## [2026-04-22 17:06:00] editorial-module-heading-alignment
+
+- status: confirmed_working
+- summary: In V6.6 mid-page editorial modules, the section heading block should read as a centered stage title rather than a left rail, especially when the card grid spans the full width.
+- learnings:
+  - For wide showcase sections like `pet-products-gallery`, center the kicker, title, summary, and chip as one heading cluster before the grid starts.
+  - A left-aligned heading block can make the top of the section feel visually jammed even when the cards below are balanced.
