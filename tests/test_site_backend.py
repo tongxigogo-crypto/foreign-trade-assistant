@@ -207,7 +207,9 @@ class SiteBackendTests(unittest.TestCase):
         self.assertEqual(status, 200)
         html = body.decode("utf-8")
         self.assertIn("Site Content Admin", html)
-        self.assertIn("hero_intro", html)
+        self.assertIn("content-navigator", html.lower().replace("_", "-"))
+        self.assertIn("图片资源", html)
+        self.assertIn("保存当前改动", html)
 
 
 if __name__ == "__main__":
