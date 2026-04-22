@@ -142,6 +142,13 @@ GALLERY_SECTION = {
 }
 
 
+TEMPLATE_SECTION = {
+    "id": "pet-product-template",
+    "label": "详情页模板",
+    "description": "管理统一的宠物用品详情页模板文案，用于后续承接已上线的画廊卡片。",
+}
+
+
 def _json_response(start_response: StartResponse, status: HTTPStatus, payload: dict | None = None, headers: list[tuple[str, str]] | None = None) -> Iterable[bytes]:
     body = b""
     response_headers = [("Content-Type", "application/json; charset=utf-8")]
@@ -1012,10 +1019,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       const editorSchema = __EDITOR_SCHEMA__;
       const imageSchema = __IMAGE_SCHEMA__;
       const gallerySection = __GALLERY_SCHEMA__;
+      const templateSection = __TEMPLATE_SCHEMA__;
       const initialMeta = __META_JSON__;
       const adminToken = __TOKEN_JSON__ || window.localStorage.getItem("site_admin_token") || "";
 
-      const sections = [...editorSchema, gallerySection, {
+      const sections = [...editorSchema, gallerySection, templateSection, {
         id: "images",
         label: "图片资源",
         description: "管理首页区块图片、路径与素材替换。",
@@ -1054,6 +1062,8 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         });
         if (!workingContent.pet_product_template) workingContent.pet_product_template = {};
         if (!workingContent.pet_product_template.path) workingContent.pet_product_template.path = "./pet-product-template.html";
+        if (!workingContent.pet_product_template.title) workingContent.pet_product_template.title = "";
+        if (!workingContent.pet_product_template.intro) workingContent.pet_product_template.intro = "";
         if (!workingContent.pet_product_template.sections) workingContent.pet_product_template.sections = {};
         if (!workingContent.pet_product_template.seo) workingContent.pet_product_template.seo = {};
       }
@@ -1066,6 +1076,10 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       function galleryCardAt(index) {
         return galleryCards()[index] || {};
+      }
+
+      function templateFields() {
+        return workingContent.pet_product_template || {};
       }
 
       function buildHeaders() {
@@ -1128,6 +1142,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         if (key.includes("cover_label")) return 20;
         if (key.includes("cover_title")) return 10;
         if (key.includes("title")) return 26;
+        if (key.includes("description")) return 120;
         if (key.includes("summary")) return 40;
         if (key.includes("tag")) return 22;
         if (key.includes("intro") || key.includes("bridge")) return 90;
@@ -1173,6 +1188,29 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             warnings.push({
               title: `${schemaCard.label} / 图片`,
               detail: "当前未设置卡片图片，首页画廊会失去主视觉锚点。",
+            });
+          }
+        });
+        const template = templateFields();
+        const templatePairs = [
+          ["title", template.title || ""],
+          ["intro", template.intro || ""],
+          ["story_title", template.sections?.story_title || ""],
+          ["story_body", template.sections?.story_body || ""],
+          ["spec_title", template.sections?.spec_title || ""],
+          ["spec_body", template.sections?.spec_body || ""],
+          ["use_case_title", template.sections?.use_case_title || ""],
+          ["use_case_body", template.sections?.use_case_body || ""],
+          ["seo_title", template.seo?.title || ""],
+          ["seo_description", template.seo?.description || ""],
+        ];
+        templatePairs.forEach(([key, value]) => {
+          const currentLength = measureLength(value);
+          const limit = recommendLength(String(key));
+          if (currentLength > limit) {
+            warnings.push({
+              title: `详情页模板 / ${key}`,
+              detail: `当前约 ${currentLength} 字，建议控制在 ${limit} 字以内，避免详情页首屏和 SEO 信息过重。`,
             });
           }
         });
@@ -1231,6 +1269,28 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
               });
             }
           });
+        });
+        const templateBefore = savedContent.pet_product_template || {};
+        const templateAfter = templateFields();
+        const templateComparisons = [
+          ["title", templateBefore.title || "", templateAfter.title || ""],
+          ["intro", templateBefore.intro || "", templateAfter.intro || ""],
+          ["story_title", templateBefore.sections?.story_title || "", templateAfter.sections?.story_title || ""],
+          ["story_body", templateBefore.sections?.story_body || "", templateAfter.sections?.story_body || ""],
+          ["spec_title", templateBefore.sections?.spec_title || "", templateAfter.sections?.spec_title || ""],
+          ["spec_body", templateBefore.sections?.spec_body || "", templateAfter.sections?.spec_body || ""],
+          ["use_case_title", templateBefore.sections?.use_case_title || "", templateAfter.sections?.use_case_title || ""],
+          ["use_case_body", templateBefore.sections?.use_case_body || "", templateAfter.sections?.use_case_body || ""],
+          ["seo_title", templateBefore.seo?.title || "", templateAfter.seo?.title || ""],
+          ["seo_description", templateBefore.seo?.description || "", templateAfter.seo?.description || ""],
+        ];
+        templateComparisons.forEach(([key, before, after]) => {
+          if (before !== after) {
+            diffs.push({
+              title: `详情页模板 / ${key}`,
+              detail: "宠物用品详情页模板已修改，模板页和已上线卡片入口会使用新内容。",
+            });
+          }
         });
         return diffs;
       }
@@ -1311,6 +1371,22 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             if ((before[key] || "") !== (after[key] || "")) textChanges += 1;
           });
           if ((before.image || "") !== (after.image || "")) imageChanges += 1;
+        });
+        const templateBefore = savedContent.pet_product_template || {};
+        const templateAfter = templateFields();
+        [
+          ["title", templateBefore.title || "", templateAfter.title || ""],
+          ["intro", templateBefore.intro || "", templateAfter.intro || ""],
+          ["story_title", templateBefore.sections?.story_title || "", templateAfter.sections?.story_title || ""],
+          ["story_body", templateBefore.sections?.story_body || "", templateAfter.sections?.story_body || ""],
+          ["spec_title", templateBefore.sections?.spec_title || "", templateAfter.sections?.spec_title || ""],
+          ["spec_body", templateBefore.sections?.spec_body || "", templateAfter.sections?.spec_body || ""],
+          ["use_case_title", templateBefore.sections?.use_case_title || "", templateAfter.sections?.use_case_title || ""],
+          ["use_case_body", templateBefore.sections?.use_case_body || "", templateAfter.sections?.use_case_body || ""],
+          ["seo_title", templateBefore.seo?.title || "", templateAfter.seo?.title || ""],
+          ["seo_description", templateBefore.seo?.description || "", templateAfter.seo?.description || ""],
+        ].forEach(([, before, after]) => {
+          if (before !== after) textChanges += 1;
         });
         return { textChanges, imageChanges, totalChanges: textChanges + imageChanges };
       }
@@ -1580,6 +1656,102 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         return cards;
       }
 
+      function renderTemplateSection() {
+        const template = templateFields();
+        const sectionsData = template.sections || {};
+        const seo = template.seo || {};
+        const metrics = (value, key) => `${measureLength(value || "")}/${recommendLength(key)}`;
+        const counterClass = (value, key) => measureLength(value || "") > recommendLength(key) ? "field-counter is-over" : "field-counter";
+        return `
+          <div class="workspace-card">
+            <h2>${templateSection.label}</h2>
+            <p>${templateSection.description}</p>
+            <div class="field-grid two-col" style="margin-top: 18px;">
+              <div class="field-card">
+                <div class="field-head">
+                  <label>模板标题</label>
+                  <span class="${counterClass(template.title, "title")}">${metrics(template.title, "title")}</span>
+                </div>
+                <small>详情页主标题，控制在清晰直接的产品级标题范围内。</small>
+                <input type="text" data-template-field="title" value="${(template.title || "").replace(/"/g, "&quot;")}" placeholder="宠物用品内容模板">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>SEO 标题</label>
+                  <span class="${counterClass(seo.title, "seo_title")}">${metrics(seo.title, "seo_title")}</span>
+                </div>
+                <small>用于浏览器标题与基础 SEO，占位域名后续替换正式域名时再一起校正。</small>
+                <input type="text" data-template-seo-field="title" value="${(seo.title || "").replace(/"/g, "&quot;")}" placeholder="Tong工作室 | 宠物用品内容模板">
+              </div>
+              <div class="field-card" style="grid-column: 1 / -1;">
+                <div class="field-head">
+                  <label>模板简介</label>
+                  <span class="${counterClass(template.intro, "intro")}">${metrics(template.intro, "intro")}</span>
+                </div>
+                <small>详情页首屏说明，建议保持品牌感和业务感并存。</small>
+                <textarea rows="4" data-template-field="intro" placeholder="先用一套统一模板承接后续内容。">${template.intro || ""}</textarea>
+              </div>
+              <div class="field-card" style="grid-column: 1 / -1;">
+                <div class="field-head">
+                  <label>SEO 描述</label>
+                  <span class="${counterClass(seo.description, "seo_description")}">${metrics(seo.description, "seo_description")}</span>
+                </div>
+                <small>用于 meta description，后续真实详情页会以这个结构继续扩展。</small>
+                <textarea rows="3" data-template-seo-field="description" placeholder="Tong工作室宠物用品内容模板。">${seo.description || ""}</textarea>
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>产品故事标题</label>
+                  <span class="${counterClass(sectionsData.story_title, "title")}">${metrics(sectionsData.story_title, "title")}</span>
+                </div>
+                <small>第一段强调产品定位、材质与品牌表达。</small>
+                <input type="text" data-template-section-field="story_title" value="${(sectionsData.story_title || "").replace(/"/g, "&quot;")}" placeholder="产品故事">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>规格与沟通点标题</label>
+                  <span class="${counterClass(sectionsData.spec_title, "title")}">${metrics(sectionsData.spec_title, "title")}</span>
+                </div>
+                <small>第二段承接 MOQ、尺寸、五金、包装等外贸信息。</small>
+                <input type="text" data-template-section-field="spec_title" value="${(sectionsData.spec_title || "").replace(/"/g, "&quot;")}" placeholder="规格与沟通点">
+              </div>
+              <div class="field-card" style="grid-column: 1 / -1;">
+                <div class="field-head">
+                  <label>产品故事正文</label>
+                  <span class="${counterClass(sectionsData.story_body, "story_body")}">${metrics(sectionsData.story_body, "story_body")}</span>
+                </div>
+                <small>这一段建议写“为什么要做这个产品、它的定位、它的差异化”。</small>
+                <textarea rows="5" data-template-section-field="story_body" placeholder="这里放产品定位、材质选择和适用场景。">${sectionsData.story_body || ""}</textarea>
+              </div>
+              <div class="field-card" style="grid-column: 1 / -1;">
+                <div class="field-head">
+                  <label>规格与沟通点正文</label>
+                  <span class="${counterClass(sectionsData.spec_body, "spec_body")}">${metrics(sectionsData.spec_body, "spec_body")}</span>
+                </div>
+                <small>这一段建议用于询盘时最常用的规格与出口沟通信息。</small>
+                <textarea rows="5" data-template-section-field="spec_body" placeholder="这里放 MOQ、尺寸、五金、包装等。">${sectionsData.spec_body || ""}</textarea>
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>使用场景标题</label>
+                  <span class="${counterClass(sectionsData.use_case_title, "title")}">${metrics(sectionsData.use_case_title, "title")}</span>
+                </div>
+                <small>第三段强调使用环境、宠物场景和素材建议。</small>
+                <input type="text" data-template-section-field="use_case_title" value="${(sectionsData.use_case_title || "").replace(/"/g, "&quot;")}" placeholder="使用场景">
+              </div>
+              <div class="field-card" style="grid-column: 1 / -1;">
+                <div class="field-head">
+                  <label>使用场景正文</label>
+                  <span class="${counterClass(sectionsData.use_case_body, "use_case_body")}">${metrics(sectionsData.use_case_body, "use_case_body")}</span>
+                </div>
+                <small>这一段建议描述宠物使用场景、用户观感和后续图文扩展方向。</small>
+                <textarea rows="5" data-template-section-field="use_case_body" placeholder="这里放宠物使用环境、用户感知和后续图文素材建议。">${sectionsData.use_case_body || ""}</textarea>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       function renderImageSection() {
         const cards = imageSchema.map((image) => {
           const path = workingContent.images[image.key] || "";
@@ -1625,6 +1797,10 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           workspace.innerHTML = renderGallerySection();
           return;
         }
+        if (currentSection.id === templateSection.id) {
+          workspace.innerHTML = renderTemplateSection();
+          return;
+        }
         workspace.innerHTML = renderTextSection(currentSection);
       }
 
@@ -1663,6 +1839,24 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         setDirty(true, "画廊卡片图片已更新，保存后首页会同步读取。");
         renderWorkspace();
         queuePreviewAssetValidation();
+      }
+
+      function updateTemplateField(key, value) {
+        templateFields()[key] = value;
+        setDirty(true, "详情页模板已更新，保存后模板页会同步读取。");
+        renderWorkspace();
+      }
+
+      function updateTemplateSectionField(key, value) {
+        templateFields().sections[key] = value;
+        setDirty(true, "详情页模板段落已更新，保存后模板页会同步读取。");
+        renderWorkspace();
+      }
+
+      function updateTemplateSeoField(key, value) {
+        templateFields().seo[key] = value;
+        setDirty(true, "详情页模板 SEO 已更新，保存后模板页会同步读取。");
+        renderWorkspace();
       }
 
       async function uploadImage(key, file) {
@@ -1896,6 +2090,21 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const galleryImageField = event.target.closest("[data-gallery-image-field]");
         if (galleryImageField) {
           updateGalleryImage(Number(galleryImageField.dataset.galleryImageField), galleryImageField.value);
+          return;
+        }
+        const templateField = event.target.closest("[data-template-field]");
+        if (templateField) {
+          updateTemplateField(templateField.dataset.templateField, templateField.value);
+          return;
+        }
+        const templateSectionField = event.target.closest("[data-template-section-field]");
+        if (templateSectionField) {
+          updateTemplateSectionField(templateSectionField.dataset.templateSectionField, templateSectionField.value);
+          return;
+        }
+        const templateSeoField = event.target.closest("[data-template-seo-field]");
+        if (templateSeoField) {
+          updateTemplateSeoField(templateSeoField.dataset.templateSeoField, templateSeoField.value);
         }
       });
 
@@ -1940,6 +2149,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         .replace("__EDITOR_SCHEMA__", json.dumps(EDITOR_SCHEMA, ensure_ascii=False))
         .replace("__IMAGE_SCHEMA__", json.dumps(IMAGE_SCHEMA, ensure_ascii=False))
         .replace("__GALLERY_SCHEMA__", json.dumps(GALLERY_SECTION, ensure_ascii=False))
+        .replace("__TEMPLATE_SCHEMA__", json.dumps(TEMPLATE_SECTION, ensure_ascii=False))
         .replace("__META_JSON__", json.dumps(admin_meta or {"updated_at": None, "history": []}, ensure_ascii=False))
         .replace("__TOKEN_JSON__", json.dumps(auth_token or "", ensure_ascii=False))
     )

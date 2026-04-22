@@ -271,3 +271,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - `pet_products_gallery.cards[4]` is the right shape for this phase: image, cover label, cover title, title, summary, tag, and status are enough to make the homepage editable without prematurely building full detail-page CMS complexity.
   - When the real homepage source lives outside the repo, complete the loop by syncing both the external `site-content.json` and the external HTML/template files, not just the repo code.
   - A single `pet-product-template.html` plus `robots.txt` and `sitemap.xml` in the external directory is a pragmatic first SEO scaffold before real per-product pages exist.
+
+## [2026-04-22 18:28:00] one-template-before-many-detail-pages
+
+- status: confirmed_working
+- summary: Before building many real product detail pages, use one polished shared template page that reads backend-managed gallery data and route homepage cards into it by status plus hash.
+- learnings:
+  - This phase benefits more from a stable reusable template structure than from generating multiple half-filled pages.
+  - The admin must manage both homepage card fields and the shared detail-template copy, otherwise the homepage and template drift immediately.
+  - For local smoke checks in this Windows setup, prefer checking stable ASCII markers like `data-template-field`, `pet-product-template`, and `entry-list` instead of relying on Chinese string matching in console output.

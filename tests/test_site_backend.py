@@ -177,6 +177,22 @@ class SiteBackendTests(unittest.TestCase):
                     }
                 ]
             },
+            "pet_product_template": {
+                "title": "宠物用品内容模板",
+                "intro": "先用一套统一模板承接后续内容。",
+                "sections": {
+                    "story_title": "产品故事",
+                    "story_body": "这里放产品定位、材质选择和适用场景。",
+                    "spec_title": "规格与沟通点",
+                    "spec_body": "这里放 MOQ、尺寸、五金、包装等信息。",
+                    "use_case_title": "使用场景",
+                    "use_case_body": "这里放宠物使用环境和图文建议。",
+                },
+                "seo": {
+                    "title": "Tong工作室 | 宠物用品内容模板",
+                    "description": "宠物用品内容模板 SEO 描述",
+                },
+            },
         }
         status, _, _ = _request(
             self.app,
@@ -197,12 +213,14 @@ class SiteBackendTests(unittest.TestCase):
         self.assertEqual(data["images"]["home.hero"], "./assets/uploads/new-hero.png")
         self.assertEqual(data["pet_products_gallery"]["cards"][0]["title"], "胸背带内容位")
         self.assertEqual(data["pet_products_gallery"]["cards"][0]["status"], "coming_soon")
+        self.assertEqual(data["pet_product_template"]["seo"]["description"], "宠物用品内容模板 SEO 描述")
 
         content_file = self.site_dir / "content" / "site-content.json"
         self.assertTrue(content_file.exists())
         persisted = json.loads(content_file.read_text(encoding="utf-8"))
         self.assertEqual(persisted["strings"]["en"]["hero_intro"], "Updated home intro")
         self.assertEqual(persisted["pet_products_gallery"]["cards"][0]["image"], "./assets/uploads/harness.png")
+        self.assertEqual(persisted["pet_product_template"]["sections"]["spec_title"], "规格与沟通点")
         meta_file = self.site_dir / "content" / "site-content.meta.json"
         self.assertTrue(meta_file.exists())
         meta = json.loads(meta_file.read_text(encoding="utf-8"))
@@ -251,6 +269,7 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("content-navigator", html.lower().replace("_", "-"))
         self.assertIn("图片资源", html)
         self.assertIn("宠物用品画廊", html)
+        self.assertIn("详情页模板", html)
         self.assertIn("保存当前改动", html)
         self.assertIn("预览首页", html)
         self.assertIn("发布前检查", html)
