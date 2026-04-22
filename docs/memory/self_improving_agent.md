@@ -254,3 +254,11 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - learnings:
   - For headings like `宠物用品内容精选`, widen the heading cluster and locally override `.use-pretext` width behavior so the desktop version reads as one complete line.
   - Allow wrapping again only at narrower breakpoints where the grid has already stepped down.
+
+## [2026-04-22 17:20:00] pretext-heading-fit
+
+- status: corrected_assumption
+- summary: Do not force `use-pretext` onto every mid-page editorial headline. For short Chinese display titles, the pretext layout can fight centered single-line typography and produce visibly worse results.
+- learnings:
+  - If the design goal is a clean centered stage title, prefer a normal `h2` over a pretext heading when the text is short and the surrounding block is already visually rich.
+  - Keep pretext on supporting copy or smaller subheads where motion adds texture without destabilizing the headline's shape.
