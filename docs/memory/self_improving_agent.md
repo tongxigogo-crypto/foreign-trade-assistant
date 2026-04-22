@@ -246,3 +246,11 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - learnings:
   - For wide showcase sections like `pet-products-gallery`, center the kicker, title, summary, and chip as one heading cluster before the grid starts.
   - A left-aligned heading block can make the top of the section feel visually jammed even when the cards below are balanced.
+
+## [2026-04-22 17:12:00] short-chinese-editorial-headlines
+
+- status: confirmed_working
+- summary: Short Chinese section headlines in V6.6 should stay on one centered line on desktop instead of wrapping prematurely under generic responsive heading rules.
+- learnings:
+  - For headings like `宠物用品内容精选`, widen the heading cluster and locally override `.use-pretext` width behavior so the desktop version reads as one complete line.
+  - Allow wrapping again only at narrower breakpoints where the grid has already stepped down.
