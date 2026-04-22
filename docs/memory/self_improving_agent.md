@@ -220,3 +220,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Prioritize `head` metadata, `JSON-LD`, precise `alt` text, and `aria-label` on the real `h1` before touching broader architecture.
   - In this project phase, keep the scrollytelling DOM and GSAP logic intact; add semantics around the existing structure instead of refactoring the page into a new stack.
   - A useful "framework optimization" inside the current static architecture is resource prioritization: keep above-the-fold mascot/product imagery high-priority and move below-the-fold IP imagery to `loading="lazy"` with async decoding.
+
+## [2026-04-22 16:35:00] external-v66-preview-to-real-integration
+
+- status: confirmed_working
+- summary: When the user approves a visual preview for the external homepage, integrate that design into the real `indexV6.6_refined.html` and lock it with an external-file regression test instead of leaving it as a disconnected preview artifact.
+- learnings:
+  - Approved preview HTML files under `C:\\Users\\Administrator\\Desktop\\preson\\` are only review artifacts; the real completion step is copying the chosen visual language into the source-of-truth V6.6 file.
+  - For external homepage regressions, use stable English markers or structural selectors in repo tests when possible; they are less fragile than repeatedly asserting long Chinese strings.
+  - For content-led homepage additions in this project, prefer image-first editorial modules with a small DOM footprint so the section can extend brand narrative without disturbing the existing scrollytelling flow.

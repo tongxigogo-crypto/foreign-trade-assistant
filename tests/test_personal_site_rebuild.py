@@ -91,6 +91,14 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('fetchpriority="high"', html)
         self.assertIn('loading="lazy"', html)
 
+    def test_external_v66_has_pet_products_gallery_section(self) -> None:
+        html = EXTERNAL_V66.read_text(encoding="utf-8")
+
+        self.assertIn('id="pet-products-gallery"', html)
+        self.assertIn("Pet Product Stories", html)
+        self.assertIn("Pet Products / Editorial Gallery", html)
+        self.assertGreaterEqual(html.count('class="pet-gallery-card"'), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
