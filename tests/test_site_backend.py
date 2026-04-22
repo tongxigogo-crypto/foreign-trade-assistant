@@ -163,6 +163,20 @@ class SiteBackendTests(unittest.TestCase):
                 "en": {"hero_intro": "Updated home intro"},
             },
             "images": {"home.hero": "./assets/uploads/new-hero.png"},
+            "pet_products_gallery": {
+                "cards": [
+                    {
+                        "id": "harness",
+                        "image": "./assets/uploads/harness.png",
+                        "cover_label": "Harness Guide",
+                        "cover_title": "胸背带",
+                        "title": "胸背带内容位",
+                        "summary": "后续会补入材质、尺寸、MOQ 与适用场景。",
+                        "tag": "Material / MOQ",
+                        "status": "coming_soon",
+                    }
+                ]
+            },
         }
         status, _, _ = _request(
             self.app,
@@ -181,11 +195,14 @@ class SiteBackendTests(unittest.TestCase):
         data = json.loads(body.decode("utf-8"))
         self.assertEqual(data["strings"]["zh"]["hero_intro"], "新的中文首页说明")
         self.assertEqual(data["images"]["home.hero"], "./assets/uploads/new-hero.png")
+        self.assertEqual(data["pet_products_gallery"]["cards"][0]["title"], "胸背带内容位")
+        self.assertEqual(data["pet_products_gallery"]["cards"][0]["status"], "coming_soon")
 
         content_file = self.site_dir / "content" / "site-content.json"
         self.assertTrue(content_file.exists())
         persisted = json.loads(content_file.read_text(encoding="utf-8"))
         self.assertEqual(persisted["strings"]["en"]["hero_intro"], "Updated home intro")
+        self.assertEqual(persisted["pet_products_gallery"]["cards"][0]["image"], "./assets/uploads/harness.png")
         meta_file = self.site_dir / "content" / "site-content.meta.json"
         self.assertTrue(meta_file.exists())
         meta = json.loads(meta_file.read_text(encoding="utf-8"))
@@ -233,6 +250,7 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("Site Content Admin", html)
         self.assertIn("content-navigator", html.lower().replace("_", "-"))
         self.assertIn("图片资源", html)
+        self.assertIn("宠物用品画廊", html)
         self.assertIn("保存当前改动", html)
         self.assertIn("预览首页", html)
         self.assertIn("发布前检查", html)

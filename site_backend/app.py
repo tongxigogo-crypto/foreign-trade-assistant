@@ -89,6 +89,59 @@ IMAGE_SCHEMA = [
 ]
 
 
+GALLERY_SECTION = {
+    "id": "pet-products-gallery",
+    "label": "宠物用品画廊",
+    "description": "管理首页 Pet Products Gallery 的 4 张内容卡片，支持图片、标题、摘要、标签与状态。",
+    "cards": [
+        {
+            "id": "harness",
+            "label": "卡片 1 / 胸背带",
+            "cover_label_placeholder": "Harness Guide",
+            "cover_title_placeholder": "胸背带",
+            "title_placeholder": "胸背带内容位",
+            "summary_placeholder": "后续会补入材质、尺寸、MOQ 与适用场景。",
+            "tag_placeholder": "Material / MOQ",
+            "ratio": "4:5",
+        },
+        {
+            "id": "toys",
+            "label": "卡片 2 / 玩具选品",
+            "cover_label_placeholder": "Selection Notes",
+            "cover_title_placeholder": "玩具选品",
+            "title_placeholder": "玩具选品内容位",
+            "summary_placeholder": "后续会补入安全性、材质差异与出口沟通点。",
+            "tag_placeholder": "Selection / SEO",
+            "ratio": "4:5",
+        },
+        {
+            "id": "leash",
+            "label": "卡片 3 / 牵引绳",
+            "cover_label_placeholder": "Leash Notes",
+            "cover_title_placeholder": "牵引绳",
+            "title_placeholder": "牵引绳内容位",
+            "summary_placeholder": "后续会补入长度规格、五金方案与包装信息。",
+            "tag_placeholder": "Hardware / Use Case",
+            "ratio": "4:5",
+        },
+        {
+            "id": "beds",
+            "label": "卡片 4 / 窝垫布艺",
+            "cover_label_placeholder": "Bed & Fabric",
+            "cover_title_placeholder": "窝垫布艺",
+            "title_placeholder": "窝垫布艺内容位",
+            "summary_placeholder": "后续会补入布料、填充、清洁方式与场景说明。",
+            "tag_placeholder": "Editorial Shelf",
+            "ratio": "4:5",
+        },
+    ],
+    "status_options": [
+        {"value": "coming_soon", "label": "敬请期待"},
+        {"value": "live", "label": "已上线"},
+    ],
+}
+
+
 def _json_response(start_response: StartResponse, status: HTTPStatus, payload: dict | None = None, headers: list[tuple[str, str]] | None = None) -> Iterable[bytes]:
     body = b""
     response_headers = [("Content-Type", "application/json; charset=utf-8")]
@@ -420,6 +473,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         line-height: 1.6;
       }
       .field-card input[type="text"],
+      .field-card select,
       .field-card textarea {
         width: 100%;
         border: 1px solid rgba(148, 163, 184, 0.24);
@@ -431,6 +485,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         resize: vertical;
       }
       .field-card input[type="text"]:focus,
+      .field-card select:focus,
       .field-card textarea:focus {
         outline: none;
         border-color: rgba(15, 111, 255, 0.42);
@@ -956,10 +1011,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       const initialContent = __CONTENT_JSON__;
       const editorSchema = __EDITOR_SCHEMA__;
       const imageSchema = __IMAGE_SCHEMA__;
+      const gallerySection = __GALLERY_SCHEMA__;
       const initialMeta = __META_JSON__;
       const adminToken = __TOKEN_JSON__ || window.localStorage.getItem("site_admin_token") || "";
 
-      const sections = [...editorSchema, {
+      const sections = [...editorSchema, gallerySection, {
         id: "images",
         label: "图片资源",
         description: "管理首页区块图片、路径与素材替换。",
@@ -980,9 +1036,37 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         if (!workingContent.strings.zh) workingContent.strings.zh = {};
         if (!workingContent.strings.en) workingContent.strings.en = {};
         if (!workingContent.images) workingContent.images = {};
+        if (!workingContent.pet_products_gallery) workingContent.pet_products_gallery = {};
+        if (!Array.isArray(workingContent.pet_products_gallery.cards)) workingContent.pet_products_gallery.cards = [];
+        gallerySection.cards.forEach((card, index) => {
+          if (!workingContent.pet_products_gallery.cards[index]) {
+            workingContent.pet_products_gallery.cards[index] = {
+              id: card.id,
+              image: "",
+              cover_label: "",
+              cover_title: "",
+              title: "",
+              summary: "",
+              tag: "",
+              status: "coming_soon",
+            };
+          }
+        });
+        if (!workingContent.pet_product_template) workingContent.pet_product_template = {};
+        if (!workingContent.pet_product_template.path) workingContent.pet_product_template.path = "./pet-product-template.html";
+        if (!workingContent.pet_product_template.sections) workingContent.pet_product_template.sections = {};
+        if (!workingContent.pet_product_template.seo) workingContent.pet_product_template.seo = {};
       }
 
       ensureShape();
+
+      function galleryCards() {
+        return workingContent.pet_products_gallery?.cards || [];
+      }
+
+      function galleryCardAt(index) {
+        return galleryCards()[index] || {};
+      }
 
       function buildHeaders() {
         const headers = { "Content-Type": "application/json" };
@@ -1001,6 +1085,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       function updateStats() {
         const textCount = editorSchema.reduce((count, section) => count + section.fields.length, 0);
+        const galleryFieldCount = gallerySection.cards.length * 6;
         const currentSection = sections.find((item) => item.id === currentSectionId);
         document.getElementById("inspector-stats").innerHTML = `
           <div class="stat-card">
@@ -1009,11 +1094,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           </div>
           <div class="stat-card">
             <span>文案字段</span>
-            <strong>${textCount}</strong>
+            <strong>${textCount + galleryFieldCount}</strong>
           </div>
           <div class="stat-card">
             <span>图片槽位</span>
-            <strong>${imageSchema.length}</strong>
+            <strong>${imageSchema.length + gallerySection.cards.length}</strong>
           </div>
           <div class="stat-card">
             <span>当前区块</span>
@@ -1040,7 +1125,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       }
 
       function recommendLength(key) {
+        if (key.includes("cover_label")) return 20;
+        if (key.includes("cover_title")) return 10;
         if (key.includes("title")) return 26;
+        if (key.includes("summary")) return 40;
+        if (key.includes("tag")) return 22;
         if (key.includes("intro") || key.includes("bridge")) return 90;
         return 120;
       }
@@ -1067,6 +1156,26 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             }
           }
         }
+        gallerySection.cards.forEach((schemaCard, index) => {
+          const card = galleryCardAt(index);
+          ["cover_label", "cover_title", "title", "summary", "tag"].forEach((key) => {
+            const value = card[key] || "";
+            const currentLength = measureLength(value);
+            const limit = recommendLength(key);
+            if (currentLength > limit) {
+              warnings.push({
+                title: `${schemaCard.label} / ${key}`,
+                detail: `当前约 ${currentLength} 字，建议控制在 ${limit} 字以内，避免卡片排版过满。`,
+              });
+            }
+          });
+          if (!card.image) {
+            warnings.push({
+              title: `${schemaCard.label} / 图片`,
+              detail: "当前未设置卡片图片，首页画廊会失去主视觉锚点。",
+            });
+          }
+        });
         imageSchema.forEach((image) => {
           const path = workingContent.images?.[image.key] || "";
           if (!path) {
@@ -1110,6 +1219,18 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
               detail: "图片资源已变更，预览首页会优先展示草稿图片路径。",
             });
           }
+        });
+        gallerySection.cards.forEach((schemaCard, index) => {
+          const before = savedContent.pet_products_gallery?.cards?.[index] || {};
+          const after = galleryCardAt(index);
+          ["image", "cover_label", "cover_title", "title", "summary", "tag", "status"].forEach((key) => {
+            if ((before[key] || "") !== (after[key] || "")) {
+              diffs.push({
+                title: `${schemaCard.label} / ${key}`,
+                detail: "宠物用品画廊卡片已修改，预览首页时会显示草稿内容。",
+              });
+            }
+          });
         });
         return diffs;
       }
@@ -1183,6 +1304,14 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           const after = workingContent.images?.[image.key] || "";
           if (before !== after) imageChanges += 1;
         });
+        gallerySection.cards.forEach((schemaCard, index) => {
+          const before = savedContent.pet_products_gallery?.cards?.[index] || {};
+          const after = galleryCardAt(index);
+          ["cover_label", "cover_title", "title", "summary", "tag", "status"].forEach((key) => {
+            if ((before[key] || "") !== (after[key] || "")) textChanges += 1;
+          });
+          if ((before.image || "") !== (after.image || "")) imageChanges += 1;
+        });
         return { textChanges, imageChanges, totalChanges: textChanges + imageChanges };
       }
 
@@ -1197,8 +1326,16 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       async function validateImageAssets() {
         previewDiagnostics = { ...previewDiagnostics, checking: true };
         renderPreviewStatus();
-        const assetChecks = await Promise.all(imageSchema.map(async (image) => {
-          const path = workingContent.images?.[image.key] || "";
+        const assetSources = [
+          ...imageSchema.map((image) => ({ key: image.key, label: image.label, path: workingContent.images?.[image.key] || "" })),
+          ...gallerySection.cards.map((schemaCard, index) => ({
+            key: `gallery.${schemaCard.id}`,
+            label: `${schemaCard.label} 图片`,
+            path: galleryCardAt(index).image || "",
+          })),
+        ];
+        const assetChecks = await Promise.all(assetSources.map(async (image) => {
+          const path = image.path || "";
           if (!path) {
             return { key: image.key, label: image.label, path, ok: false, detail: "当前未设置图片路径。" };
           }
@@ -1359,6 +1496,90 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         `;
       }
 
+      function renderGallerySection() {
+        const cards = gallerySection.cards.map((schemaCard, index) => {
+          const card = galleryCardAt(index);
+          const statusOptions = gallerySection.status_options.map((option) => `
+            <option value="${option.value}" ${card.status === option.value ? "selected" : ""}>${option.label}</option>
+          `).join("");
+          const preview = card.image ? `<img src="${card.image}" alt="${schemaCard.label}">` : `<div class="image-empty">暂无图片</div>`;
+          return `
+            <div class="workspace-card">
+              <h2>${schemaCard.label}</h2>
+              <p>管理这张首页画廊卡片的封面、标题、摘要、标签和状态。建议保持图片主导，文字克制。</p>
+              <div class="image-card" style="margin-top: 18px;">
+                <div class="image-preview">${preview}</div>
+                <div class="image-meta">
+                  <h3>卡片封面</h3>
+                  <p>建议比例：${schemaCard.ratio}。当前阶段可以使用宠物图片作为占位，等真实内容上线后再替换。</p>
+                  <div class="image-tools">
+                    <input type="text" data-gallery-image-field="${index}" value="${(card.image || "").replace(/"/g, "&quot;")}" placeholder="./assets/example.png">
+                    <div class="image-actions">
+                      <input type="file" id="gallery-file-${index}" data-gallery-image-upload="${index}" accept="image/*" hidden>
+                      <button type="button" class="button" data-gallery-upload-trigger="${index}">上传卡片图片</button>
+                      <button type="button" class="ghost-button" data-gallery-clear-image="${index}">清空图片</button>
+                      <span class="upload-name">${card.image || "当前未设置图片路径"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="field-grid two-col" style="margin-top: 18px;">
+                <div class="field-card">
+                  <div class="field-head">
+                    <label>封面英文标签</label>
+                    <span class="${measureLength(card.cover_label || "") > recommendLength("cover_label") ? "field-counter is-over" : "field-counter"}">${measureLength(card.cover_label || "")}/${recommendLength("cover_label")}</span>
+                  </div>
+                  <small>例如 Harness Guide，显示在卡片左上角。</small>
+                  <input type="text" data-gallery-field="cover_label" data-gallery-index="${index}" value="${(card.cover_label || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.cover_label_placeholder}">
+                </div>
+                <div class="field-card">
+                  <div class="field-head">
+                    <label>封面主类目</label>
+                    <span class="${measureLength(card.cover_title || "") > recommendLength("cover_title") ? "field-counter is-over" : "field-counter"}">${measureLength(card.cover_title || "")}/${recommendLength("cover_title")}</span>
+                  </div>
+                  <small>例如 胸背带，显示在封面主视觉层。</small>
+                  <input type="text" data-gallery-field="cover_title" data-gallery-index="${index}" value="${(card.cover_title || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.cover_title_placeholder}">
+                </div>
+                <div class="field-card">
+                  <div class="field-head">
+                    <label>卡片标题</label>
+                    <span class="${measureLength(card.title || "") > recommendLength("title") ? "field-counter is-over" : "field-counter"}">${measureLength(card.title || "")}/${recommendLength("title")}</span>
+                  </div>
+                  <small>首页正文区主标题，建议短句直接。</small>
+                  <input type="text" data-gallery-field="title" data-gallery-index="${index}" value="${(card.title || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.title_placeholder}">
+                </div>
+                <div class="field-card">
+                  <div class="field-head">
+                    <label>卡片标签</label>
+                    <span class="${measureLength(card.tag || "") > recommendLength("tag") ? "field-counter is-over" : "field-counter"}">${measureLength(card.tag || "")}/${recommendLength("tag")}</span>
+                  </div>
+                  <small>用于卡片底部小标签，例如 Material / MOQ。</small>
+                  <input type="text" data-gallery-field="tag" data-gallery-index="${index}" value="${(card.tag || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.tag_placeholder}">
+                </div>
+                <div class="field-card" style="grid-column: 1 / -1;">
+                  <div class="field-head">
+                    <label>卡片摘要</label>
+                    <span class="${measureLength(card.summary || "") > recommendLength("summary") ? "field-counter is-over" : "field-counter"}">${measureLength(card.summary || "")}/${recommendLength("summary")}</span>
+                  </div>
+                  <small>首页目前建议只保留一行语义，说明内容方向即可。</small>
+                  <textarea rows="3" data-gallery-field="summary" data-gallery-index="${index}" placeholder="${schemaCard.summary_placeholder}">${card.summary || ""}</textarea>
+                </div>
+                <div class="field-card">
+                  <div class="field-head">
+                    <label>上线状态</label>
+                    <span class="field-counter">${card.status === "live" ? "已上线" : "敬请期待"}</span>
+                  </div>
+                  <small>未上线时首页显示“敬请期待”；已上线时会指向详情模板页。</small>
+                  <select data-gallery-field="status" data-gallery-index="${index}">${statusOptions}</select>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return cards;
+      }
+
       function renderImageSection() {
         const cards = imageSchema.map((image) => {
           const path = workingContent.images[image.key] || "";
@@ -1400,6 +1621,10 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           workspace.innerHTML = renderImageSection();
           return;
         }
+        if (currentSection.id === gallerySection.id) {
+          workspace.innerHTML = renderGallerySection();
+          return;
+        }
         workspace.innerHTML = renderTextSection(currentSection);
       }
 
@@ -1426,6 +1651,20 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         queuePreviewAssetValidation();
       }
 
+      function updateGalleryField(index, key, value) {
+        galleryCards()[index][key] = value;
+        setDirty(true, "宠物用品画廊卡片已更新，保存后首页会同步读取。");
+        renderWorkspace();
+        queuePreviewAssetValidation();
+      }
+
+      function updateGalleryImage(index, value) {
+        galleryCards()[index].image = value;
+        setDirty(true, "画廊卡片图片已更新，保存后首页会同步读取。");
+        renderWorkspace();
+        queuePreviewAssetValidation();
+      }
+
       async function uploadImage(key, file) {
         const status = document.getElementById("save-status");
         status.textContent = "正在上传图片...";
@@ -1448,6 +1687,32 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const payload = await response.json();
         workingContent.images[key] = payload.path;
         setDirty(true, `图片已上传：${payload.path}`);
+        renderWorkspace();
+        queuePreviewAssetValidation();
+      }
+
+      async function uploadGalleryImage(index, file) {
+        const status = document.getElementById("save-status");
+        status.textContent = "正在上传画廊图片...";
+        const buffer = await file.arrayBuffer();
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+        bytes.forEach((value) => { binary += String.fromCharCode(value); });
+        const response = await fetch("/admin/api/assets", {
+          method: "POST",
+          headers: buildHeaders(),
+          body: JSON.stringify({
+            filename: file.name,
+            content_base64: btoa(binary),
+          }),
+        });
+        if (!response.ok) {
+          status.textContent = "画廊图片上传失败，请重试。";
+          return;
+        }
+        const payload = await response.json();
+        galleryCards()[index].image = payload.path;
+        setDirty(true, `画廊图片已上传：${payload.path}`);
         renderWorkspace();
         queuePreviewAssetValidation();
       }
@@ -1589,12 +1854,26 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           return;
         }
 
+        const galleryUploadTrigger = event.target.closest("[data-gallery-upload-trigger]");
+        if (galleryUploadTrigger) {
+          const index = galleryUploadTrigger.dataset.galleryUploadTrigger;
+          const input = document.getElementById(`gallery-file-${index}`);
+          if (input) input.click();
+          return;
+        }
+
         const clearImage = event.target.closest("[data-clear-image]");
         if (clearImage) {
           workingContent.images[clearImage.dataset.clearImage] = "";
           setDirty(true, "图片已清空，保存后生效。");
           renderWorkspace();
           queuePreviewAssetValidation();
+          return;
+        }
+
+        const clearGalleryImage = event.target.closest("[data-gallery-clear-image]");
+        if (clearGalleryImage) {
+          updateGalleryImage(Number(clearGalleryImage.dataset.galleryClearImage), "");
         }
       });
 
@@ -1607,13 +1886,33 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const imageField = event.target.closest("[data-image-field]");
         if (imageField) {
           updateImageField(imageField.dataset.imageField, imageField.value);
+          return;
+        }
+        const galleryField = event.target.closest("[data-gallery-field]");
+        if (galleryField) {
+          updateGalleryField(Number(galleryField.dataset.galleryIndex), galleryField.dataset.galleryField, galleryField.value);
+          return;
+        }
+        const galleryImageField = event.target.closest("[data-gallery-image-field]");
+        if (galleryImageField) {
+          updateGalleryImage(Number(galleryImageField.dataset.galleryImageField), galleryImageField.value);
         }
       });
 
       document.addEventListener("change", (event) => {
+        const gallerySelect = event.target.closest("select[data-gallery-field]");
+        if (gallerySelect) {
+          updateGalleryField(Number(gallerySelect.dataset.galleryIndex), gallerySelect.dataset.galleryField, gallerySelect.value);
+          return;
+        }
         const fileInput = event.target.closest("[data-image-upload]");
         if (fileInput && fileInput.files && fileInput.files[0]) {
           uploadImage(fileInput.dataset.imageUpload, fileInput.files[0]);
+          return;
+        }
+        const galleryFileInput = event.target.closest("[data-gallery-image-upload]");
+        if (galleryFileInput && galleryFileInput.files && galleryFileInput.files[0]) {
+          uploadGalleryImage(Number(galleryFileInput.dataset.galleryImageUpload), galleryFileInput.files[0]);
         }
       });
 
@@ -1640,6 +1939,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         .replace("__CONTENT_JSON__", json.dumps(content, ensure_ascii=False))
         .replace("__EDITOR_SCHEMA__", json.dumps(EDITOR_SCHEMA, ensure_ascii=False))
         .replace("__IMAGE_SCHEMA__", json.dumps(IMAGE_SCHEMA, ensure_ascii=False))
+        .replace("__GALLERY_SCHEMA__", json.dumps(GALLERY_SECTION, ensure_ascii=False))
         .replace("__META_JSON__", json.dumps(admin_meta or {"updated_at": None, "history": []}, ensure_ascii=False))
         .replace("__TOKEN_JSON__", json.dumps(auth_token or "", ensure_ascii=False))
     )

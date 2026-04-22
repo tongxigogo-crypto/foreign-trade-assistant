@@ -262,3 +262,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - learnings:
   - If the design goal is a clean centered stage title, prefer a normal `h2` over a pretext heading when the text is short and the surrounding block is already visually rich.
   - Keep pretext on supporting copy or smaller subheads where motion adds texture without destabilizing the headline's shape.
+
+## [2026-04-22 18:05:00] external-v66-gallery-management-and-template-seo
+
+- status: confirmed_working
+- summary: For the external V6.6 flow, pet product content should be managed as a dedicated gallery-card object in the backend, with one reusable template page and lightweight SEO files added directly to the external publish directory.
+- learnings:
+  - `pet_products_gallery.cards[4]` is the right shape for this phase: image, cover label, cover title, title, summary, tag, and status are enough to make the homepage editable without prematurely building full detail-page CMS complexity.
+  - When the real homepage source lives outside the repo, complete the loop by syncing both the external `site-content.json` and the external HTML/template files, not just the repo code.
+  - A single `pet-product-template.html` plus `robots.txt` and `sitemap.xml` in the external directory is a pragmatic first SEO scaffold before real per-product pages exist.

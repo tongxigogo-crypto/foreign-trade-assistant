@@ -52,6 +52,67 @@ DEFAULT_CONTENT: dict[str, Any] = {
         "home.pet_trade": "",
         "home.mini_program": "",
     },
+    "pet_products_gallery": {
+        "cards": [
+            {
+                "id": "harness",
+                "image": "",
+                "cover_label": "",
+                "cover_title": "",
+                "title": "",
+                "summary": "",
+                "tag": "",
+                "status": "coming_soon",
+            },
+            {
+                "id": "toys",
+                "image": "",
+                "cover_label": "",
+                "cover_title": "",
+                "title": "",
+                "summary": "",
+                "tag": "",
+                "status": "coming_soon",
+            },
+            {
+                "id": "leash",
+                "image": "",
+                "cover_label": "",
+                "cover_title": "",
+                "title": "",
+                "summary": "",
+                "tag": "",
+                "status": "coming_soon",
+            },
+            {
+                "id": "beds",
+                "image": "",
+                "cover_label": "",
+                "cover_title": "",
+                "title": "",
+                "summary": "",
+                "tag": "",
+                "status": "coming_soon",
+            },
+        ],
+    },
+    "pet_product_template": {
+        "path": "./pet-product-template.html",
+        "title": "",
+        "intro": "",
+        "sections": {
+            "story_title": "",
+            "story_body": "",
+            "spec_title": "",
+            "spec_body": "",
+            "use_case_title": "",
+            "use_case_body": "",
+        },
+        "seo": {
+            "title": "",
+            "description": "",
+        },
+    },
 }
 
 
@@ -75,26 +136,37 @@ class ContentStore:
         self.meta_path = self.content_dir / "site-content.meta.json"
         self.upload_dir = site_dir / "assets" / "uploads"
 
+    def _merge_content(self, payload: dict[str, Any]) -> dict[str, Any]:
+        merged = copy.deepcopy(self.default_content)
+        merged["strings"].update(payload.get("strings", {}))
+        merged["images"].update(payload.get("images", {}))
+        incoming_gallery = payload.get("pet_products_gallery", {})
+        incoming_cards = incoming_gallery.get("cards", [])
+        base_cards = copy.deepcopy(merged["pet_products_gallery"]["cards"])
+        for index, card in enumerate(base_cards):
+            if index < len(incoming_cards) and isinstance(incoming_cards[index], dict):
+                card.update(incoming_cards[index])
+        merged["pet_products_gallery"] = {"cards": base_cards}
+        incoming_template = payload.get("pet_product_template", {})
+        merged["pet_product_template"].update(
+            {key: value for key, value in incoming_template.items() if key != "sections" and key != "seo"}
+        )
+        merged["pet_product_template"]["sections"].update(incoming_template.get("sections", {}))
+        merged["pet_product_template"]["seo"].update(incoming_template.get("seo", {}))
+        return merged
+
     def load(self) -> dict[str, Any]:
         if not self.content_path.exists():
             if self.source_html_path and self.source_html_path.exists() and self.extract_callback:
                 extracted = self.extract_callback(self.source_html_path.read_text(encoding="utf-8"))
-                merged = copy.deepcopy(self.default_content)
-                merged["strings"].update(extracted.get("strings", {}))
-                merged["images"].update(extracted.get("images", {}))
-                return merged
+                return self._merge_content(extracted)
             return copy.deepcopy(self.default_content)
         with self.content_path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
-        merged = copy.deepcopy(self.default_content)
-        merged["strings"].update(data.get("strings", {}))
-        merged["images"].update(data.get("images", {}))
-        return merged
+        return self._merge_content(data)
 
     def save(self, payload: dict[str, Any]) -> dict[str, Any]:
-        data = copy.deepcopy(self.default_content)
-        data["strings"].update(payload.get("strings", {}))
-        data["images"].update(payload.get("images", {}))
+        data = self._merge_content(payload)
         now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
         self.content_dir.mkdir(parents=True, exist_ok=True)

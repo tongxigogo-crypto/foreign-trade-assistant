@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SITE_DIR = ROOT / "website_from_playground"
 EXTERNAL_V66 = Path(r"C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html")
+EXTERNAL_TEMPLATE = Path(r"C:\Users\Administrator\Desktop\preson\pet-product-template.html")
 
 
 class PersonalSiteRebuildTests(unittest.TestCase):
@@ -102,6 +103,16 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('class="use-pretext" style="color: #0F172A;">', html)
         self.assertGreaterEqual(html.count('class="pet-gallery-link is-coming"'), 4)
         self.assertNotIn("查看详情", html)
+
+    def test_external_pet_product_template_has_basic_seo_shell(self) -> None:
+        html = EXTERNAL_TEMPLATE.read_text(encoding="utf-8")
+
+        self.assertIn('<meta name="description"', html)
+        self.assertIn('<link rel="canonical"', html)
+        self.assertIn('application/ld+json', html)
+        self.assertIn('Pet Product Template', html)
+        self.assertIn('/api/content', html)
+        self.assertIn('product-hero-image', html)
 
 
 if __name__ == "__main__":

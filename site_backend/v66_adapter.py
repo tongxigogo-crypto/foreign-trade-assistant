@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import re
+from html import escape
 from typing import Callable
 
 IMAGE_PATH_FIXUPS = {
@@ -38,6 +39,67 @@ V66_DEFAULT_CONTENT = {
         "home.pet_trade": "./小Q和豆子/小Q介绍.png",
         "home.mini_program": "./小Q和豆子/豆子感谢.png",
     },
+    "pet_products_gallery": {
+        "cards": [
+            {
+                "id": "harness",
+                "image": "./小Q和豆子/小Q介绍.png",
+                "cover_label": "Harness Guide",
+                "cover_title": "胸背带",
+                "title": "胸背带内容位",
+                "summary": "后续会补入材质、尺寸、MOQ 与适用场景。",
+                "tag": "Material / MOQ",
+                "status": "coming_soon",
+            },
+            {
+                "id": "toys",
+                "image": "./小Q和豆子/豆子感谢.png",
+                "cover_label": "Selection Notes",
+                "cover_title": "玩具选品",
+                "title": "玩具选品内容位",
+                "summary": "后续会补入安全性、材质差异与出口沟通点。",
+                "tag": "Selection / SEO",
+                "status": "coming_soon",
+            },
+            {
+                "id": "leash",
+                "image": "./小Q和豆子/走秀.png",
+                "cover_label": "Leash Notes",
+                "cover_title": "牵引绳",
+                "title": "牵引绳内容位",
+                "summary": "后续会补入长度规格、五金方案与包装信息。",
+                "tag": "Hardware / Use Case",
+                "status": "coming_soon",
+            },
+            {
+                "id": "beds",
+                "image": "./小Q和豆子/豆子.png",
+                "cover_label": "Bed & Fabric",
+                "cover_title": "窝垫布艺",
+                "title": "窝垫布艺内容位",
+                "summary": "后续会补入布料、填充、清洁方式与场景说明。",
+                "tag": "Editorial Shelf",
+                "status": "coming_soon",
+            },
+        ],
+    },
+    "pet_product_template": {
+        "path": "./pet-product-template.html",
+        "title": "宠物用品内容模板",
+        "intro": "先用一套统一模板承接后续内容，等后台内容稳定后，再扩展成独立详情页。",
+        "sections": {
+            "story_title": "产品故事",
+            "story_body": "这里放产品定位、材质选择和适用场景，保持品牌气质与业务信息一起出现。",
+            "spec_title": "规格与沟通点",
+            "spec_body": "这里放 MOQ、尺寸、五金、包装等适合外贸询盘使用的关键信息。",
+            "use_case_title": "使用场景",
+            "use_case_body": "这里放宠物使用环境、用户感知和后续图文素材建议。",
+        },
+        "seo": {
+            "title": "Tong工作室 | 宠物用品内容模板",
+            "description": "Tong工作室宠物用品内容模板，用于后续发布胸背带、牵引绳、玩具选品和窝垫布艺等内容页。",
+        },
+    },
 }
 
 
@@ -57,10 +119,70 @@ def extract_content(html: str) -> dict:
     return copy.deepcopy(V66_DEFAULT_CONTENT)
 
 
+def _gallery_status_markup(status: str, template_path: str, card_id: str) -> str:
+    if status == "live":
+        href = f"{template_path}#{escape(card_id)}"
+        return f'<a class="pet-gallery-link" href="{href}"><span>已上线</span><span>→</span></a>'
+    return '<span class="pet-gallery-link is-coming"><span>敬请期待</span><span>·</span></span>'
+
+
+def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
+    shape_a_styles = [
+        "",
+        ' style="background: radial-gradient(circle at 40% 40%, rgba(14,165,233,0.48), rgba(14,165,233,0.08));"',
+        ' style="background: radial-gradient(circle at 40% 40%, rgba(167,139,250,0.48), rgba(167,139,250,0.08));"',
+        ' style="background: radial-gradient(circle at 40% 40%, rgba(34,197,94,0.42), rgba(34,197,94,0.08));"',
+    ]
+    shape_b_styles = [
+        "",
+        ' style="background: radial-gradient(circle at 50% 50%, rgba(45,212,191,0.34), rgba(45,212,191,0.06));"',
+        ' style="background: radial-gradient(circle at 50% 50%, rgba(236,72,153,0.28), rgba(236,72,153,0.06));"',
+        ' style="background: radial-gradient(circle at 50% 50%, rgba(59,130,246,0.24), rgba(59,130,246,0.06));"',
+    ]
+    shape_a = shape_a_styles[index] if index < len(shape_a_styles) else ""
+    shape_b = shape_b_styles[index] if index < len(shape_b_styles) else ""
+    status_markup = _gallery_status_markup(card.get("status", "coming_soon"), template_path, card.get("id", f"card-{index + 1}"))
+    return f"""
+                        <article class="pet-gallery-card">
+                            <div class="pet-gallery-cover">
+                                <img class="pet-gallery-image" src="{escape(card.get("image", ""))}" alt="{escape(card.get("title", ""))} 封面图" loading="lazy" decoding="async">
+                                <div class="pet-gallery-shape a"{shape_a}></div>
+                                <div class="pet-gallery-shape b"{shape_b}></div>
+                                <div class="pet-gallery-shape c"></div>
+                                <div class="pet-gallery-layout">
+                                    <div class="pet-gallery-cover-chip">{escape(card.get("cover_label", ""))}</div>
+                                    <div class="pet-gallery-number">{index + 1:02d}</div>
+                                    <div class="pet-gallery-cover-title">{escape(card.get("cover_title", ""))}</div>
+                                </div>
+                            </div>
+                            <div class="pet-gallery-copy">
+                                <h3 class="use-pretext" style="color: #0F172A;">{escape(card.get("title", ""))}</h3>
+                                <p class="use-pretext" style="color: #64748b;">{escape(card.get("summary", ""))}</p>
+                                <div class="pet-gallery-footer">
+                                    <div class="pet-gallery-tag">{escape(card.get("tag", ""))}</div>
+                                    {status_markup}
+                                </div>
+                            </div>
+                        </article>"""
+
+
 def apply_content(html: str, content: dict) -> str:
     zh = content.get("strings", {}).get("zh", {})
     raw_images = content.get("images", {})
     images = {key: IMAGE_PATH_FIXUPS.get(value, value) for key, value in raw_images.items()}
+    gallery = copy.deepcopy(V66_DEFAULT_CONTENT["pet_products_gallery"])
+    incoming_gallery = content.get("pet_products_gallery", {})
+    for index, card in enumerate(gallery["cards"]):
+        incoming_cards = incoming_gallery.get("cards", [])
+        if index < len(incoming_cards) and isinstance(incoming_cards[index], dict):
+            card.update(incoming_cards[index])
+            if card.get("image"):
+                card["image"] = IMAGE_PATH_FIXUPS.get(card["image"], card["image"])
+    template = copy.deepcopy(V66_DEFAULT_CONTENT["pet_product_template"])
+    incoming_template = content.get("pet_product_template", {})
+    template.update({key: value for key, value in incoming_template.items() if key not in {"sections", "seo"}})
+    template["sections"].update(incoming_template.get("sections", {}))
+    template["seo"].update(incoming_template.get("seo", {}))
 
     html = _replace(
         r'(<div class="text-2xl font-black tracking-tighter text-gray-900">)(.*?)(</div>)',
@@ -133,6 +255,16 @@ def apply_content(html: str, content: dict) -> str:
     for idx, src in enumerate(slots):
         html = _replace_nth(local_img_pattern, html, lambda m, src=src: f'{m.group(1)}{src}{m.group(3)}', idx)
 
+    gallery_markup = "\n".join(
+        _gallery_card_markup(card, index, template.get("path", "./pet-product-template.html"))
+        for index, card in enumerate(gallery["cards"])
+    )
+    html = _replace(
+        r'(<div class="pet-gallery-row">)(.*?)(</div>\s*<div class="pet-gallery-note">)',
+        html,
+        rf"\1{gallery_markup}\3",
+    )
+
     return html
 
 
@@ -147,6 +279,8 @@ PREVIEW_SCRIPT = """
   try { payload = JSON.parse(raw); } catch { return; }
   const zh = payload?.strings?.zh || {};
   const images = payload?.images || {};
+  const gallery = payload?.pet_products_gallery?.cards || [];
+  const templatePath = payload?.pet_product_template?.path || './pet-product-template.html';
   const setHtml = (selector, value, index = 0) => {
     const nodes = document.querySelectorAll(selector);
     const node = nodes[index];
@@ -182,6 +316,42 @@ PREVIEW_SCRIPT = """
   setSrc('.workspace-shot img', images['home.trade_assistant']);
   setSrc('.ip-card-portrait img', images['home.pet_trade'], 0);
   setSrc('.ip-card-portrait img', images['home.mini_program'], 1);
+  gallery.forEach((card, index) => {
+    setSrc('#pet-products-gallery .pet-gallery-image', card.image, index);
+    setText('#pet-products-gallery .pet-gallery-cover-chip', card.cover_label, index);
+    setText('#pet-products-gallery .pet-gallery-cover-title', card.cover_title, index);
+    setText('#pet-products-gallery .pet-gallery-copy h3.use-pretext', card.title, index);
+    setText('#pet-products-gallery .pet-gallery-copy p.use-pretext', card.summary, index);
+    setText('#pet-products-gallery .pet-gallery-tag', card.tag, index);
+    const links = document.querySelectorAll('#pet-products-gallery .pet-gallery-footer .pet-gallery-link');
+    const node = links[index];
+    if (!node) return;
+    if (card.status === 'live') {
+      if (node.tagName === 'A') {
+        node.classList.remove('is-coming');
+        node.setAttribute('href', `${templatePath}#${card.id || `card-${index + 1}`}`);
+        node.innerHTML = '<span>已上线</span><span>→</span>';
+      } else {
+        const replacement = document.createElement('a');
+        replacement.className = 'pet-gallery-link';
+        replacement.href = `${templatePath}#${card.id || `card-${index + 1}`}`;
+        replacement.innerHTML = '<span>已上线</span><span>→</span>';
+        node.replaceWith(replacement);
+      }
+      return;
+    }
+    if (card.status !== 'live') {
+      node.classList.add('is-coming');
+      if (node.tagName === 'A') {
+        const replacement = document.createElement('span');
+        replacement.className = 'pet-gallery-link is-coming';
+        replacement.innerHTML = '<span>敬请期待</span><span>·</span>';
+        node.replaceWith(replacement);
+      } else {
+        node.innerHTML = '<span>敬请期待</span><span>·</span>';
+      }
+    }
+  });
 })();
 </script>
 """
