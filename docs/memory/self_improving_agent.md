@@ -193,3 +193,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - If the user names a specific local publish artifact such as `C:\\Users\\Administrator\\Desktop\\preson\\indexV6.6_refined.html`, treat that file as the homepage source of truth for preview and save flows until told otherwise.
   - Do not assume the repo's static demo site is the publish target just because it already has a backend scaffold.
   - When the real publish source is a standalone HTML file, prefer serving that file directly through the local backend and syncing admin saves back into the same file, instead of maintaining a disconnected parallel preview target.
+
+## [2026-04-22 13:58:00] v66-preview-chinese-asset-paths
+
+- status: confirmed_working
+- summary: When the admin preview targets the external V6.6 HTML, Chinese image paths need two protections: normalize previously corrupted JSON image values, and normalize WSGI `PATH_INFO` before resolving static files.
+- learnings:
+  - `wsgiref.simple_server` on Windows can surface percent-encoded or mojibake `PATH_INFO`; recover by attempting `latin-1 -> utf-8` decoding and then `unquote` before mapping to disk.
+  - If earlier saves produced corrupted values in `site-content.json`, keep a small fixup map in the V6.6 adapter so preview and sync do not strand existing content entries.
+  - When local preview behavior appears unchanged after a fix, first check for multiple `site_backend.server` processes; stale instances can mask a correct code change and make debugging look inconsistent.

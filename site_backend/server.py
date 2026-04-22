@@ -4,6 +4,7 @@ import mimetypes
 import os
 from pathlib import Path
 from typing import Callable, Iterable
+from urllib.parse import unquote
 from wsgiref.simple_server import make_server
 
 from .app import create_app
@@ -11,6 +12,15 @@ from .content_store import ContentStore
 from .v66_adapter import PREVIEW_SCRIPT, V66_DEFAULT_CONTENT, apply_content, extract_content
 
 StartResponse = Callable[[str, list[tuple[str, str]]], None]
+
+
+def _normalize_path_info(raw_path: str) -> str:
+    path = str(raw_path or "/")
+    try:
+        path = path.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        pass
+    return unquote(path)
 
 
 def create_site_server(root_dir: Path, admin_password: str | None = None, session_secret: str | None = None):
@@ -37,7 +47,7 @@ def create_site_server(root_dir: Path, admin_password: str | None = None, sessio
     )
 
     def app(environ: dict, start_response: StartResponse) -> Iterable[bytes]:
-        path = str(environ.get("PATH_INFO", "/"))
+        path = _normalize_path_info(str(environ.get("PATH_INFO", "/")))
         if path.startswith("/api/") or path == "/admin" or path.startswith("/admin/"):
             return backend_app(environ, start_response)
 

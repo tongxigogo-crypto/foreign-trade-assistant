@@ -4,6 +4,11 @@ import copy
 import re
 from typing import Callable
 
+IMAGE_PATH_FIXUPS = {
+    "./灏廞鍜岃眴瀛?璞嗗瓙鎰熻阿.png": "./小Q和豆子/豆子感谢.png",
+    "./灏廞鍜岃眴瀛?APP.png": "./小Q和豆子/APP.png",
+    "./灏廞鍜岃眴瀛?灏廞浠嬬粛.png": "./小Q和豆子/小Q介绍.png",
+}
 
 V66_DEFAULT_CONTENT = {
     "strings": {
@@ -54,7 +59,8 @@ def extract_content(html: str) -> dict:
 
 def apply_content(html: str, content: dict) -> str:
     zh = content.get("strings", {}).get("zh", {})
-    images = content.get("images", {})
+    raw_images = content.get("images", {})
+    images = {key: IMAGE_PATH_FIXUPS.get(value, value) for key, value in raw_images.items()}
 
     html = _replace(
         r'(<div class="text-2xl font-black tracking-tighter text-gray-900">)(.*?)(</div>)',
@@ -179,4 +185,3 @@ PREVIEW_SCRIPT = """
 })();
 </script>
 """
-
