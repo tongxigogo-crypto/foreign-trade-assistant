@@ -211,3 +211,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - For this local CMS flow, the most actionable preview hints are: whether preview will use draft content, how many text/image changes differ from the saved version, and whether each managed image path responds successfully from the local server.
   - When preview can open an unsaved draft safely, use a lightweight confirmation modal only when there are draft changes or asset risks; otherwise open preview directly.
   - Image-path checks can stay entirely client-side in the admin page by fetching the same-origin asset URL that the preview page will use.
+
+## [2026-04-22 15:05:00] external-v66-seo-first-pass
+
+- status: confirmed_working
+- summary: For the external `indexV6.6_refined.html`, the highest-value first SEO pass is not a framework migration but a machine-readable layer added directly to the existing single-file homepage.
+- learnings:
+  - Prioritize `head` metadata, `JSON-LD`, precise `alt` text, and `aria-label` on the real `h1` before touching broader architecture.
+  - In this project phase, keep the scrollytelling DOM and GSAP logic intact; add semantics around the existing structure instead of refactoring the page into a new stack.
+  - A useful "framework optimization" inside the current static architecture is resource prioritization: keep above-the-fold mascot/product imagery high-priority and move below-the-fold IP imagery to `loading="lazy"` with async decoding.

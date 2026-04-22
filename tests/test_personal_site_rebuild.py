@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE_DIR = ROOT / "website_from_playground"
+EXTERNAL_V66 = Path(r"C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html")
 
 
 class PersonalSiteRebuildTests(unittest.TestCase):
@@ -76,6 +77,19 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("个人网站", llms)
         self.assertIn("Tongxi Fairy Lab", agent)
         self.assertIn("site profile", openapi.lower())
+
+    def test_external_v66_has_core_seo_semantics(self) -> None:
+        html = EXTERNAL_V66.read_text(encoding="utf-8")
+
+        self.assertIn('<meta name="description"', html)
+        self.assertIn('<link rel="canonical"', html)
+        self.assertIn('application/ld+json', html)
+        self.assertIn('SoftwareApplication', html)
+        self.assertIn('aria-label="把客户、报价、邮件和任务收回同一个工作台"', html)
+        self.assertIn('alt="豆子核心 - 短尾巴柯基 3D 角色头像，代表系统底层逻辑与全局避障引擎"', html)
+        self.assertIn('alt="外贸助理 APP v0.1.1 界面，展示本地优先的客户询盘分析、多模型兼容与报价跟进工作流"', html)
+        self.assertIn('fetchpriority="high"', html)
+        self.assertIn('loading="lazy"', html)
 
 
 if __name__ == "__main__":
