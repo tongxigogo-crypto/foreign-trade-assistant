@@ -6,7 +6,7 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 DEFAULT_CONTENT: dict[str, Any] = {
@@ -56,8 +56,19 @@ DEFAULT_CONTENT: dict[str, Any] = {
 
 
 class ContentStore:
-    def __init__(self, site_dir: Path) -> None:
+    def __init__(
+        self,
+        site_dir: Path,
+        default_content: dict[str, Any] | None = None,
+        source_html_path: Path | None = None,
+        extract_callback: Callable[[str], dict[str, Any]] | None = None,
+        sync_callback: Callable[[str, dict[str, Any]], str] | None = None,
+    ) -> None:
         self.site_dir = site_dir
+        self.default_content = copy.deepcopy(default_content or DEFAULT_CONTENT)
+        self.source_html_path = source_html_path
+        self.extract_callback = extract_callback
+        self.sync_callback = sync_callback
         self.content_dir = site_dir / "content"
         self.content_path = self.content_dir / "site-content.json"
         self.backup_path = self.content_dir / "site-content.backup.json"
@@ -66,16 +77,22 @@ class ContentStore:
 
     def load(self) -> dict[str, Any]:
         if not self.content_path.exists():
-            return copy.deepcopy(DEFAULT_CONTENT)
+            if self.source_html_path and self.source_html_path.exists() and self.extract_callback:
+                extracted = self.extract_callback(self.source_html_path.read_text(encoding="utf-8"))
+                merged = copy.deepcopy(self.default_content)
+                merged["strings"].update(extracted.get("strings", {}))
+                merged["images"].update(extracted.get("images", {}))
+                return merged
+            return copy.deepcopy(self.default_content)
         with self.content_path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
-        merged = copy.deepcopy(DEFAULT_CONTENT)
+        merged = copy.deepcopy(self.default_content)
         merged["strings"].update(data.get("strings", {}))
         merged["images"].update(data.get("images", {}))
         return merged
 
     def save(self, payload: dict[str, Any]) -> dict[str, Any]:
-        data = copy.deepcopy(DEFAULT_CONTENT)
+        data = copy.deepcopy(self.default_content)
         data["strings"].update(payload.get("strings", {}))
         data["images"].update(payload.get("images", {}))
         now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
@@ -86,6 +103,10 @@ class ContentStore:
         tmp_path = self.content_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         tmp_path.replace(self.content_path)
+        if self.source_html_path and self.sync_callback:
+            html = self.source_html_path.read_text(encoding="utf-8")
+            updated_html = self.sync_callback(html, data)
+            self.source_html_path.write_text(updated_html, encoding="utf-8")
         self._write_meta(now, "content_saved", "内容已保存")
         return data
 

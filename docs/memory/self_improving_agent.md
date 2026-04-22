@@ -184,3 +184,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Keep homepage text and homepage image overrides in one shared `website_from_playground/content/site-content.json` document, and make the frontend merge that data into its existing i18n object at boot.
   - Backend v1 should be useful on first open: provide a default content skeleton with keys like `hero_intro` and the managed image slots so the editor is not an empty JSON shell.
   - A minimal `site_backend/server.py` wrapper that serves both static files and `/admin` routes is enough for local operation and easier to verify than introducing a heavier deployment shape too early.
+
+## [2026-04-22 09:05:00] real-publish-source-vs-repo-demo-site
+
+- status: confirmed_rule
+- summary: Before wiring any admin preview or publish flow, verify the user's real release target. In this project, the real homepage source can live outside the repo and must not be silently substituted with an in-repo demo site.
+- learnings:
+  - If the user names a specific local publish artifact such as `C:\\Users\\Administrator\\Desktop\\preson\\indexV6.6_refined.html`, treat that file as the homepage source of truth for preview and save flows until told otherwise.
+  - Do not assume the repo's static demo site is the publish target just because it already has a backend scaffold.
+  - When the real publish source is a standalone HTML file, prefer serving that file directly through the local backend and syncing admin saves back into the same file, instead of maintaining a disconnected parallel preview target.

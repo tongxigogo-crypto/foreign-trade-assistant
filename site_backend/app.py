@@ -15,28 +15,28 @@ StartResponse = Callable[[str, list[tuple[str, str]]], None]
 EDITOR_SCHEMA = [
     {
         "id": "brand",
-        "label": "品牌信息",
-        "description": "维护站点名称与基础品牌说明。",
+        "label": "导航品牌",
+        "description": "维护导航栏里的品牌名称与产品副标题。",
         "fields": [
-            {"key": "brand_name", "label": "品牌名称", "type": "text", "placeholder": "Tongxi Fairy Lab"},
-            {"key": "brand_tagline", "label": "品牌副标题", "type": "textarea", "rows": 3, "placeholder": "宠物 IP · 工具产品 · 国际贸易准备"},
+            {"key": "brand_name", "label": "导航品牌名", "type": "text", "placeholder": "Tong Studio"},
+            {"key": "brand_tagline", "label": "导航副标题", "type": "text", "placeholder": "Trade Assistant APP"},
         ],
     },
     {
         "id": "hero",
-        "label": "首屏内容",
-        "description": "首屏标题区和引导文案。",
+        "label": "首屏工作台",
+        "description": "维护首屏主标题、说明和第二屏引导标题。",
         "fields": [
-            {"key": "hero_intro", "label": "首屏主介绍", "type": "textarea", "rows": 4},
-            {"key": "hero_bridge", "label": "业务关系说明", "type": "textarea", "rows": 4},
-            {"key": "hero_summary_title", "label": "首屏摘要标题", "type": "text"},
-            {"key": "hero_summary_body", "label": "首屏摘要正文", "type": "textarea", "rows": 4},
+            {"key": "hero_summary_title", "label": "首屏主标题", "type": "textarea", "rows": 3},
+            {"key": "hero_intro", "label": "首屏说明", "type": "textarea", "rows": 4},
+            {"key": "hero_bridge", "label": "功能区标题", "type": "textarea", "rows": 3},
+            {"key": "hero_summary_body", "label": "功能区说明", "type": "textarea", "rows": 4},
         ],
     },
     {
         "id": "pet-ip",
-        "label": "Pet IP",
-        "description": "管理宠物 IP 模块标题和说明。",
+        "label": "产品形象展示",
+        "description": "管理 Pet IP 展示区的标题和说明。",
         "fields": [
             {"key": "pet_ip_title", "label": "模块标题", "type": "text"},
             {"key": "pet_ip_body", "label": "模块正文", "type": "textarea", "rows": 5},
@@ -44,8 +44,8 @@ EDITOR_SCHEMA = [
     },
     {
         "id": "trade-assistant",
-        "label": "外贸助理",
-        "description": "管理外贸助理模块的标题与产品说明。",
+        "label": "功能卡 1",
+        "description": "对应功能扩展区第一张卡片。",
         "fields": [
             {"key": "trade_assistant_title", "label": "模块标题", "type": "text"},
             {"key": "trade_assistant_body", "label": "模块正文", "type": "textarea", "rows": 5},
@@ -53,8 +53,8 @@ EDITOR_SCHEMA = [
     },
     {
         "id": "pet-trade",
-        "label": "国际贸易",
-        "description": "管理国际贸易模块标题和业务方向说明。",
+        "label": "功能卡 2",
+        "description": "对应功能扩展区第二张卡片。",
         "fields": [
             {"key": "pet_trade_title", "label": "模块标题", "type": "text"},
             {"key": "pet_trade_body", "label": "模块正文", "type": "textarea", "rows": 5},
@@ -62,8 +62,8 @@ EDITOR_SCHEMA = [
     },
     {
         "id": "mini-program",
-        "label": "小程序开发",
-        "description": "管理小程序开发能力描述。",
+        "label": "功能卡 3",
+        "description": "对应功能扩展区第三张卡片。",
         "fields": [
             {"key": "mini_program_title", "label": "模块标题", "type": "text"},
             {"key": "mini_program_body", "label": "模块正文", "type": "textarea", "rows": 5},
@@ -71,8 +71,8 @@ EDITOR_SCHEMA = [
     },
     {
         "id": "contact",
-        "label": "联系方式",
-        "description": "管理联系模块标题和说明。",
+        "label": "收尾转化",
+        "description": "管理最后一屏的标题与说明。",
         "fields": [
             {"key": "contact_title", "label": "模块标题", "type": "text"},
             {"key": "contact_body", "label": "模块正文", "type": "textarea", "rows": 5},
@@ -1367,9 +1367,24 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
     )
 
 
-def create_app(root_dir: Path, admin_password: str, session_secret: str):
-    site_dir = root_dir / "website_from_playground"
-    store = ContentStore(site_dir)
+def create_app(
+    root_dir: Path,
+    admin_password: str,
+    session_secret: str,
+    site_dir: Path | None = None,
+    default_content: dict | None = None,
+    source_html_path: Path | None = None,
+    extract_callback=None,
+    sync_callback=None,
+):
+    resolved_site_dir = site_dir or (root_dir / "website_from_playground")
+    store = ContentStore(
+        resolved_site_dir,
+        default_content=default_content,
+        source_html_path=source_html_path,
+        extract_callback=extract_callback,
+        sync_callback=sync_callback,
+    )
 
     def app(environ: dict, start_response: StartResponse) -> Iterable[bytes]:
         method = str(environ.get("REQUEST_METHOD", "GET")).upper()
