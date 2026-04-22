@@ -229,3 +229,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Approved preview HTML files under `C:\\Users\\Administrator\\Desktop\\preson\\` are only review artifacts; the real completion step is copying the chosen visual language into the source-of-truth V6.6 file.
   - For external homepage regressions, use stable English markers or structural selectors in repo tests when possible; they are less fragile than repeatedly asserting long Chinese strings.
   - For content-led homepage additions in this project, prefer image-first editorial modules with a small DOM footprint so the section can extend brand narrative without disturbing the existing scrollytelling flow.
+
+## [2026-04-22 16:52:00] early-homepage-placeholder-content
+
+- status: confirmed_working
+- summary: During the site's early phase, new homepage content modules should explicitly present themselves as placeholders when there are no real detail pages yet, while still matching the visual language of the finished site.
+- learnings:
+  - For unfinished content systems, replace fake detail links with clear `敬请期待` states so the homepage does not imply missing pages already exist.
+  - A new image-led module needs the same `use-pretext` hooks as the rest of V6.6, otherwise it reads as bolted-on even if the layout is visually consistent.
+  - Using real local mascot/pet imagery as temporary covers is preferable to abstract gradients when the business already has recognizable brand assets and the backend content system will come later.

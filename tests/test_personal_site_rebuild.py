@@ -98,6 +98,10 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("Pet Product Stories", html)
         self.assertIn("Pet Products / Editorial Gallery", html)
         self.assertGreaterEqual(html.count('class="pet-gallery-card"'), 4)
+        self.assertGreaterEqual(html.count('class="pet-gallery-image"'), 4)
+        self.assertIn('class="use-pretext" style="color: #0F172A;">', html)
+        self.assertGreaterEqual(html.count('class="pet-gallery-link is-coming"'), 4)
+        self.assertNotIn("查看详情", html)
 
 
 if __name__ == "__main__":
