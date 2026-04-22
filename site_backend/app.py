@@ -570,6 +570,14 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         font-size: 12px;
         font-weight: 700;
       }
+      .status-chip.is-draft {
+        background: rgba(15, 111, 255, 0.12);
+        color: var(--accent);
+      }
+      .status-chip.is-risk {
+        background: rgba(180, 35, 24, 0.12);
+        color: #b42318;
+      }
       .status-chip.is-dirty {
         background: rgba(245, 158, 11, 0.14);
         color: #b45309;
@@ -666,6 +674,84 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         display: block;
         margin-bottom: 4px;
         color: #102f57;
+      }
+      .preview-state {
+        display: grid;
+        gap: 14px;
+      }
+      .preview-summary {
+        display: grid;
+        gap: 10px;
+      }
+      .preview-summary strong {
+        font-size: 15px;
+      }
+      .preview-summary span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .preview-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .preview-metric {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      .preview-metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      .preview-metric strong {
+        font-size: 22px;
+      }
+      .preview-assets {
+        display: grid;
+        gap: 10px;
+      }
+      .preview-asset {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      .preview-asset strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      .preview-asset span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+        word-break: break-all;
+      }
+      .preview-asset.ok {
+        border-color: rgba(11, 143, 98, 0.22);
+      }
+      .preview-asset.risk {
+        border-color: rgba(180, 35, 24, 0.22);
+        background: rgba(255, 244, 243, 0.92);
+      }
+      .preview-asset em {
+        display: inline-flex;
+        margin-top: 8px;
+        font-style: normal;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .preview-asset.ok em {
+        color: var(--success);
+      }
+      .preview-asset.risk em {
+        color: #b42318;
       }
       .ok-note {
         color: var(--success);
@@ -831,6 +917,10 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             <p id="preview-diff-ok" class="ok-note" hidden>当前草稿与最近保存版本一致，直接预览即可。</p>
           </div>
           <div class="inspector-panel">
+            <h3>预览状态</h3>
+            <div id="preview-state" class="preview-state"></div>
+          </div>
+          <div class="inspector-panel">
             <h3>运营建议</h3>
             <ul>
               <li>中文和英文内容分开维护，避免互相覆盖。</li>
@@ -848,6 +938,17 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         <div class="modal-actions">
           <button id="cancel-publish" type="button" class="ghost-button">取消</button>
           <button id="confirm-publish" type="button" class="button">确认发布</button>
+        </div>
+      </div>
+    </div>
+    <div id="preview-modal" class="modal" aria-hidden="true">
+      <div class="modal-card">
+        <h3>确认预览首页</h3>
+        <p id="preview-modal-copy">当前预览将带上草稿变更，仅用于查看前台效果，不会覆盖正式内容。</p>
+        <div id="preview-modal-list" class="warning-list" style="margin-top: 14px;"></div>
+        <div class="modal-actions">
+          <button id="cancel-preview" type="button" class="ghost-button">取消</button>
+          <button id="confirm-preview" type="button" class="button">继续预览</button>
         </div>
       </div>
     </div>
@@ -871,6 +972,8 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       let workingContent = JSON.parse(JSON.stringify(initialContent));
       let adminMeta = initialMeta || { updated_at: null, history: [] };
       let dirty = false;
+      let previewDiagnostics = { checking: false, checkedAt: null, assetChecks: [] };
+      let previewValidationTimer = null;
 
       function ensureShape() {
         if (!workingContent.strings) workingContent.strings = {};
@@ -973,6 +1076,12 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             });
           }
         });
+        (previewDiagnostics.assetChecks || []).filter((item) => !item.ok).forEach((item) => {
+          warnings.push({
+            title: item.label,
+            detail: item.detail || "当前图片在预览中可能无法正常加载。",
+          });
+        });
         return warnings;
       }
 
@@ -1055,6 +1164,141 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             <span>${formatTime(item.timestamp)}</span>
           </div>
         `).join("");
+      }
+
+      function getDiffStats() {
+        let textChanges = 0;
+        let imageChanges = 0;
+        for (const lang of ["zh", "en"]) {
+          for (const section of editorSchema) {
+            for (const field of section.fields) {
+              const before = savedContent.strings?.[lang]?.[field.key] || "";
+              const after = workingContent.strings?.[lang]?.[field.key] || "";
+              if (before !== after) textChanges += 1;
+            }
+          }
+        }
+        imageSchema.forEach((image) => {
+          const before = savedContent.images?.[image.key] || "";
+          const after = workingContent.images?.[image.key] || "";
+          if (before !== after) imageChanges += 1;
+        });
+        return { textChanges, imageChanges, totalChanges: textChanges + imageChanges };
+      }
+
+      function normalizeAssetPath(path) {
+        if (!path) return "";
+        if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) return path;
+        if (path.startsWith("./")) return `/${path.slice(2)}`;
+        if (path.startsWith("/")) return path;
+        return `/${path}`;
+      }
+
+      async function validateImageAssets() {
+        previewDiagnostics = { ...previewDiagnostics, checking: true };
+        renderPreviewStatus();
+        const assetChecks = await Promise.all(imageSchema.map(async (image) => {
+          const path = workingContent.images?.[image.key] || "";
+          if (!path) {
+            return { key: image.key, label: image.label, path, ok: false, detail: "当前未设置图片路径。" };
+          }
+          try {
+            const response = await fetch(normalizeAssetPath(path), { method: "GET", cache: "no-store" });
+            return {
+              key: image.key,
+              label: image.label,
+              path,
+              ok: response.ok,
+              detail: response.ok ? "预览时可正常加载。" : `预览加载失败（HTTP ${response.status}）。`,
+            };
+          } catch (error) {
+            return { key: image.key, label: image.label, path, ok: false, detail: "预览时无法读取这张图片。" };
+          }
+        }));
+        previewDiagnostics = { checking: false, checkedAt: new Date().toISOString(), assetChecks };
+        renderPreviewStatus();
+        return assetChecks;
+      }
+
+      function queuePreviewAssetValidation(immediate = false) {
+        if (previewValidationTimer) window.clearTimeout(previewValidationTimer);
+        if (immediate) return validateImageAssets();
+        previewDiagnostics = { ...previewDiagnostics, checking: true };
+        renderPreviewStatus();
+        previewValidationTimer = window.setTimeout(() => {
+          validateImageAssets();
+        }, 180);
+        return Promise.resolve(previewDiagnostics.assetChecks || []);
+      }
+
+      function renderPreviewStatus() {
+        const root = document.getElementById("preview-state");
+        const stats = getDiffStats();
+        const failedAssets = (previewDiagnostics.assetChecks || []).filter((item) => !item.ok);
+        const modeClass = failedAssets.length ? "status-chip is-risk" : stats.totalChanges ? "status-chip is-draft" : "status-chip";
+        const modeLabel = failedAssets.length ? "预览有素材风险" : stats.totalChanges ? "将以草稿预览" : "直接预览正式内容";
+        const summary = failedAssets.length
+          ? "检测到图片素材可能在预览里失效，建议先处理再打开首页预览。"
+          : stats.totalChanges
+            ? "当前预览会带上未保存草稿，但不会覆盖正式内容。"
+            : "当前没有草稿差异，预览结果会与已保存内容一致。";
+        const checkedAt = previewDiagnostics.checkedAt ? `上次检查：${formatTime(previewDiagnostics.checkedAt)}` : "尚未完成预览素材检查。";
+        const assets = (previewDiagnostics.assetChecks || []).length
+          ? previewDiagnostics.assetChecks.map((item) => `
+            <div class="preview-asset ${item.ok ? "ok" : "risk"}">
+              <strong>${item.label}</strong>
+              <span>${item.path || "未设置路径"}</span>
+              <em>${item.detail}</em>
+            </div>
+          `).join("")
+          : `<div class="preview-asset"><strong>图片素材检查</strong><span>${previewDiagnostics.checking ? "正在检查..." : "还没有最新的预览检查结果。"}</span></div>`;
+        root.innerHTML = `
+          <div class="preview-summary">
+            <span class="${modeClass}">${modeLabel}</span>
+            <strong>预览内容和正式内容的关系已明确标注</strong>
+            <span>${summary}</span>
+            <span>${previewDiagnostics.checking ? "正在更新预览素材状态..." : checkedAt}</span>
+          </div>
+          <div class="preview-metrics">
+            <div class="preview-metric">
+              <span>文案变更</span>
+              <strong>${stats.textChanges}</strong>
+            </div>
+            <div class="preview-metric">
+              <span>图片变更</span>
+              <strong>${stats.imageChanges}</strong>
+            </div>
+          </div>
+          <div class="preview-assets">${assets}</div>
+        `;
+      }
+
+      function launchPreviewWindow() {
+        const diffs = collectDiffs();
+        window.localStorage.setItem("site_content_preview", JSON.stringify(workingContent));
+        if (diffs.length) {
+          setDirty(dirty, `预览首页将带上 ${diffs.length} 处草稿变更。`);
+        }
+        window.open("/?preview=1", "_blank");
+      }
+
+      function openPreviewModal(summary, items) {
+        document.getElementById("preview-modal-copy").textContent = summary;
+        document.getElementById("preview-modal-list").innerHTML = items.map((item) => `
+          <div class="warning-item">
+            <strong>${item.title}</strong>
+            <span>${item.detail}</span>
+          </div>
+        `).join("");
+        const modal = document.getElementById("preview-modal");
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closePreviewModal() {
+        const modal = document.getElementById("preview-modal");
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
       }
 
       function renderNav() {
@@ -1167,6 +1411,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         renderWarnings();
         renderDiffs();
         renderMeta();
+        renderPreviewStatus();
       }
 
       function updateTextField(key, value) {
@@ -1178,6 +1423,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         workingContent.images[key] = value;
         setDirty(true, "图片路径已更新，保存后前台才会读取到新内容。");
         renderWorkspace();
+        queuePreviewAssetValidation();
       }
 
       async function uploadImage(key, file) {
@@ -1203,6 +1449,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         workingContent.images[key] = payload.path;
         setDirty(true, `图片已上传：${payload.path}`);
         renderWorkspace();
+        queuePreviewAssetValidation();
       }
 
       async function saveContent() {
@@ -1224,6 +1471,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         await refreshMeta();
         setDirty(false, "已保存到内容文件。");
         renderAll();
+        await queuePreviewAssetValidation(true);
       }
 
       async function refreshMeta() {
@@ -1235,16 +1483,38 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         adminMeta = await response.json();
       }
 
-      function previewHome() {
-        const diffs = collectDiffs();
-        window.localStorage.setItem("site_content_preview", JSON.stringify(workingContent));
-        if (diffs.length) {
-          setDirty(dirty, `预览首页将带上 ${diffs.length} 处草稿变更。`);
+      async function previewHome() {
+        const assetChecks = await queuePreviewAssetValidation(true);
+        renderWarnings();
+        const stats = getDiffStats();
+        const failedAssets = (assetChecks || []).filter((item) => !item.ok);
+        const items = [];
+        if (stats.textChanges || stats.imageChanges) {
+          items.push({
+            title: "草稿预览",
+            detail: `这次预览将带上 ${stats.textChanges} 处文案变更和 ${stats.imageChanges} 处图片变更，不会覆盖正式首页。`,
+          });
         }
-        window.open("/?preview=1", "_blank");
+        failedAssets.forEach((item) => {
+          items.push({
+            title: item.label,
+            detail: item.detail || "当前图片在预览中可能无法正常加载。",
+          });
+        });
+        if (items.length) {
+          openPreviewModal(
+            failedAssets.length
+              ? "预览前检查到图片素材风险，你仍可以继续打开预览，但建议先处理这些问题。"
+              : "当前预览会使用草稿内容，仅用于查看前台效果，不会发布到正式页面。",
+            items,
+          );
+          return;
+        }
+        launchPreviewWindow();
       }
 
-      function runPreflightCheck() {
+      async function runPreflightCheck() {
+        await queuePreviewAssetValidation(true);
         renderWarnings();
         const warnings = collectWarnings();
         if (!warnings.length) {
@@ -1293,6 +1563,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         ensureShape();
         setDirty(false, "已恢复到最近保存版本。");
         renderAll();
+        queuePreviewAssetValidation();
       }
 
       document.addEventListener("click", (event) => {
@@ -1323,6 +1594,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           workingContent.images[clearImage.dataset.clearImage] = "";
           setDirty(true, "图片已清空，保存后生效。");
           renderWorkspace();
+          queuePreviewAssetValidation();
         }
       });
 
@@ -1352,8 +1624,14 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       document.getElementById("publish-content").addEventListener("click", openPublishModal);
       document.getElementById("cancel-publish").addEventListener("click", closePublishModal);
       document.getElementById("confirm-publish").addEventListener("click", publishContent);
+      document.getElementById("cancel-preview").addEventListener("click", closePreviewModal);
+      document.getElementById("confirm-preview").addEventListener("click", () => {
+        closePreviewModal();
+        launchPreviewWindow();
+      });
 
       renderAll();
+      queuePreviewAssetValidation(true);
     </script>
   </body>
 </html>"""

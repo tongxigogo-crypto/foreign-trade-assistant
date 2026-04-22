@@ -202,3 +202,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - `wsgiref.simple_server` on Windows can surface percent-encoded or mojibake `PATH_INFO`; recover by attempting `latin-1 -> utf-8` decoding and then `unquote` before mapping to disk.
   - If earlier saves produced corrupted values in `site-content.json`, keep a small fixup map in the V6.6 adapter so preview and sync do not strand existing content entries.
   - When local preview behavior appears unchanged after a fix, first check for multiple `site_backend.server` processes; stale instances can mask a correct code change and make debugging look inconsistent.
+
+## [2026-04-22 14:20:00] admin-preview-diagnostics-panel
+
+- status: confirmed_working
+- summary: The admin preview flow is safer when the sidebar shows draft-vs-published state and image asset reachability before opening the homepage preview.
+- learnings:
+  - For this local CMS flow, the most actionable preview hints are: whether preview will use draft content, how many text/image changes differ from the saved version, and whether each managed image path responds successfully from the local server.
+  - When preview can open an unsaved draft safely, use a lightweight confirmation modal only when there are draft changes or asset risks; otherwise open preview directly.
+  - Image-path checks can stay entirely client-side in the admin page by fetching the same-origin asset URL that the preview page will use.

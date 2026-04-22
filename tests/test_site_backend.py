@@ -239,6 +239,9 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("publish-content", html)
         self.assertIn("publish-modal", html)
         self.assertIn("preview-diff", html)
+        self.assertIn("preview-state", html)
+        self.assertIn("preview-modal", html)
+        self.assertIn("confirm-preview", html)
 
 
 if __name__ == "__main__":
