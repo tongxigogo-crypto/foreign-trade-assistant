@@ -280,3 +280,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - This phase benefits more from a stable reusable template structure than from generating multiple half-filled pages.
   - The admin must manage both homepage card fields and the shared detail-template copy, otherwise the homepage and template drift immediately.
   - For local smoke checks in this Windows setup, prefer checking stable ASCII markers like `data-template-field`, `pet-product-template`, and `entry-list` instead of relying on Chinese string matching in console output.
+
+## [2026-04-23 01:55:00] v66-editorial-rail-baseline
+
+- status: confirmed_working
+- summary: In the external V6.6 homepage, the pet-products editorial area works better as a horizontal content rail inside the same outer width shell used by the other major sections, with one explicit template-preview CTA instead of making every placeholder card clickable.
+- learnings:
+  - Use one shared outer shell token for scene 1 support elements, features, pet IP, gallery, and closing sections; keep the hero laptop itself intentionally narrower inside that shell.
+  - For early-stage gallery cards that are still `coming_soon`, keep their per-card state inert and provide a separate `查看模板预览` entry at the section-note level so the homepage has a clear jump target without implying full detail pages already exist.
+  - When a horizontal rail is introduced, lock it in with regression checks for `grid-auto-flow: column`, `overflow-x: auto`, the shared shell token, and the preview-template link.

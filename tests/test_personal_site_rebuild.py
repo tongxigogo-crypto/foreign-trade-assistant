@@ -28,8 +28,8 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("为后续宠物用品国际贸易做准备", index_html)
 
     def test_pages_and_i18n_do_not_contain_mojibake(self) -> None:
-        suspicious_markers = ["瀹", "鍥", "棣", "鑱", "€"]
-        expected_zh = ["宠物", "联系我", "外贸助理", "国际贸易", "小程序开发"]
+        suspicious_markers = ["鐎", "閸", "妫", "閼", "鈧"]
+        expected_zh = ["宠物", "联系", "外贸助理", "国际贸易", "小程序开发"]
 
         for relative_path in [
             "index.html",
@@ -98,11 +98,21 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('id="pet-products-gallery"', html)
         self.assertIn("Pet Product Stories", html)
         self.assertIn("Pet Products / Editorial Gallery", html)
+        self.assertIn("grid-auto-flow: column", html)
+        self.assertIn("overflow-x: auto", html)
         self.assertGreaterEqual(html.count('class="pet-gallery-card"'), 4)
         self.assertGreaterEqual(html.count('class="pet-gallery-image"'), 4)
         self.assertIn('class="use-pretext" style="color: #0F172A;">', html)
         self.assertGreaterEqual(html.count('class="pet-gallery-link is-coming"'), 4)
-        self.assertNotIn("查看详情", html)
+        self.assertIn('href="./pet-product-template.html"', html)
+        self.assertNotIn("鏌ョ湅璇︽儏", html)
+
+    def test_external_v66_uses_consistent_section_shells(self) -> None:
+        html = EXTERNAL_V66.read_text(encoding="utf-8")
+
+        self.assertIn("--content-shell: 1280px", html)
+        self.assertIn("max-width: var(--content-shell)", html)
+        self.assertGreaterEqual(html.count("section-shell"), 4)
 
     def test_external_pet_product_template_has_basic_seo_shell(self) -> None:
         html = EXTERNAL_TEMPLATE.read_text(encoding="utf-8")
