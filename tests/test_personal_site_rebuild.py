@@ -100,6 +100,8 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("Pet Products / Editorial Gallery", html)
         self.assertIn("grid-auto-flow: column", html)
         self.assertIn("overflow-x: auto", html)
+        self.assertIn("scrollbar-width: none", html)
+        self.assertIn("function initPetGalleryRail()", html)
         self.assertGreaterEqual(html.count('class="pet-gallery-card"'), 4)
         self.assertGreaterEqual(html.count('class="pet-gallery-image"'), 4)
         self.assertIn('class="use-pretext" style="color: #0F172A;">', html)
@@ -110,7 +112,7 @@ class PersonalSiteRebuildTests(unittest.TestCase):
     def test_external_v66_uses_consistent_section_shells(self) -> None:
         html = EXTERNAL_V66.read_text(encoding="utf-8")
 
-        self.assertIn("--content-shell: 1280px", html)
+        self.assertIn("--content-shell: 1400px", html)
         self.assertIn("max-width: var(--content-shell)", html)
         self.assertGreaterEqual(html.count("section-shell"), 4)
 

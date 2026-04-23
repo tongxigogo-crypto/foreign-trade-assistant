@@ -289,3 +289,11 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Use one shared outer shell token for scene 1 support elements, features, pet IP, gallery, and closing sections; keep the hero laptop itself intentionally narrower inside that shell.
   - For early-stage gallery cards that are still `coming_soon`, keep their per-card state inert and provide a separate `查看模板预览` entry at the section-note level so the homepage has a clear jump target without implying full detail pages already exist.
   - When a horizontal rail is introduced, lock it in with regression checks for `grid-auto-flow: column`, `overflow-x: auto`, the shared shell token, and the preview-template link.
+
+## [2026-04-23 02:12:00] v66-natural-gallery-motion
+
+- status: confirmed_working
+- summary: For the V6.6 pet-products rail, a visible scrollbar reads as unfinished; the better desktop behavior is a hidden-scrollbar editorial rail that auto-drifts gently, pauses on hover, and supports pointer dragging.
+- learnings:
+  - Keep the rail implementation lightweight: hide the scrollbar, use a simple requestAnimationFrame drift with edge reversal, and pause during hover or pointer drag instead of introducing a heavy marquee dependency.
+  - When the shared section shell is tightened too far, the first hero screen is the first place users feel it; widening the outer shell while slightly enlarging the laptop stage restores the intended desktop-first presence without undoing the aligned mid-page widths.
