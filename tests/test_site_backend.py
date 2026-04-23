@@ -227,6 +227,83 @@ class SiteBackendTests(unittest.TestCase):
         self.assertTrue(meta["updated_at"])
         self.assertGreaterEqual(len(meta["history"]), 1)
 
+    def test_extended_gallery_and_template_fields_persist_and_generate_discovery_files(self) -> None:
+        cookie = self._login_cookie()
+        payload = {
+            "pet_products_gallery": {
+                "cards": [
+                    {
+                        "id": "harness",
+                        "image": "./assets/uploads/harness.png",
+                        "cover_label": "Harness Guide",
+                        "cover_title": "Harness",
+                        "title": "Harness spotlight",
+                        "summary": "Lightweight homepage summary",
+                        "tag": "Material / MOQ",
+                        "status": "live",
+                        "entry_mode": "template",
+                    }
+                ]
+            },
+            "pet_product_template": {
+                "path": "./pet-product-template.html",
+                "eyebrow": "Pet Product Template",
+                "title": "Pet Product Content Template",
+                "intro": "Use one shared template before detailed product pages go live.",
+                "status_label": "Template Preview",
+                "cta_label": "Contact for Inquiry",
+                "cta_url": "mailto:tongxigogo@gmail.com",
+                "sections": {
+                    "story_title": "Product Story",
+                    "story_body": "Explain the product role and editorial angle.",
+                    "spec_title": "Specs & Notes",
+                    "spec_body": "MOQ, packaging, and quote-facing details.",
+                    "use_case_title": "Use Case",
+                    "use_case_body": "How this product is used in pet scenarios.",
+                    "care_title": "Care & Notes",
+                    "care_body": "Cleaning and sales reminders.",
+                },
+                "specs": [
+                    {"label": "MOQ", "value": "300 sets"},
+                    {"label": "Material", "value": "Oxford fabric"},
+                    {"label": "Packaging", "value": "Flat pack"},
+                ],
+                "seo": {
+                    "title": "Tong Studio | Pet Product Template",
+                    "description": "Template page for upcoming pet product detail content.",
+                    "canonical_path": "/pet-product-template.html",
+                },
+            },
+        }
+        status, _, _ = _request(
+            self.app,
+            "PUT",
+            "/admin/api/content",
+            body=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Cookie": cookie,
+            },
+        )
+        self.assertEqual(status, 200)
+
+        content_file = self.site_dir / "content" / "site-content.json"
+        persisted = json.loads(content_file.read_text(encoding="utf-8"))
+        first_card = persisted["pet_products_gallery"]["cards"][0]
+        self.assertEqual(first_card["entry_mode"], "template")
+        template = persisted["pet_product_template"]
+        self.assertEqual(template["eyebrow"], "Pet Product Template")
+        self.assertEqual(template["status_label"], "Template Preview")
+        self.assertEqual(template["cta_url"], "mailto:tongxigogo@gmail.com")
+        self.assertEqual(template["sections"]["care_title"], "Care & Notes")
+        self.assertEqual(template["specs"][1]["value"], "Oxford fabric")
+        self.assertEqual(template["seo"]["canonical_path"], "/pet-product-template.html")
+
+        robots = (self.site_dir / "robots.txt").read_text(encoding="utf-8")
+        sitemap = (self.site_dir / "sitemap.xml").read_text(encoding="utf-8")
+        self.assertIn("Sitemap:", robots)
+        self.assertIn("pet-product-template.html", sitemap)
+
     def test_asset_upload_writes_file_and_returns_relative_path(self) -> None:
         cookie = self._login_cookie()
         png_bytes = b"\x89PNG\r\n\x1a\nfake-image"

@@ -63,6 +63,7 @@ DEFAULT_CONTENT: dict[str, Any] = {
                 "summary": "",
                 "tag": "",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
             {
                 "id": "toys",
@@ -73,6 +74,7 @@ DEFAULT_CONTENT: dict[str, Any] = {
                 "summary": "",
                 "tag": "",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
             {
                 "id": "leash",
@@ -83,6 +85,7 @@ DEFAULT_CONTENT: dict[str, Any] = {
                 "summary": "",
                 "tag": "",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
             {
                 "id": "beds",
@@ -93,13 +96,18 @@ DEFAULT_CONTENT: dict[str, Any] = {
                 "summary": "",
                 "tag": "",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
         ],
     },
     "pet_product_template": {
         "path": "./pet-product-template.html",
+        "eyebrow": "",
         "title": "",
         "intro": "",
+        "status_label": "",
+        "cta_label": "",
+        "cta_url": "",
         "sections": {
             "story_title": "",
             "story_body": "",
@@ -107,10 +115,18 @@ DEFAULT_CONTENT: dict[str, Any] = {
             "spec_body": "",
             "use_case_title": "",
             "use_case_body": "",
+            "care_title": "",
+            "care_body": "",
         },
+        "specs": [
+            {"label": "", "value": ""},
+            {"label": "", "value": ""},
+            {"label": "", "value": ""},
+        ],
         "seo": {
             "title": "",
             "description": "",
+            "canonical_path": "",
         },
     },
 }
@@ -140,6 +156,7 @@ class ContentStore:
         merged = copy.deepcopy(self.default_content)
         merged["strings"].update(payload.get("strings", {}))
         merged["images"].update(payload.get("images", {}))
+
         incoming_gallery = payload.get("pet_products_gallery", {})
         incoming_cards = incoming_gallery.get("cards", [])
         base_cards = copy.deepcopy(merged["pet_products_gallery"]["cards"])
@@ -147,11 +164,19 @@ class ContentStore:
             if index < len(incoming_cards) and isinstance(incoming_cards[index], dict):
                 card.update(incoming_cards[index])
         merged["pet_products_gallery"] = {"cards": base_cards}
+
         incoming_template = payload.get("pet_product_template", {})
         merged["pet_product_template"].update(
-            {key: value for key, value in incoming_template.items() if key != "sections" and key != "seo"}
+            {key: value for key, value in incoming_template.items() if key not in {"sections", "specs", "seo"}}
         )
         merged["pet_product_template"]["sections"].update(incoming_template.get("sections", {}))
+
+        incoming_specs = incoming_template.get("specs", [])
+        base_specs = copy.deepcopy(merged["pet_product_template"]["specs"])
+        for index, spec in enumerate(base_specs):
+            if index < len(incoming_specs) and isinstance(incoming_specs[index], dict):
+                spec.update(incoming_specs[index])
+        merged["pet_product_template"]["specs"] = base_specs
         merged["pet_product_template"]["seo"].update(incoming_template.get("seo", {}))
         return merged
 
@@ -179,46 +204,61 @@ class ContentStore:
             html = self.source_html_path.read_text(encoding="utf-8")
             updated_html = self.sync_callback(html, data)
             self.source_html_path.write_text(updated_html, encoding="utf-8")
-        self._write_meta(now, "content_saved", "内容已保存")
+        self._write_discovery_files(data)
+        self._write_meta(now, "content_saved", "content_saved")
         return data
 
     def load_meta(self) -> dict[str, Any]:
         if not self.meta_path.exists():
-            return {
-                "updated_at": None,
-                "history": [],
-            }
+            return {"updated_at": None, "history": []}
         with self.meta_path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
-        return {
-            "updated_at": data.get("updated_at"),
-            "history": list(data.get("history", [])),
-        }
+        return {"updated_at": data.get("updated_at"), "history": list(data.get("history", []))}
 
     def publish(self) -> dict[str, Any]:
         updated_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
-        self._write_meta(updated_at, "content_published", "内容已发布")
+        self._write_discovery_files(self.load())
+        self._write_meta(updated_at, "content_published", "content_published")
         return self.load_meta()
 
     def _write_meta(self, updated_at: str, event: str, label: str) -> None:
         meta = self.load_meta()
         history = list(meta.get("history", []))
-        history.insert(
-            0,
-            {
-                "timestamp": updated_at,
-                "event": event,
-                "label": label,
-            },
-        )
-        payload = {
-            "updated_at": updated_at,
-            "history": history[:12],
-        }
+        history.insert(0, {"timestamp": updated_at, "event": event, "label": label})
+        payload = {"updated_at": updated_at, "history": history[:12]}
         self.content_dir.mkdir(parents=True, exist_ok=True)
         tmp_path = self.meta_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         tmp_path.replace(self.meta_path)
+
+    def _write_discovery_files(self, content: dict[str, Any]) -> None:
+        base_url = "https://tongstudio.example.com"
+        template_path = str(content.get("pet_product_template", {}).get("path") or "./pet-product-template.html")
+        template_url = f"{base_url}/{template_path.lstrip('./')}"
+        robots = "\n".join(
+            [
+                "User-agent: *",
+                "Allow: /",
+                f"Sitemap: {base_url}/sitemap.xml",
+                "",
+            ]
+        )
+        sitemap = "\n".join(
+            [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+                "  <url>",
+                f"    <loc>{base_url}/</loc>",
+                "  </url>",
+                "  <url>",
+                f"    <loc>{template_url}</loc>",
+                "  </url>",
+                "</urlset>",
+                "",
+            ]
+        )
+        (self.site_dir / "robots.txt").write_text(robots, encoding="utf-8")
+        (self.site_dir / "sitemap.xml").write_text(sitemap, encoding="utf-8")
 
     def save_asset(self, filename: str, content_base64: str) -> str:
         safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(filename).name).strip("-")

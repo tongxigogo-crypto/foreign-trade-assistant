@@ -297,3 +297,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
 - learnings:
   - Keep the rail implementation lightweight: hide the scrollbar, use a simple requestAnimationFrame drift with edge reversal, and pause during hover or pointer drag instead of introducing a heavy marquee dependency.
   - When the shared section shell is tightened too far, the first hero screen is the first place users feel it; widening the outer shell while slightly enlarging the laptop stage restores the intended desktop-first presence without undoing the aligned mid-page widths.
+
+## [2026-04-24 11:42:00] external-v66-template-fields-and-discovery-sync
+
+- status: confirmed_working
+- summary: The external V6.6 publishing flow now needs the homepage gallery, shared product template, and SEO discovery files to evolve together; extending only the backend schema is not enough unless the external content JSON, adapter, and generated `robots.txt` / `sitemap.xml` are synchronized in the same run.
+- learnings:
+  - For the current phase, each `pet_products_gallery` card should carry both `status` and `entry_mode`; `status=live` does not automatically mean the card should navigate, because early live cards may still be display-only.
+  - The shared `pet_product_template` object is materially more useful once it includes `eyebrow`, CTA fields, a care section, hero spec cards, and `seo.canonical_path`; otherwise the detail template becomes visually richer than the CMS can actually drive.
+  - After schema expansion, always re-save the external content through `ContentStore` so the external homepage HTML, `site-content.json`, `robots.txt`, and `sitemap.xml` stay aligned with the backend’s latest shape.

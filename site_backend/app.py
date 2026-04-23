@@ -1057,15 +1057,33 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
               summary: "",
               tag: "",
               status: "coming_soon",
+              entry_mode: "none",
             };
           }
         });
         if (!workingContent.pet_product_template) workingContent.pet_product_template = {};
         if (!workingContent.pet_product_template.path) workingContent.pet_product_template.path = "./pet-product-template.html";
+        if (!workingContent.pet_product_template.eyebrow) workingContent.pet_product_template.eyebrow = "";
         if (!workingContent.pet_product_template.title) workingContent.pet_product_template.title = "";
         if (!workingContent.pet_product_template.intro) workingContent.pet_product_template.intro = "";
+        if (!workingContent.pet_product_template.status_label) workingContent.pet_product_template.status_label = "";
+        if (!workingContent.pet_product_template.cta_label) workingContent.pet_product_template.cta_label = "";
+        if (!workingContent.pet_product_template.cta_url) workingContent.pet_product_template.cta_url = "";
         if (!workingContent.pet_product_template.sections) workingContent.pet_product_template.sections = {};
+        if (!workingContent.pet_product_template.sections.care_title) workingContent.pet_product_template.sections.care_title = "";
+        if (!workingContent.pet_product_template.sections.care_body) workingContent.pet_product_template.sections.care_body = "";
+        if (!Array.isArray(workingContent.pet_product_template.specs)) {
+          workingContent.pet_product_template.specs = [
+            { label: "", value: "" },
+            { label: "", value: "" },
+            { label: "", value: "" },
+          ];
+        }
+        while (workingContent.pet_product_template.specs.length < 3) {
+          workingContent.pet_product_template.specs.push({ label: "", value: "" });
+        }
         if (!workingContent.pet_product_template.seo) workingContent.pet_product_template.seo = {};
+        if (!workingContent.pet_product_template.seo.canonical_path) workingContent.pet_product_template.seo.canonical_path = "";
       }
 
       ensureShape();
@@ -1099,7 +1117,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       function updateStats() {
         const textCount = editorSchema.reduce((count, section) => count + section.fields.length, 0);
-        const galleryFieldCount = gallerySection.cards.length * 6;
+        const galleryFieldCount = gallerySection.cards.length * 8 + 14;
         const currentSection = sections.find((item) => item.id === currentSectionId);
         document.getElementById("inspector-stats").innerHTML = `
           <div class="stat-card">
@@ -1173,7 +1191,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         }
         gallerySection.cards.forEach((schemaCard, index) => {
           const card = galleryCardAt(index);
-          ["cover_label", "cover_title", "title", "summary", "tag"].forEach((key) => {
+          ["cover_label", "cover_title", "title", "summary", "tag", "entry_mode"].forEach((key) => {
             const value = card[key] || "";
             const currentLength = measureLength(value);
             const limit = recommendLength(key);
@@ -1193,16 +1211,25 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         });
         const template = templateFields();
         const templatePairs = [
+          ["path", template.path || ""],
+          ["eyebrow", template.eyebrow || ""],
           ["title", template.title || ""],
+          ["status_label", template.status_label || ""],
           ["intro", template.intro || ""],
+          ["cta_label", template.cta_label || ""],
+          ["cta_url", template.cta_url || ""],
           ["story_title", template.sections?.story_title || ""],
           ["story_body", template.sections?.story_body || ""],
           ["spec_title", template.sections?.spec_title || ""],
           ["spec_body", template.sections?.spec_body || ""],
           ["use_case_title", template.sections?.use_case_title || ""],
           ["use_case_body", template.sections?.use_case_body || ""],
+          ["care_title", template.sections?.care_title || ""],
+          ["care_body", template.sections?.care_body || ""],
           ["seo_title", template.seo?.title || ""],
           ["seo_description", template.seo?.description || ""],
+          ["canonical_path", template.seo?.canonical_path || ""],
+          ...((template.specs || []).flatMap((spec, index) => [[`spec_label_${index}`, spec?.label || ""], [`spec_value_${index}`, spec?.value || ""]])),
         ];
         templatePairs.forEach(([key, value]) => {
           const currentLength = measureLength(value);
@@ -1261,7 +1288,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         gallerySection.cards.forEach((schemaCard, index) => {
           const before = savedContent.pet_products_gallery?.cards?.[index] || {};
           const after = galleryCardAt(index);
-          ["image", "cover_label", "cover_title", "title", "summary", "tag", "status"].forEach((key) => {
+          ["image", "cover_label", "cover_title", "title", "summary", "tag", "status", "entry_mode"].forEach((key) => {
             if ((before[key] || "") !== (after[key] || "")) {
               diffs.push({
                 title: `${schemaCard.label} / ${key}`,
@@ -1273,16 +1300,25 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const templateBefore = savedContent.pet_product_template || {};
         const templateAfter = templateFields();
         const templateComparisons = [
+          ["path", templateBefore.path || "", templateAfter.path || ""],
+          ["eyebrow", templateBefore.eyebrow || "", templateAfter.eyebrow || ""],
           ["title", templateBefore.title || "", templateAfter.title || ""],
+          ["status_label", templateBefore.status_label || "", templateAfter.status_label || ""],
           ["intro", templateBefore.intro || "", templateAfter.intro || ""],
+          ["cta_label", templateBefore.cta_label || "", templateAfter.cta_label || ""],
+          ["cta_url", templateBefore.cta_url || "", templateAfter.cta_url || ""],
           ["story_title", templateBefore.sections?.story_title || "", templateAfter.sections?.story_title || ""],
           ["story_body", templateBefore.sections?.story_body || "", templateAfter.sections?.story_body || ""],
           ["spec_title", templateBefore.sections?.spec_title || "", templateAfter.sections?.spec_title || ""],
           ["spec_body", templateBefore.sections?.spec_body || "", templateAfter.sections?.spec_body || ""],
           ["use_case_title", templateBefore.sections?.use_case_title || "", templateAfter.sections?.use_case_title || ""],
           ["use_case_body", templateBefore.sections?.use_case_body || "", templateAfter.sections?.use_case_body || ""],
+          ["care_title", templateBefore.sections?.care_title || "", templateAfter.sections?.care_title || ""],
+          ["care_body", templateBefore.sections?.care_body || "", templateAfter.sections?.care_body || ""],
           ["seo_title", templateBefore.seo?.title || "", templateAfter.seo?.title || ""],
           ["seo_description", templateBefore.seo?.description || "", templateAfter.seo?.description || ""],
+          ["canonical_path", templateBefore.seo?.canonical_path || "", templateAfter.seo?.canonical_path || ""],
+          ...((templateAfter.specs || []).flatMap((spec, index) => [[`spec_label_${index}`, templateBefore.specs?.[index]?.label || "", spec?.label || ""], [`spec_value_${index}`, templateBefore.specs?.[index]?.value || "", spec?.value || ""]])),
         ];
         templateComparisons.forEach(([key, before, after]) => {
           if (before !== after) {
@@ -1578,23 +1614,29 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           const statusOptions = gallerySection.status_options.map((option) => `
             <option value="${option.value}" ${card.status === option.value ? "selected" : ""}>${option.label}</option>
           `).join("");
-          const preview = card.image ? `<img src="${card.image}" alt="${schemaCard.label}">` : `<div class="image-empty">暂无图片</div>`;
+          const entryOptions = [
+            { value: "none", label: "Display only" },
+            { value: "template", label: "Open template page" },
+          ].map((option) => `
+            <option value="${option.value}" ${card.entry_mode === option.value ? "selected" : ""}>${option.label}</option>
+          `).join("");
+          const preview = card.image ? `<img src="${card.image}" alt="${schemaCard.label}">` : `<div class="image-empty">No image</div>`;
           return `
             <div class="workspace-card">
               <h2>${schemaCard.label}</h2>
-              <p>管理这张首页画廊卡片的封面、标题、摘要、标签和状态。建议保持图片主导，文字克制。</p>
+              <p>Manage the cover, copy, tag, publish status, and click behavior for this homepage gallery card.</p>
               <div class="image-card" style="margin-top: 18px;">
                 <div class="image-preview">${preview}</div>
                 <div class="image-meta">
-                  <h3>卡片封面</h3>
-                  <p>建议比例：${schemaCard.ratio}。当前阶段可以使用宠物图片作为占位，等真实内容上线后再替换。</p>
+                  <h3>Cover Image</h3>
+                  <p>Recommended ratio: ${schemaCard.ratio}. Early-stage content can keep using pet visuals as placeholders.</p>
                   <div class="image-tools">
                     <input type="text" data-gallery-image-field="${index}" value="${(card.image || "").replace(/"/g, "&quot;")}" placeholder="./assets/example.png">
                     <div class="image-actions">
                       <input type="file" id="gallery-file-${index}" data-gallery-image-upload="${index}" accept="image/*" hidden>
-                      <button type="button" class="button" data-gallery-upload-trigger="${index}">上传卡片图片</button>
-                      <button type="button" class="ghost-button" data-gallery-clear-image="${index}">清空图片</button>
-                      <span class="upload-name">${card.image || "当前未设置图片路径"}</span>
+                      <button type="button" class="button" data-gallery-upload-trigger="${index}">Upload card image</button>
+                      <button type="button" class="ghost-button" data-gallery-clear-image="${index}">Clear image</button>
+                      <span class="upload-name">${card.image || "No image path set"}</span>
                     </div>
                   </div>
                 </div>
@@ -1602,51 +1644,59 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
               <div class="field-grid two-col" style="margin-top: 18px;">
                 <div class="field-card">
                   <div class="field-head">
-                    <label>封面英文标签</label>
+                    <label>Cover Eyebrow</label>
                     <span class="${measureLength(card.cover_label || "") > recommendLength("cover_label") ? "field-counter is-over" : "field-counter"}">${measureLength(card.cover_label || "")}/${recommendLength("cover_label")}</span>
                   </div>
-                  <small>例如 Harness Guide，显示在卡片左上角。</small>
+                  <small>Example: Harness Guide.</small>
                   <input type="text" data-gallery-field="cover_label" data-gallery-index="${index}" value="${(card.cover_label || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.cover_label_placeholder}">
                 </div>
                 <div class="field-card">
                   <div class="field-head">
-                    <label>封面主类目</label>
+                    <label>Cover Title</label>
                     <span class="${measureLength(card.cover_title || "") > recommendLength("cover_title") ? "field-counter is-over" : "field-counter"}">${measureLength(card.cover_title || "")}/${recommendLength("cover_title")}</span>
                   </div>
-                  <small>例如 胸背带，显示在封面主视觉层。</small>
+                  <small>Main category text displayed on the cover.</small>
                   <input type="text" data-gallery-field="cover_title" data-gallery-index="${index}" value="${(card.cover_title || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.cover_title_placeholder}">
                 </div>
                 <div class="field-card">
                   <div class="field-head">
-                    <label>卡片标题</label>
+                    <label>Card Title</label>
                     <span class="${measureLength(card.title || "") > recommendLength("title") ? "field-counter is-over" : "field-counter"}">${measureLength(card.title || "")}/${recommendLength("title")}</span>
                   </div>
-                  <small>首页正文区主标题，建议短句直接。</small>
+                  <small>Homepage primary title, keep it direct.</small>
                   <input type="text" data-gallery-field="title" data-gallery-index="${index}" value="${(card.title || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.title_placeholder}">
                 </div>
                 <div class="field-card">
                   <div class="field-head">
-                    <label>卡片标签</label>
+                    <label>Card Tag</label>
                     <span class="${measureLength(card.tag || "") > recommendLength("tag") ? "field-counter is-over" : "field-counter"}">${measureLength(card.tag || "")}/${recommendLength("tag")}</span>
                   </div>
-                  <small>用于卡片底部小标签，例如 Material / MOQ。</small>
+                  <small>Footer helper tag such as Material / MOQ.</small>
                   <input type="text" data-gallery-field="tag" data-gallery-index="${index}" value="${(card.tag || "").replace(/"/g, "&quot;")}" placeholder="${schemaCard.tag_placeholder}">
                 </div>
                 <div class="field-card" style="grid-column: 1 / -1;">
                   <div class="field-head">
-                    <label>卡片摘要</label>
+                    <label>Card Summary</label>
                     <span class="${measureLength(card.summary || "") > recommendLength("summary") ? "field-counter is-over" : "field-counter"}">${measureLength(card.summary || "")}/${recommendLength("summary")}</span>
                   </div>
-                  <small>首页目前建议只保留一行语义，说明内容方向即可。</small>
+                  <small>Keep homepage summaries very short.</small>
                   <textarea rows="3" data-gallery-field="summary" data-gallery-index="${index}" placeholder="${schemaCard.summary_placeholder}">${card.summary || ""}</textarea>
                 </div>
                 <div class="field-card">
                   <div class="field-head">
-                    <label>上线状态</label>
-                    <span class="field-counter">${card.status === "live" ? "已上线" : "敬请期待"}</span>
+                    <label>Publish Status</label>
+                    <span class="field-counter">${card.status === "live" ? "Live" : "Coming soon"}</span>
                   </div>
-                  <small>未上线时首页显示“敬请期待”；已上线时会指向详情模板页。</small>
+                  <small>Only live cards can expose a click entry.</small>
                   <select data-gallery-field="status" data-gallery-index="${index}">${statusOptions}</select>
+                </div>
+                <div class="field-card">
+                  <div class="field-head">
+                    <label>Click Entry</label>
+                    <span class="field-counter">${card.entry_mode === "template" ? "Template page" : "Display only"}</span>
+                  </div>
+                  <small>Control whether this card opens the product template page.</small>
+                  <select data-gallery-field="entry_mode" data-gallery-index="${index}">${entryOptions}</select>
                 </div>
               </div>
             </div>
@@ -1660,8 +1710,21 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const template = templateFields();
         const sectionsData = template.sections || {};
         const seo = template.seo || {};
+        const specs = Array.isArray(template.specs) ? [...template.specs] : [];
+        while (specs.length < 3) specs.push({ label: "", value: "" });
         const metrics = (value, key) => `${measureLength(value || "")}/${recommendLength(key)}`;
         const counterClass = (value, key) => measureLength(value || "") > recommendLength(key) ? "field-counter is-over" : "field-counter";
+        const specCards = specs.map((spec, index) => `
+          <div class="field-card">
+            <div class="field-head">
+              <label>Spec Card ${index + 1}</label>
+              <span class="field-counter">${measureLength(spec.label || "") + measureLength(spec.value || "")}/48</span>
+            </div>
+            <small>Used in the hero spec strip on the template page.</small>
+            <input type="text" data-template-spec-field="label" data-template-spec-index="${index}" value="${(spec.label || "").replace(/"/g, "&quot;")}" placeholder="MOQ / Packaging / Material">
+            <input type="text" data-template-spec-field="value" data-template-spec-index="${index}" value="${(spec.value || "").replace(/"/g, "&quot;")}" placeholder="300 sets / Flat pack / Oxford fabric" style="margin-top: 10px;">
+          </div>
+        `).join("");
         return `
           <div class="workspace-card">
             <h2>${templateSection.label}</h2>
@@ -1669,83 +1732,154 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             <div class="field-grid two-col" style="margin-top: 18px;">
               <div class="field-card">
                 <div class="field-head">
-                  <label>模板标题</label>
+                  <label>Template Path</label>
+                  <span class="field-counter">Static route</span>
+                </div>
+                <small>Default entry path used by live homepage cards.</small>
+                <input type="text" data-template-field="path" value="${(template.path || "").replace(/"/g, "&quot;")}" placeholder="./pet-product-template.html">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>Eyebrow</label>
+                  <span class="${counterClass(template.eyebrow, "cover_label")}">${metrics(template.eyebrow, "cover_label")}</span>
+                </div>
+                <small>Short label shown above the detail-page headline.</small>
+                <input type="text" data-template-field="eyebrow" value="${(template.eyebrow || "").replace(/"/g, "&quot;")}" placeholder="Pet Product Template">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>Template Title</label>
                   <span class="${counterClass(template.title, "title")}">${metrics(template.title, "title")}</span>
                 </div>
-                <small>详情页主标题，控制在清晰直接的产品级标题范围内。</small>
-                <input type="text" data-template-field="title" value="${(template.title || "").replace(/"/g, "&quot;")}" placeholder="宠物用品内容模板">
+                <small>Main headline for the detail template.</small>
+                <input type="text" data-template-field="title" value="${(template.title || "").replace(/"/g, "&quot;")}" placeholder="Pet Product Content Template">
               </div>
               <div class="field-card">
                 <div class="field-head">
-                  <label>SEO 标题</label>
-                  <span class="${counterClass(seo.title, "seo_title")}">${metrics(seo.title, "seo_title")}</span>
+                  <label>Status Label</label>
+                  <span class="${counterClass(template.status_label, "cover_title")}">${metrics(template.status_label, "cover_title")}</span>
                 </div>
-                <small>用于浏览器标题与基础 SEO，占位域名后续替换正式域名时再一起校正。</small>
-                <input type="text" data-template-seo-field="title" value="${(seo.title || "").replace(/"/g, "&quot;")}" placeholder="Tong工作室 | 宠物用品内容模板">
+                <small>Status chip shown in the template hero.</small>
+                <input type="text" data-template-field="status_label" value="${(template.status_label || "").replace(/"/g, "&quot;")}" placeholder="Template Preview">
               </div>
               <div class="field-card" style="grid-column: 1 / -1;">
                 <div class="field-head">
-                  <label>模板简介</label>
+                  <label>Intro</label>
                   <span class="${counterClass(template.intro, "intro")}">${metrics(template.intro, "intro")}</span>
                 </div>
-                <small>详情页首屏说明，建议保持品牌感和业务感并存。</small>
-                <textarea rows="4" data-template-field="intro" placeholder="先用一套统一模板承接后续内容。">${template.intro || ""}</textarea>
+                <small>Top-of-page intro for the shared detail template.</small>
+                <textarea rows="4" data-template-field="intro" placeholder="Use one shared template before full product pages go live.">${template.intro || ""}</textarea>
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>Primary CTA Label</label>
+                  <span class="${counterClass(template.cta_label, "cover_title")}">${metrics(template.cta_label, "cover_title")}</span>
+                </div>
+                <small>Primary call-to-action text.</small>
+                <input type="text" data-template-field="cta_label" value="${(template.cta_label || "").replace(/"/g, "&quot;")}" placeholder="Contact for Inquiry">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>Primary CTA URL</label>
+                  <span class="field-counter">URL</span>
+                </div>
+                <small>Supports mailto links or future form routes.</small>
+                <input type="text" data-template-field="cta_url" value="${(template.cta_url || "").replace(/"/g, "&quot;")}" placeholder="mailto:tongxigogo@gmail.com">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>SEO Title</label>
+                  <span class="${counterClass(seo.title, "seo_title")}">${metrics(seo.title, "seo_title")}</span>
+                </div>
+                <small>Browser title and primary SEO title.</small>
+                <input type="text" data-template-seo-field="title" value="${(seo.title || "").replace(/"/g, "&quot;")}" placeholder="Tong Studio | Pet Product Template">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>Canonical Path</label>
+                  <span class="field-counter">SEO</span>
+                </div>
+                <small>Example: /pet-product-template.html</small>
+                <input type="text" data-template-seo-field="canonical_path" value="${(seo.canonical_path || "").replace(/"/g, "&quot;")}" placeholder="/pet-product-template.html">
               </div>
               <div class="field-card" style="grid-column: 1 / -1;">
                 <div class="field-head">
-                  <label>SEO 描述</label>
+                  <label>SEO Description</label>
                   <span class="${counterClass(seo.description, "seo_description")}">${metrics(seo.description, "seo_description")}</span>
                 </div>
-                <small>用于 meta description，后续真实详情页会以这个结构继续扩展。</small>
-                <textarea rows="3" data-template-seo-field="description" placeholder="Tong工作室宠物用品内容模板。">${seo.description || ""}</textarea>
+                <small>Meta description for the template page.</small>
+                <textarea rows="3" data-template-seo-field="description" placeholder="Template description for pet product pages.">${seo.description || ""}</textarea>
               </div>
               <div class="field-card">
                 <div class="field-head">
-                  <label>产品故事标题</label>
+                  <label>Story Title</label>
                   <span class="${counterClass(sectionsData.story_title, "title")}">${metrics(sectionsData.story_title, "title")}</span>
                 </div>
-                <small>第一段强调产品定位、材质与品牌表达。</small>
-                <input type="text" data-template-section-field="story_title" value="${(sectionsData.story_title || "").replace(/"/g, "&quot;")}" placeholder="产品故事">
+                <small>Section 1: product positioning and story.</small>
+                <input type="text" data-template-section-field="story_title" value="${(sectionsData.story_title || "").replace(/"/g, "&quot;")}" placeholder="Product Story">
               </div>
               <div class="field-card">
                 <div class="field-head">
-                  <label>规格与沟通点标题</label>
+                  <label>Spec Title</label>
                   <span class="${counterClass(sectionsData.spec_title, "title")}">${metrics(sectionsData.spec_title, "title")}</span>
                 </div>
-                <small>第二段承接 MOQ、尺寸、五金、包装等外贸信息。</small>
-                <input type="text" data-template-section-field="spec_title" value="${(sectionsData.spec_title || "").replace(/"/g, "&quot;")}" placeholder="规格与沟通点">
+                <small>Section 2: specs and trade-facing points.</small>
+                <input type="text" data-template-section-field="spec_title" value="${(sectionsData.spec_title || "").replace(/"/g, "&quot;")}" placeholder="Specs & Notes">
               </div>
               <div class="field-card" style="grid-column: 1 / -1;">
                 <div class="field-head">
-                  <label>产品故事正文</label>
+                  <label>Story Body</label>
                   <span class="${counterClass(sectionsData.story_body, "story_body")}">${metrics(sectionsData.story_body, "story_body")}</span>
                 </div>
-                <small>这一段建议写“为什么要做这个产品、它的定位、它的差异化”。</small>
-                <textarea rows="5" data-template-section-field="story_body" placeholder="这里放产品定位、材质选择和适用场景。">${sectionsData.story_body || ""}</textarea>
+                <small>Explain the product role, character, and differentiation.</small>
+                <textarea rows="5" data-template-section-field="story_body" placeholder="Describe the product story and positioning.">${sectionsData.story_body || ""}</textarea>
               </div>
               <div class="field-card" style="grid-column: 1 / -1;">
                 <div class="field-head">
-                  <label>规格与沟通点正文</label>
+                  <label>Spec Body</label>
                   <span class="${counterClass(sectionsData.spec_body, "spec_body")}">${metrics(sectionsData.spec_body, "spec_body")}</span>
                 </div>
-                <small>这一段建议用于询盘时最常用的规格与出口沟通信息。</small>
-                <textarea rows="5" data-template-section-field="spec_body" placeholder="这里放 MOQ、尺寸、五金、包装等。">${sectionsData.spec_body || ""}</textarea>
+                <small>Use for MOQ, packaging, size, hardware, and inquiry notes.</small>
+                <textarea rows="5" data-template-section-field="spec_body" placeholder="Summarize the core spec and quote details.">${sectionsData.spec_body || ""}</textarea>
               </div>
               <div class="field-card">
                 <div class="field-head">
-                  <label>使用场景标题</label>
+                  <label>Use Case Title</label>
                   <span class="${counterClass(sectionsData.use_case_title, "title")}">${metrics(sectionsData.use_case_title, "title")}</span>
                 </div>
-                <small>第三段强调使用环境、宠物场景和素材建议。</small>
-                <input type="text" data-template-section-field="use_case_title" value="${(sectionsData.use_case_title || "").replace(/"/g, "&quot;")}" placeholder="使用场景">
+                <small>Section 3: usage scenarios and editorial angle.</small>
+                <input type="text" data-template-section-field="use_case_title" value="${(sectionsData.use_case_title || "").replace(/"/g, "&quot;")}" placeholder="Use Case">
+              </div>
+              <div class="field-card">
+                <div class="field-head">
+                  <label>Care Title</label>
+                  <span class="${counterClass(sectionsData.care_title, "title")}">${metrics(sectionsData.care_title, "title")}</span>
+                </div>
+                <small>Section 4: care, cleaning, or sales notes.</small>
+                <input type="text" data-template-section-field="care_title" value="${(sectionsData.care_title || "").replace(/"/g, "&quot;")}" placeholder="Care & Notes">
               </div>
               <div class="field-card" style="grid-column: 1 / -1;">
                 <div class="field-head">
-                  <label>使用场景正文</label>
+                  <label>Use Case Body</label>
                   <span class="${counterClass(sectionsData.use_case_body, "use_case_body")}">${metrics(sectionsData.use_case_body, "use_case_body")}</span>
                 </div>
-                <small>这一段建议描述宠物使用场景、用户观感和后续图文扩展方向。</small>
-                <textarea rows="5" data-template-section-field="use_case_body" placeholder="这里放宠物使用环境、用户感知和后续图文素材建议。">${sectionsData.use_case_body || ""}</textarea>
+                <small>Describe scenes, pet behavior, and visual usage direction.</small>
+                <textarea rows="5" data-template-section-field="use_case_body" placeholder="Describe pet-use scenarios and visuals.">${sectionsData.use_case_body || ""}</textarea>
+              </div>
+              <div class="field-card" style="grid-column: 1 / -1;">
+                <div class="field-head">
+                  <label>Care Body</label>
+                  <span class="${counterClass(sectionsData.care_body, "care_body")}">${metrics(sectionsData.care_body, "care_body")}</span>
+                </div>
+                <small>Use for washing instructions, reminders, and final notes.</small>
+                <textarea rows="4" data-template-section-field="care_body" placeholder="Add care and communication notes.">${sectionsData.care_body || ""}</textarea>
+              </div>
+            </div>
+            <div class="workspace-card" style="margin-top: 18px;">
+              <h2>Hero Spec Cards</h2>
+              <p>Three short cards used directly below the detail-page hero.</p>
+              <div class="field-grid three-col" style="margin-top: 18px;">
+                ${specCards}
               </div>
             </div>
           </div>
@@ -1856,6 +1990,17 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       function updateTemplateSeoField(key, value) {
         templateFields().seo[key] = value;
         setDirty(true, "详情页模板 SEO 已更新，保存后模板页会同步读取。");
+        renderWorkspace();
+      }
+
+      function updateTemplateSpecField(index, key, value) {
+        if (!Array.isArray(templateFields().specs)) templateFields().specs = [];
+        while (templateFields().specs.length <= index) {
+          templateFields().specs.push({ label: "", value: "" });
+        }
+        if (!templateFields().specs[index]) templateFields().specs[index] = { label: "", value: "" };
+        templateFields().specs[index][key] = value;
+        setDirty(true, "Template hero spec cards updated. Save to sync the detail page.");
         renderWorkspace();
       }
 
@@ -2105,6 +2250,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         const templateSeoField = event.target.closest("[data-template-seo-field]");
         if (templateSeoField) {
           updateTemplateSeoField(templateSeoField.dataset.templateSeoField, templateSeoField.value);
+          return;
+        }
+        const templateSpecField = event.target.closest("[data-template-spec-field]");
+        if (templateSpecField) {
+          updateTemplateSpecField(Number(templateSpecField.dataset.templateSpecIndex), templateSpecField.dataset.templateSpecField, templateSpecField.value);
         }
       });
 

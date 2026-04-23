@@ -125,6 +125,10 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('Pet Product Template', html)
         self.assertIn('/api/content', html)
         self.assertIn('product-hero-image', html)
+        self.assertIn('product-eyebrow', html)
+        self.assertIn('primary-cta', html)
+        self.assertIn('spec-label-0', html)
+        self.assertIn('care-title', html)
 
 
 if __name__ == "__main__":

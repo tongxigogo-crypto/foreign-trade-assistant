@@ -50,6 +50,7 @@ V66_DEFAULT_CONTENT = {
                 "summary": "后续会补入材质、尺寸、MOQ 与适用场景。",
                 "tag": "Material / MOQ",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
             {
                 "id": "toys",
@@ -60,6 +61,7 @@ V66_DEFAULT_CONTENT = {
                 "summary": "后续会补入安全性、材质差异与出口沟通点。",
                 "tag": "Selection / SEO",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
             {
                 "id": "leash",
@@ -70,6 +72,7 @@ V66_DEFAULT_CONTENT = {
                 "summary": "后续会补入长度规格、五金方案与包装信息。",
                 "tag": "Hardware / Use Case",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
             {
                 "id": "beds",
@@ -80,13 +83,18 @@ V66_DEFAULT_CONTENT = {
                 "summary": "后续会补入布料、填充、清洁方式与场景说明。",
                 "tag": "Editorial Shelf",
                 "status": "coming_soon",
+                "entry_mode": "none",
             },
         ],
     },
     "pet_product_template": {
         "path": "./pet-product-template.html",
+        "eyebrow": "Pet Product Template",
         "title": "宠物用品内容模板",
         "intro": "先用一套统一模板承接后续内容，等后台内容稳定后，再扩展成独立详情页。",
+        "status_label": "模板预览",
+        "cta_label": "联系询盘",
+        "cta_url": "mailto:tongxigogo@gmail.com",
         "sections": {
             "story_title": "产品故事",
             "story_body": "这里放产品定位、材质选择和适用场景，保持品牌气质与业务信息一起出现。",
@@ -94,10 +102,18 @@ V66_DEFAULT_CONTENT = {
             "spec_body": "这里放 MOQ、尺寸、五金、包装等适合外贸询盘使用的关键信息。",
             "use_case_title": "使用场景",
             "use_case_body": "这里放宠物使用环境、用户感知和后续图文素材建议。",
+            "care_title": "保养与沟通补充",
+            "care_body": "这里放清洗方式、使用注意事项和售前沟通补充。",
         },
+        "specs": [
+            {"label": "MOQ", "value": "300 sets"},
+            {"label": "Material", "value": "Editorial placeholder"},
+            {"label": "Packaging", "value": "Flat pack ready"},
+        ],
         "seo": {
-            "title": "Tong工作室 | 宠物用品内容模板",
-            "description": "Tong工作室宠物用品内容模板，用于后续发布胸背带、牵引绳、玩具选品和窝垫布艺等内容页。",
+            "title": "Tong Studio | 宠物用品内容模板",
+            "description": "用于后续发布胸背带、牵引绳、玩具选品和窝垫布艺等宠物用品内容页。",
+            "canonical_path": "/pet-product-template.html",
         },
     },
 }
@@ -119,10 +135,15 @@ def extract_content(html: str) -> dict:
     return copy.deepcopy(V66_DEFAULT_CONTENT)
 
 
-def _gallery_status_markup(status: str, template_path: str, card_id: str) -> str:
-    if status == "live":
+def _gallery_status_markup(status: str, entry_mode: str, template_path: str, card_id: str) -> str:
+    if status == "live" and entry_mode == "template":
         href = f"{template_path}#{escape(card_id)}"
         return f'<a class="pet-gallery-link" href="{href}"><span>已上线</span><span>→</span></a>'
+    if status == "live":
+        return '<span class="pet-gallery-link is-coming"><span>已上线</span><span>·</span></span>'
+    return '<span class="pet-gallery-link is-coming"><span>敬请期待</span><span>·</span></span>'
+    if status == "live":
+        return '<span class="pet-gallery-link is-coming"><span>已上线</span><span>→</span></span>'
     return '<span class="pet-gallery-link is-coming"><span>敬请期待</span><span>·</span></span>'
 
 
@@ -141,7 +162,12 @@ def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
     ]
     shape_a = shape_a_styles[index] if index < len(shape_a_styles) else ""
     shape_b = shape_b_styles[index] if index < len(shape_b_styles) else ""
-    status_markup = _gallery_status_markup(card.get("status", "coming_soon"), template_path, card.get("id", f"card-{index + 1}"))
+    status_markup = _gallery_status_markup(
+        card.get("status", "coming_soon"),
+        card.get("entry_mode", "none"),
+        template_path,
+        card.get("id", f"card-{index + 1}"),
+    )
     return f"""
                         <article class="pet-gallery-card">
                             <div class="pet-gallery-cover">
@@ -326,7 +352,7 @@ PREVIEW_SCRIPT = """
     const links = document.querySelectorAll('#pet-products-gallery .pet-gallery-footer .pet-gallery-link');
     const node = links[index];
     if (!node) return;
-    if (card.status === 'live') {
+    if (card.status === 'live' && (card.entry_mode || 'none') === 'template') {
       if (node.tagName === 'A') {
         node.classList.remove('is-coming');
         node.setAttribute('href', `${templatePath}#${card.id || `card-${index + 1}`}`);
@@ -340,16 +366,26 @@ PREVIEW_SCRIPT = """
       }
       return;
     }
-    if (card.status !== 'live') {
-      node.classList.add('is-coming');
+    if (card.status === 'live') {
       if (node.tagName === 'A') {
         const replacement = document.createElement('span');
         replacement.className = 'pet-gallery-link is-coming';
-        replacement.innerHTML = '<span>敬请期待</span><span>·</span>';
+        replacement.innerHTML = '<span>已上线</span><span>·</span>';
         node.replaceWith(replacement);
       } else {
-        node.innerHTML = '<span>敬请期待</span><span>·</span>';
+        node.classList.add('is-coming');
+        node.innerHTML = '<span>已上线</span><span>·</span>';
       }
+      return;
+    }
+    if (node.tagName === 'A') {
+      const replacement = document.createElement('span');
+      replacement.className = 'pet-gallery-link is-coming';
+      replacement.innerHTML = '<span>敬请期待</span><span>·</span>';
+      node.replaceWith(replacement);
+    } else {
+      node.classList.add('is-coming');
+      node.innerHTML = '<span>敬请期待</span><span>·</span>';
     }
   });
 })();
