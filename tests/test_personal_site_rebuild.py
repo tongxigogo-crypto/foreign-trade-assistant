@@ -5,7 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SITE_DIR = ROOT / "website_from_playground"
 EXTERNAL_V66 = Path(r"C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html")
+EXTERNAL_V66_EN = Path(r"C:\Users\Administrator\Desktop\preson\indexV6.6_refined_en.html")
 EXTERNAL_TEMPLATE = Path(r"C:\Users\Administrator\Desktop\preson\pet-product-template.html")
+EXTERNAL_BILINGUAL = Path(r"C:\Users\Administrator\Desktop\preson\bilingual.js")
 
 
 class PersonalSiteRebuildTests(unittest.TestCase):
@@ -86,17 +88,24 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('<link rel="canonical"', html)
         self.assertIn('application/ld+json', html)
         self.assertIn('SoftwareApplication', html)
-        self.assertIn('html lang="en"', html)
-        self.assertIn('aria-label="Bring customer context, quotes, emails, and tasks back into one workspace"', html)
+        self.assertIn('html lang="zh-CN" data-site-lang="zh"', html)
+        self.assertIn("bilingual.js", html)
+        self.assertIn('外贸助理 APP 与宠物用品内容', html)
         self.assertIn('alt="Douzi Core, a short-tail corgi 3D character representing the site-wide obstacle-avoidance engine"', html)
         self.assertIn('alt="Trade Assistant v0.1.1 interface showing local-first inquiry review, quote guidance, and follow-up workflow"', html)
-        self.assertIn('Tong Studio | Local-First Trade Assistant for Pet Products and WPC Workflows', html)
         self.assertIn('fetchpriority="high"', html)
         self.assertIn('loading="lazy"', html)
+
+        english_html = EXTERNAL_V66_EN.read_text(encoding="utf-8")
+        self.assertIn('html lang="en" data-site-lang="en"', english_html)
+        self.assertIn('Tong Studio | Local-First Trade Assistant for Pet Products and WPC Workflows', english_html)
 
     def test_external_v66_has_launch_ready_navigation_and_ctas(self) -> None:
         html = EXTERNAL_V66.read_text(encoding="utf-8")
 
+        self.assertIn('data-lang-control="en"', html)
+        self.assertIn('data-lang-control="zh"', html)
+        self.assertIn("bilingual.js", html)
         self.assertIn('href="#pet-products-gallery"', html)
         self.assertIn('href="#contact"', html)
         self.assertIn('id="contact"', html)
@@ -105,6 +114,18 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("Email: tongxigogo@gmail.com", html)
         self.assertIn("WeChat: tong1390", html)
         self.assertIn("Local-first · Multi-model compatible", html)
+
+    def test_external_v66_has_bilingual_copy_runtime(self) -> None:
+        script = EXTERNAL_BILINGUAL.read_text(encoding="utf-8")
+
+        self.assertIn("const translations", script)
+        self.assertIn("Tong Studio", script)
+        self.assertIn("Tong工作室", script)
+        self.assertIn("applyLanguage(getLanguage())", script)
+        self.assertIn("indexV6.6_refined_en.html", script)
+        self.assertIn("indexV6.6_refined.html", script)
+        self.assertIn("外贸助理", script)
+        self.assertIn("Trade Assistant", script)
 
     def test_external_v66_has_resource_priority_hints(self) -> None:
         html = EXTERNAL_V66.read_text(encoding="utf-8")

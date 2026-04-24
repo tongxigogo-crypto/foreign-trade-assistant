@@ -221,6 +221,16 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - In this project phase, keep the scrollytelling DOM and GSAP logic intact; add semantics around the existing structure instead of refactoring the page into a new stack.
   - A useful "framework optimization" inside the current static architecture is resource prioritization: keep above-the-fold mascot/product imagery high-priority and move below-the-fold IP imagery to `loading="lazy"` with async decoding.
 
+## [2026-04-24 00:00:00] external-v66-bilingual-two-file-pattern
+
+- status: confirmed_working
+- summary: For the external V6.6 homepage, the safer bilingual pattern is a Chinese default file plus a separate English sibling file, not forcing one file to behave as both language experiences.
+- learnings:
+  - Keep `C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html` as the Chinese default source of truth and create `indexV6.6_refined_en.html` for the English independent-site version.
+  - Use `html[data-site-lang]` and a small shared `bilingual.js` helper for copy hydration and EN/CN button routing, but route buttons between files instead of relying on `?lang=` state.
+  - Add a cache-busting query to the shared bilingual script during active local preview so browser cache does not hide recent text changes.
+  - For image-led pet gallery cards, keep English titles and summaries short to avoid narrow-viewport word breaks; the homepage should remain visual-first.
+
 ## [2026-04-22 16:35:00] external-v66-preview-to-real-integration
 
 - status: confirmed_working
