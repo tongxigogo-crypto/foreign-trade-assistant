@@ -306,3 +306,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - For the current phase, each `pet_products_gallery` card should carry both `status` and `entry_mode`; `status=live` does not automatically mean the card should navigate, because early live cards may still be display-only.
   - The shared `pet_product_template` object is materially more useful once it includes `eyebrow`, CTA fields, a care section, hero spec cards, and `seo.canonical_path`; otherwise the detail template becomes visually richer than the CMS can actually drive.
   - After schema expansion, always re-save the external content through `ContentStore` so the external homepage HTML, `site-content.json`, `robots.txt`, and `sitemap.xml` stay aligned with the backend’s latest shape.
+
+## [2026-04-24 12:08:00] cms-gallery-needs-visual-rail-preview
+
+- status: confirmed_working
+- summary: For the homepage pet-products gallery, a field-only CMS editor is too abstract; backend users make better decisions when the section begins with a compact rail-style visual preview that approximates the homepage reading order.
+- learnings:
+  - Put the gallery preview ahead of the per-card forms so image dominance, title rhythm, and publish-state semantics are readable before operators dive into individual fields.
+  - The backend preview should echo the homepage card grammar, not just show thumbnails; keep the kicker, cover title, title, summary, tag, and state chip in the mini-card so “display only” versus “template page” is obvious.
+  - A horizontal preview rail inside the CMS is enough for this phase; there is no need to embed the full homepage iframe just to validate gallery composition.

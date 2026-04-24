@@ -356,6 +356,8 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("preview-state", html)
         self.assertIn("preview-modal", html)
         self.assertIn("confirm-preview", html)
+        self.assertIn("gallery-preview-rail", html)
+        self.assertIn("Homepage Gallery Preview", html)
 
 
 if __name__ == "__main__":

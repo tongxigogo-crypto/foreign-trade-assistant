@@ -558,6 +558,162 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         align-items: center;
         flex-wrap: wrap;
       }
+      .gallery-preview-shell {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at top left, rgba(129, 216, 255, 0.28), transparent 32%),
+          radial-gradient(circle at top right, rgba(216, 192, 255, 0.26), transparent 36%),
+          rgba(246, 249, 255, 0.92);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      .gallery-preview-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: end;
+        margin-bottom: 16px;
+      }
+      .gallery-preview-head strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+      .gallery-preview-head span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .gallery-preview-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.76);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .gallery-preview-rail {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(220px, 280px);
+        gap: 16px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+      }
+      .gallery-preview-rail::-webkit-scrollbar {
+        display: none;
+      }
+      .gallery-preview-card {
+        min-width: 0;
+        border-radius: 22px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 16px 40px rgba(31, 47, 86, 0.08);
+      }
+      .gallery-preview-media {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background: linear-gradient(180deg, #f4f8ff, #dfe9fb);
+      }
+      .gallery-preview-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .gallery-preview-overlay {
+        position: absolute;
+        inset: 0;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background:
+          radial-gradient(circle at 78% 18%, rgba(56, 189, 248, 0.22), transparent 24%),
+          linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.08));
+      }
+      .gallery-preview-kicker {
+        display: inline-flex;
+        align-items: center;
+        align-self: start;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .gallery-preview-cover {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .gallery-preview-cover strong {
+        font-size: 18px;
+        line-height: 1.05;
+      }
+      .gallery-preview-number {
+        font-size: 28px;
+        font-weight: 900;
+        color: rgba(15, 23, 42, 0.18);
+      }
+      .gallery-preview-copy {
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+      }
+      .gallery-preview-copy h3 {
+        margin: 0;
+        font-size: 19px;
+        line-height: 1.15;
+      }
+      .gallery-preview-copy p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .gallery-preview-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .gallery-preview-tag {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #90a0bc;
+      }
+      .gallery-preview-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.05);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .gallery-preview-status.is-live {
+        background: rgba(11, 143, 98, 0.12);
+        color: var(--success);
+      }
+      .gallery-preview-status.is-link {
+        background: rgba(15, 111, 255, 0.12);
+        color: var(--accent);
+      }
       .button,
       .ghost-button {
         border: 0;
@@ -899,6 +1055,10 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         .field-grid.two-col,
         .stats {
           grid-template-columns: 1fr;
+        }
+        .gallery-preview-head {
+          flex-direction: column;
+          align-items: start;
         }
         .image-card {
           grid-template-columns: 1fr;
@@ -1609,6 +1769,38 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       }
 
       function renderGallerySection() {
+        const previewCards = gallerySection.cards.map((schemaCard, index) => {
+          const card = galleryCardAt(index);
+          const statusText = card.status === "live" ? (card.entry_mode === "template" ? "Live / Linked" : "Live") : "Coming soon";
+          const statusClass = card.status === "live"
+            ? (card.entry_mode === "template" ? "gallery-preview-status is-link" : "gallery-preview-status is-live")
+            : "gallery-preview-status";
+          const image = card.image
+            ? `<img src="${card.image}" alt="${schemaCard.label}">`
+            : `<div class="image-empty">No image</div>`;
+          return `
+            <article class="gallery-preview-card">
+              <div class="gallery-preview-media">
+                ${image}
+                <div class="gallery-preview-overlay">
+                  <span class="gallery-preview-kicker">${card.cover_label || schemaCard.cover_label_placeholder}</span>
+                  <div class="gallery-preview-cover">
+                    <strong>${card.cover_title || schemaCard.cover_title_placeholder}</strong>
+                    <span class="gallery-preview-number">${String(index + 1).padStart(2, "0")}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="gallery-preview-copy">
+                <h3>${card.title || schemaCard.title_placeholder}</h3>
+                <p>${card.summary || schemaCard.summary_placeholder}</p>
+                <div class="gallery-preview-footer">
+                  <span class="gallery-preview-tag">${card.tag || schemaCard.tag_placeholder}</span>
+                  <span class="${statusClass}">${statusText}</span>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("");
         const cards = gallerySection.cards.map((schemaCard, index) => {
           const card = galleryCardAt(index);
           const statusOptions = gallerySection.status_options.map((option) => `
@@ -1703,7 +1895,23 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           `;
         }).join("");
 
-        return cards;
+        return `
+          <div class="workspace-card">
+            <h2>Homepage Gallery Preview</h2>
+            <p>Use this strip to judge image dominance, title rhythm, and whether each card should stay display-only or open the shared template page.</p>
+            <div class="gallery-preview-shell">
+              <div class="gallery-preview-head">
+                <div>
+                  <strong>Editorial rail snapshot</strong>
+                  <span>Approximate the homepage reading order without leaving the CMS.</span>
+                </div>
+                <span class="gallery-preview-chip">${gallerySection.cards.length} cards · horizontal rail</span>
+              </div>
+              <div class="gallery-preview-rail">${previewCards}</div>
+            </div>
+          </div>
+          ${cards}
+        `;
       }
 
       function renderTemplateSection() {
