@@ -151,6 +151,7 @@ class ContentStore:
         self.backup_path = self.content_dir / "site-content.backup.json"
         self.meta_path = self.content_dir / "site-content.meta.json"
         self.upload_dir = site_dir / "assets" / "uploads"
+        self.default_content = self._merge_content({})
 
     def _merge_content(self, payload: dict[str, Any]) -> dict[str, Any]:
         merged = copy.deepcopy(self.default_content)
@@ -158,12 +159,20 @@ class ContentStore:
         merged["images"].update(payload.get("images", {}))
 
         incoming_gallery = payload.get("pet_products_gallery", {})
-        incoming_cards = incoming_gallery.get("cards", [])
         base_cards = copy.deepcopy(merged["pet_products_gallery"]["cards"])
-        for index, card in enumerate(base_cards):
-            if index < len(incoming_cards) and isinstance(incoming_cards[index], dict):
-                card.update(incoming_cards[index])
-        merged["pet_products_gallery"] = {"cards": base_cards}
+        legacy_cards = incoming_gallery.get("cards", [])
+        merged_gallery: dict[str, Any] = {"cards": copy.deepcopy(base_cards)}
+        for lang in ("zh", "en"):
+            incoming_cards = incoming_gallery.get(lang, {}).get("cards")
+            if incoming_cards is None and lang == "zh":
+                incoming_cards = legacy_cards
+            lang_cards = copy.deepcopy(base_cards)
+            for index, card in enumerate(lang_cards):
+                if index < len(incoming_cards or []) and isinstance(incoming_cards[index], dict):
+                    card.update(incoming_cards[index])
+            merged_gallery[lang] = {"cards": lang_cards}
+        merged_gallery["cards"] = copy.deepcopy(merged_gallery["zh"]["cards"])
+        merged["pet_products_gallery"] = merged_gallery
 
         incoming_template = payload.get("pet_product_template", {})
         merged["pet_product_template"].update(

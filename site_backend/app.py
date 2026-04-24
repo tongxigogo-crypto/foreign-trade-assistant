@@ -1107,7 +1107,9 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           <div class="action-stack">
             <span id="dirty-chip" class="status-chip">已同步</span>
             <div class="inspector-actions">
-              <button id="preview-home" type="button" class="ghost-button">预览首页</button>
+              <button type="button" class="ghost-button" data-preview-target="zh">预览中文首页</button>
+              <button type="button" class="ghost-button" data-preview-target="en">Preview English Home</button>
+              <button type="button" class="ghost-button" data-preview-target="template">预览详情模板</button>
               <button id="preflight-check" type="button" class="ghost-button">发布前检查</button>
               <button id="save-content" type="button" class="button">保存当前改动</button>
               <button id="publish-content" type="button" class="button">正式发布</button>
@@ -1206,21 +1208,31 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         if (!workingContent.images) workingContent.images = {};
         if (!workingContent.pet_products_gallery) workingContent.pet_products_gallery = {};
         if (!Array.isArray(workingContent.pet_products_gallery.cards)) workingContent.pet_products_gallery.cards = [];
-        gallerySection.cards.forEach((card, index) => {
-          if (!workingContent.pet_products_gallery.cards[index]) {
-            workingContent.pet_products_gallery.cards[index] = {
-              id: card.id,
-              image: "",
-              cover_label: "",
-              cover_title: "",
-              title: "",
-              summary: "",
-              tag: "",
-              status: "coming_soon",
-              entry_mode: "none",
-            };
+        ["zh", "en"].forEach((lang) => {
+          if (!workingContent.pet_products_gallery[lang]) workingContent.pet_products_gallery[lang] = {};
+          if (!Array.isArray(workingContent.pet_products_gallery[lang].cards)) {
+            workingContent.pet_products_gallery[lang].cards = [];
           }
         });
+        gallerySection.cards.forEach((card, index) => {
+          ["zh", "en"].forEach((lang) => {
+            if (!workingContent.pet_products_gallery[lang].cards[index]) {
+              const legacy = lang === "zh" ? workingContent.pet_products_gallery.cards[index] : null;
+              workingContent.pet_products_gallery[lang].cards[index] = legacy || {
+               id: card.id,
+               image: "",
+               cover_label: "",
+               cover_title: "",
+               title: "",
+               summary: "",
+               tag: "",
+               status: "coming_soon",
+               entry_mode: "none",
+              };
+            }
+          });
+        });
+        workingContent.pet_products_gallery.cards = workingContent.pet_products_gallery.zh.cards;
         if (!workingContent.pet_product_template) workingContent.pet_product_template = {};
         if (!workingContent.pet_product_template.path) workingContent.pet_product_template.path = "./pet-product-template.html";
         if (!workingContent.pet_product_template.eyebrow) workingContent.pet_product_template.eyebrow = "";
@@ -1248,12 +1260,13 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       ensureShape();
 
-      function galleryCards() {
-        return workingContent.pet_products_gallery?.cards || [];
+      function galleryCards(lang = currentLang) {
+        return workingContent.pet_products_gallery?.[lang]?.cards
+          || (lang === "zh" ? workingContent.pet_products_gallery?.cards || [] : []);
       }
 
-      function galleryCardAt(index) {
-        return galleryCards()[index] || {};
+      function galleryCardAt(index, lang = currentLang) {
+        return galleryCards(lang)[index] || {};
       }
 
       function templateFields() {
@@ -1277,7 +1290,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       function updateStats() {
         const textCount = editorSchema.reduce((count, section) => count + section.fields.length, 0);
-        const galleryFieldCount = gallerySection.cards.length * 8 + 14;
+        const galleryFieldCount = gallerySection.cards.length * 8 * 2 + 14;
         const currentSection = sections.find((item) => item.id === currentSectionId);
         document.getElementById("inspector-stats").innerHTML = `
           <div class="stat-card">
@@ -1349,25 +1362,27 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             }
           }
         }
-        gallerySection.cards.forEach((schemaCard, index) => {
-          const card = galleryCardAt(index);
-          ["cover_label", "cover_title", "title", "summary", "tag", "entry_mode"].forEach((key) => {
-            const value = card[key] || "";
-            const currentLength = measureLength(value);
-            const limit = recommendLength(key);
-            if (currentLength > limit) {
+        ["zh", "en"].forEach((lang) => {
+          gallerySection.cards.forEach((schemaCard, index) => {
+            const card = galleryCardAt(index, lang);
+            ["cover_label", "cover_title", "title", "summary", "tag", "entry_mode"].forEach((key) => {
+              const value = card[key] || "";
+              const currentLength = measureLength(value);
+              const limit = recommendLength(key);
+              if (currentLength > limit) {
+                warnings.push({
+                  title: `${schemaCard.label} / ${key}`,
+                  detail: `${lang === "zh" ? "中文" : "英文"}当前约 ${currentLength} 字，建议控制在 ${limit} 字以内，避免卡片排版过满。`,
+                });
+              }
+            });
+            if (!card.image) {
               warnings.push({
-                title: `${schemaCard.label} / ${key}`,
-                detail: `当前约 ${currentLength} 字，建议控制在 ${limit} 字以内，避免卡片排版过满。`,
+                title: `${schemaCard.label} / 图片`,
+                detail: `${lang === "zh" ? "中文" : "英文"}卡片未设置图片，首页画廊会失去主视觉锚点。`,
               });
             }
           });
-          if (!card.image) {
-            warnings.push({
-              title: `${schemaCard.label} / 图片`,
-              detail: "当前未设置卡片图片，首页画廊会失去主视觉锚点。",
-            });
-          }
         });
         const template = templateFields();
         const templatePairs = [
@@ -1445,16 +1460,20 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             });
           }
         });
-        gallerySection.cards.forEach((schemaCard, index) => {
-          const before = savedContent.pet_products_gallery?.cards?.[index] || {};
-          const after = galleryCardAt(index);
-          ["image", "cover_label", "cover_title", "title", "summary", "tag", "status", "entry_mode"].forEach((key) => {
-            if ((before[key] || "") !== (after[key] || "")) {
-              diffs.push({
-                title: `${schemaCard.label} / ${key}`,
-                detail: "宠物用品画廊卡片已修改，预览首页时会显示草稿内容。",
-              });
-            }
+        ["zh", "en"].forEach((lang) => {
+          gallerySection.cards.forEach((schemaCard, index) => {
+            const before = savedContent.pet_products_gallery?.[lang]?.cards?.[index]
+              || (lang === "zh" ? savedContent.pet_products_gallery?.cards?.[index] : {})
+              || {};
+            const after = galleryCardAt(index, lang);
+            ["image", "cover_label", "cover_title", "title", "summary", "tag", "status", "entry_mode"].forEach((key) => {
+              if ((before[key] || "") !== (after[key] || "")) {
+                diffs.push({
+                  title: `${schemaCard.label} / ${lang === "zh" ? "中文" : "英文"} / ${key}`,
+                  detail: "宠物用品画廊卡片已修改，预览对应语言首页时会显示草稿内容。",
+                });
+              }
+            });
           });
         });
         const templateBefore = savedContent.pet_product_template || {};
@@ -1560,13 +1579,17 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           const after = workingContent.images?.[image.key] || "";
           if (before !== after) imageChanges += 1;
         });
-        gallerySection.cards.forEach((schemaCard, index) => {
-          const before = savedContent.pet_products_gallery?.cards?.[index] || {};
-          const after = galleryCardAt(index);
-          ["cover_label", "cover_title", "title", "summary", "tag", "status"].forEach((key) => {
-            if ((before[key] || "") !== (after[key] || "")) textChanges += 1;
+        ["zh", "en"].forEach((lang) => {
+          gallerySection.cards.forEach((schemaCard, index) => {
+            const before = savedContent.pet_products_gallery?.[lang]?.cards?.[index]
+              || (lang === "zh" ? savedContent.pet_products_gallery?.cards?.[index] : {})
+              || {};
+            const after = galleryCardAt(index, lang);
+            ["cover_label", "cover_title", "title", "summary", "tag", "status", "entry_mode"].forEach((key) => {
+              if ((before[key] || "") !== (after[key] || "")) textChanges += 1;
+            });
+            if ((before.image || "") !== (after.image || "")) imageChanges += 1;
           });
-          if ((before.image || "") !== (after.image || "")) imageChanges += 1;
         });
         const templateBefore = savedContent.pet_product_template || {};
         const templateAfter = templateFields();
@@ -1598,13 +1621,14 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       async function validateImageAssets() {
         previewDiagnostics = { ...previewDiagnostics, checking: true };
         renderPreviewStatus();
+        const galleryAssetSources = ["zh", "en"].flatMap((lang) => gallerySection.cards.map((schemaCard, index) => ({
+          key: `gallery.${lang}.${schemaCard.id}`,
+          label: `${schemaCard.label} ${lang === "zh" ? "中文" : "英文"}图片`,
+          path: galleryCardAt(index, lang).image || "",
+        })));
         const assetSources = [
           ...imageSchema.map((image) => ({ key: image.key, label: image.label, path: workingContent.images?.[image.key] || "" })),
-          ...gallerySection.cards.map((schemaCard, index) => ({
-            key: `gallery.${schemaCard.id}`,
-            label: `${schemaCard.label} 图片`,
-            path: galleryCardAt(index).image || "",
-          })),
+          ...galleryAssetSources,
         ];
         const assetChecks = await Promise.all(assetSources.map(async (image) => {
           const path = image.path || "";
@@ -1682,13 +1706,19 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         `;
       }
 
-      function launchPreviewWindow() {
+      function previewUrl(target = currentLang) {
+        if (target === "en") return "/indexV6.6_refined_en.html?preview=1";
+        if (target === "template") return "/pet-product-template.html?preview=1";
+        return "/?preview=1";
+      }
+
+      function launchPreviewWindow(target = currentLang) {
         const diffs = collectDiffs();
         window.localStorage.setItem("site_content_preview", JSON.stringify(workingContent));
         if (diffs.length) {
           setDirty(dirty, `预览首页将带上 ${diffs.length} 处草稿变更。`);
         }
-        window.open("/?preview=1", "_blank");
+        window.open(previewUrl(target), "_blank");
       }
 
       function openPreviewModal(summary, items) {
@@ -2171,6 +2201,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       function updateGalleryField(index, key, value) {
         galleryCards()[index][key] = value;
+        if (currentLang === "zh") workingContent.pet_products_gallery.cards = workingContent.pet_products_gallery.zh.cards;
         setDirty(true, "宠物用品画廊卡片已更新，保存后首页会同步读取。");
         renderWorkspace();
         queuePreviewAssetValidation();
@@ -2178,6 +2209,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       function updateGalleryImage(index, value) {
         galleryCards()[index].image = value;
+        if (currentLang === "zh") workingContent.pet_products_gallery.cards = workingContent.pet_products_gallery.zh.cards;
         setDirty(true, "画廊卡片图片已更新，保存后首页会同步读取。");
         renderWorkspace();
         queuePreviewAssetValidation();
@@ -2295,7 +2327,8 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         adminMeta = await response.json();
       }
 
-      async function previewHome() {
+      async function previewHome(target = currentLang) {
+        window.pendingPreviewTarget = target;
         const assetChecks = await queuePreviewAssetValidation(true);
         renderWarnings();
         const stats = getDiffStats();
@@ -2322,7 +2355,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
           );
           return;
         }
-        launchPreviewWindow();
+        launchPreviewWindow(target);
       }
 
       async function runPreflightCheck() {
@@ -2485,7 +2518,9 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
 
       document.getElementById("save-content").addEventListener("click", saveContent);
       document.getElementById("reset-content").addEventListener("click", resetContent);
-      document.getElementById("preview-home").addEventListener("click", previewHome);
+      document.querySelectorAll("[data-preview-target]").forEach((button) => {
+        button.addEventListener("click", () => previewHome(button.dataset.previewTarget || currentLang));
+      });
       document.getElementById("preflight-check").addEventListener("click", runPreflightCheck);
       document.getElementById("publish-content").addEventListener("click", openPublishModal);
       document.getElementById("cancel-publish").addEventListener("click", closePublishModal);
@@ -2493,7 +2528,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
       document.getElementById("cancel-preview").addEventListener("click", closePreviewModal);
       document.getElementById("confirm-preview").addEventListener("click", () => {
         closePreviewModal();
-        launchPreviewWindow();
+        launchPreviewWindow(window.pendingPreviewTarget || currentLang);
       });
 
       renderAll();

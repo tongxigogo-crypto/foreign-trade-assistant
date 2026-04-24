@@ -353,3 +353,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - The external V6.6 homepage needs a real `#contact` section plus navigation entries for `#pet-products-gallery` and `#contact`; CTA-looking controls should be anchors with concrete `mailto:` targets until a form route exists.
   - Keep lightweight resource hints in the HTML head for the current CDN dependencies and first-screen images; this is a low-risk performance improvement before any future bundling or framework migration.
   - Add tests for these launch-facing behaviors because they live in the external page source and are easy to lose during later content syncs.
+
+## [2026-04-24 14:10:00] bilingual-cms-gallery-isolation
+
+- status: confirmed_working
+- summary: The V6.6 admin can manage Chinese and English homepage gallery card content from one CMS, but legacy single-language gallery data must only be treated as a Chinese fallback.
+- learnings:
+  - Store `pet_products_gallery.zh.cards` and `pet_products_gallery.en.cards` explicitly, while mirroring `pet_products_gallery.cards` from Chinese only for backward compatibility with older saved JSON.
+  - Frontend runtime should prefer `pet_products_gallery[lang].cards`; if localized cards are empty, only Chinese may fall back to legacy `cards`, otherwise English can accidentally inherit Chinese placeholder copy.
+  - Preview buttons should target concrete surfaces (`/`, `/indexV6.6_refined_en.html`, and `/pet-product-template.html`) with `?preview=1`, using `localStorage.site_content_preview` for draft-only checks before save.

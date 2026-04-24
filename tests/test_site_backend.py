@@ -80,6 +80,8 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("images", data)
         self.assertIn("zh", data["strings"])
         self.assertIn("en", data["strings"])
+        self.assertIn("zh", data["pet_products_gallery"])
+        self.assertIn("en", data["pet_products_gallery"])
 
     def test_admin_meta_endpoint_returns_history_shape(self) -> None:
         cookie = self._login_cookie()
@@ -220,6 +222,8 @@ class SiteBackendTests(unittest.TestCase):
         persisted = json.loads(content_file.read_text(encoding="utf-8"))
         self.assertEqual(persisted["strings"]["en"]["hero_intro"], "Updated home intro")
         self.assertEqual(persisted["pet_products_gallery"]["cards"][0]["image"], "./assets/uploads/harness.png")
+        self.assertEqual(persisted["pet_products_gallery"]["zh"]["cards"][0]["image"], "./assets/uploads/harness.png")
+        self.assertIn("cards", persisted["pet_products_gallery"]["en"])
         self.assertEqual(persisted["pet_product_template"]["sections"]["spec_title"], "规格与沟通点")
         meta_file = self.site_dir / "content" / "site-content.meta.json"
         self.assertTrue(meta_file.exists())
@@ -304,6 +308,59 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("Sitemap:", robots)
         self.assertIn("pet-product-template.html", sitemap)
 
+    def test_bilingual_gallery_fields_persist_with_legacy_zh_mirror(self) -> None:
+        cookie = self._login_cookie()
+        payload = {
+            "pet_products_gallery": {
+                "zh": {
+                    "cards": [
+                        {
+                            "id": "harness",
+                            "image": "./assets/uploads/zh-harness.png",
+                            "cover_label": "胸背指南",
+                            "cover_title": "胸背带",
+                            "title": "中文胸背带",
+                            "summary": "中文摘要",
+                            "tag": "材质 / MOQ",
+                            "status": "coming_soon",
+                            "entry_mode": "template",
+                        }
+                    ]
+                },
+                "en": {
+                    "cards": [
+                        {
+                            "id": "harness",
+                            "image": "./assets/uploads/en-harness.png",
+                            "cover_label": "Harness Guide",
+                            "cover_title": "Harness",
+                            "title": "English harness",
+                            "summary": "English summary",
+                            "tag": "Material / MOQ",
+                            "status": "live",
+                            "entry_mode": "template",
+                        }
+                    ]
+                },
+            }
+        }
+        status, _, _ = _request(
+            self.app,
+            "PUT",
+            "/admin/api/content",
+            body=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Cookie": cookie,
+            },
+        )
+        self.assertEqual(status, 200)
+
+        persisted = json.loads((self.site_dir / "content" / "site-content.json").read_text(encoding="utf-8"))
+        self.assertEqual(persisted["pet_products_gallery"]["zh"]["cards"][0]["title"], "中文胸背带")
+        self.assertEqual(persisted["pet_products_gallery"]["en"]["cards"][0]["title"], "English harness")
+        self.assertEqual(persisted["pet_products_gallery"]["cards"][0]["title"], "中文胸背带")
+
     def test_asset_upload_writes_file_and_returns_relative_path(self) -> None:
         cookie = self._login_cookie()
         png_bytes = b"\x89PNG\r\n\x1a\nfake-image"
@@ -348,7 +405,10 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("宠物用品画廊", html)
         self.assertIn("详情页模板", html)
         self.assertIn("保存当前改动", html)
-        self.assertIn("预览首页", html)
+        self.assertIn('data-preview-target="zh"', html)
+        self.assertIn('data-preview-target="en"', html)
+        self.assertIn('data-preview-target="template"', html)
+        self.assertIn("Preview English Home", html)
         self.assertIn("发布前检查", html)
         self.assertIn("publish-content", html)
         self.assertIn("publish-modal", html)
