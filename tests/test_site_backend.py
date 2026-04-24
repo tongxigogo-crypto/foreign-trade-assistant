@@ -83,6 +83,38 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("zh", data["pet_products_gallery"])
         self.assertIn("en", data["pet_products_gallery"])
 
+    def test_public_ai_context_endpoint_exposes_assistant_contract(self) -> None:
+        status, headers, payload = _request(self.app, "GET", "/api/ai-context")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "application/json; charset=utf-8")
+        self.assertEqual(headers["Access-Control-Allow-Origin"], "*")
+        data = json.loads(payload.decode("utf-8"))
+        self.assertEqual(data["ai_core"]["id"], "douzi-core")
+        self.assertEqual(data["ai_core"]["message_endpoint"], "/api/ai-core/message")
+        self.assertEqual(data["product"]["version"], "v0.1.1-beta2-build39")
+        self.assertIn("en", data["site"]["languages"])
+        self.assertIn("zh", data["site"]["languages"])
+
+    def test_ai_core_message_endpoint_is_reserved_without_model_call(self) -> None:
+        body = json.dumps({"message": "How can this site help with quotes?", "locale": "en"}).encode("utf-8")
+        status, headers, payload = _request(
+            self.app,
+            "POST",
+            "/api/ai-core/message",
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Access-Control-Allow-Origin"], "*")
+        data = json.loads(payload.decode("utf-8"))
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["assistant"]["id"], "douzi-core")
+        self.assertFalse(data["assistant"]["model_connected"])
+        self.assertEqual(data["status"], "reserved")
+        self.assertTrue(data["input_received"])
+
     def test_admin_meta_endpoint_returns_history_shape(self) -> None:
         cookie = self._login_cookie()
         status, _, payload = _request(self.app, "GET", "/admin/api/meta", headers={"Cookie": cookie})

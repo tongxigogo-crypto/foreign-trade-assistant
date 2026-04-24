@@ -148,6 +148,12 @@ TEMPLATE_SECTION = {
     "description": "管理统一的宠物用品详情页模板文案，用于后续承接已上线的画廊卡片。",
 }
 
+PUBLIC_API_HEADERS = [
+    ("Access-Control-Allow-Origin", "*"),
+    ("Access-Control-Allow-Methods", "GET, POST, OPTIONS"),
+    ("Access-Control-Allow-Headers", "Content-Type, Authorization"),
+]
+
 
 def _json_response(start_response: StartResponse, status: HTTPStatus, payload: dict | None = None, headers: list[tuple[str, str]] | None = None) -> Iterable[bytes]:
     body = b""
@@ -203,6 +209,99 @@ def _authed(environ: dict, admin_password: str, session_secret: str) -> bool:
         return True
     token = _get_bearer_token(environ) or _get_query_token(environ)
     return is_token_authenticated(token, admin_password, session_secret)
+
+
+def _public_site_context(content: dict) -> dict:
+    strings = content.get("strings", {})
+    gallery = content.get("pet_products_gallery", {})
+    template = content.get("pet_product_template", {})
+    return {
+        "schema_version": "2026-04-24.ai-core.v1",
+        "brand": {
+            "name": "Tong Studio",
+            "studio_name_zh": "Tong工作室",
+            "contact": {
+                "email": "tongxigogo@gmail.com",
+                "wechat": "tong1390",
+            },
+        },
+        "site": {
+            "languages": ["en", "zh"],
+            "home": {
+                "zh": "/",
+                "en": "/indexV6.6_refined_en.html",
+            },
+            "pet_product_template": template.get("path") or "/pet-product-template.html",
+        },
+        "product": {
+            "name": "Trade Assistant",
+            "version": "v0.1.1-beta2-build39",
+            "principles": ["local-first", "multi-model compatible", "desktop workspace"],
+            "capabilities": [
+                "customer context archive",
+                "product data archive",
+                "email history recovery",
+                "quote and reply guidance",
+                "task progression reminders",
+            ],
+        },
+        "ai_core": {
+            "id": "douzi-core",
+            "status": "reserved",
+            "role": "future AI assistant entry point and site-wide Douzi mascot core",
+            "context_endpoint": "/api/ai-context",
+            "message_endpoint": "/api/ai-core/message",
+            "contract": {
+                "method": "POST",
+                "content_type": "application/json",
+                "request": {
+                    "message": "string",
+                    "locale": "en | zh",
+                    "surface": "homepage | admin | external-ai",
+                },
+            },
+        },
+        "copy": {
+            "zh": strings.get("zh", {}),
+            "en": strings.get("en", {}),
+        },
+        "pet_products_gallery": {
+            "zh": gallery.get("zh", {}).get("cards", gallery.get("cards", [])),
+            "en": gallery.get("en", {}).get("cards", []),
+        },
+    }
+
+
+def _ai_core_placeholder_response(payload: dict, content: dict) -> dict:
+    message = str(payload.get("message") or "").strip()
+    locale = str(payload.get("locale") or "en").lower()
+    if locale not in {"en", "zh"}:
+        locale = "en"
+    context = _public_site_context(content)
+    return {
+        "ok": True,
+        "status": "reserved",
+        "assistant": {
+            "id": "douzi-core",
+            "name": "Douzi Core",
+            "model_connected": False,
+        },
+        "input_received": bool(message),
+        "reply": (
+            "豆子 AI 助手接口已预留。当前不会调用外部模型；后续可在这里接入本地优先的问答、站点导览和外贸助理能力。"
+            if locale == "zh"
+            else "Douzi AI assistant endpoint is reserved. No external model is called yet; this endpoint is ready for future local-first site guidance and Trade Assistant workflows."
+        ),
+        "next_step": {
+            "context_endpoint": "/api/ai-context",
+            "production_ready": False,
+            "requires_model_adapter": True,
+        },
+        "site_context": {
+            "brand": context["brand"],
+            "product": context["product"],
+        },
+    }
 
 
 def _login_page() -> str:
@@ -2570,6 +2669,21 @@ def create_app(
     def app(environ: dict, start_response: StartResponse) -> Iterable[bytes]:
         method = str(environ.get("REQUEST_METHOD", "GET")).upper()
         path = str(environ.get("PATH_INFO", "/"))
+
+        if method == "OPTIONS" and path in {"/api/ai-context", "/api/ai-core/message"}:
+            return _json_response(start_response, HTTPStatus.NO_CONTENT, headers=PUBLIC_API_HEADERS)
+
+        if method == "GET" and path == "/api/ai-context":
+            return _json_response(start_response, HTTPStatus.OK, _public_site_context(store.load()), headers=PUBLIC_API_HEADERS)
+
+        if method == "POST" and path == "/api/ai-core/message":
+            payload = _read_json(environ)
+            return _json_response(
+                start_response,
+                HTTPStatus.OK,
+                _ai_core_placeholder_response(payload, store.load()),
+                headers=PUBLIC_API_HEADERS,
+            )
 
         if method == "GET" and path == "/api/content":
             return _json_response(start_response, HTTPStatus.OK, store.load())

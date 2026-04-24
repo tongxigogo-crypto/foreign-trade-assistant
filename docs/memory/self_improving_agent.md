@@ -362,3 +362,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Store `pet_products_gallery.zh.cards` and `pet_products_gallery.en.cards` explicitly, while mirroring `pet_products_gallery.cards` from Chinese only for backward compatibility with older saved JSON.
   - Frontend runtime should prefer `pet_products_gallery[lang].cards`; if localized cards are empty, only Chinese may fall back to legacy `cards`, otherwise English can accidentally inherit Chinese placeholder copy.
   - Preview buttons should target concrete surfaces (`/`, `/indexV6.6_refined_en.html`, and `/pet-product-template.html`) with `?preview=1`, using `localStorage.site_content_preview` for draft-only checks before save.
+
+## [2026-04-24 14:38:00] douzi-ai-core-reserved-api
+
+- status: confirmed_working
+- summary: The floating Douzi core should act as a future AI assistant mount point without turning the homepage into a chat product before the model adapter is ready.
+- learnings:
+  - Reserve the front-end contract with `data-ai-assistant-mount="douzi-core"` plus `window.TongAICore.context()` and `window.TongAICore.send()` so later assistant UI work has a stable hook.
+  - Keep the first public AI API layer model-free: `/api/ai-context` exposes structured site/product context, while `/api/ai-core/message` returns a reserved placeholder response and confirms no external model is connected.
+  - Add CORS headers to the public AI context/message endpoints now, because future external AI clients need machine-readable access without depending on the admin session.
