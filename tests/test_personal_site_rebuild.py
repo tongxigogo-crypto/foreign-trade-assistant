@@ -121,6 +121,11 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("Mini Program", html)
         self.assertIn("Product Information", html)
         self.assertIn("IP Collaboration", html)
+        self.assertIn('data-contact-form', html)
+        self.assertIn('name="intent" value="website-development"', html)
+        self.assertIn('name="company_url"', html)
+        self.assertIn("/api/contact", EXTERNAL_BILINGUAL.read_text(encoding="utf-8"))
+        self.assertIn("wechat-qr-tong1390.jpg", html)
         self.assertIn("Local-first · Multi-model compatible", html)
 
     def test_external_v66_has_bilingual_copy_runtime(self) -> None:

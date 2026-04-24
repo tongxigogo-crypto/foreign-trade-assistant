@@ -371,3 +371,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Reserve the front-end contract with `data-ai-assistant-mount="douzi-core"` plus `window.TongAICore.context()` and `window.TongAICore.send()` so later assistant UI work has a stable hook.
   - Keep the first public AI API layer model-free: `/api/ai-context` exposes structured site/product context, while `/api/ai-core/message` returns a reserved placeholder response and confirms no external model is connected.
   - Add CORS headers to the public AI context/message endpoints now, because future external AI clients need machine-readable access without depending on the admin session.
+
+## [2026-04-25 01:55:00] contact-form-placeholder-before-email-provider
+
+- status: confirmed_working
+- summary: The V6.6 contact area now needs a real form shape before final copy review, but email delivery should stay placeholder-only until the deployment provider and Resend credentials are configured.
+- learnings:
+  - Keep the four contact intents as stable slugs: `website-development`, `mini-program`, `product-information`, and `ip-collaboration`; these are the contract between homepage UI, `/api/contact`, and the future email template.
+  - The initial anti-spam layer should be simple and auditable: a honeypot field plus required name/contact/intent/message validation is enough before adding Cloudflare Turnstile.
+  - Use a stable local QR asset name such as `小Q和豆子/wechat-qr-tong1390.jpg` instead of referencing timestamped WeChat export filenames in the homepage.

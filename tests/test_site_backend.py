@@ -115,6 +115,61 @@ class SiteBackendTests(unittest.TestCase):
         self.assertEqual(data["status"], "reserved")
         self.assertTrue(data["input_received"])
 
+    def test_contact_endpoint_accepts_valid_placeholder_submission(self) -> None:
+        body = json.dumps({
+            "name": "Alex Buyer",
+            "contact": "alex@example.com",
+            "intent": "website-development",
+            "message": "We need a pet product landing page and want to discuss the first scope.",
+            "locale": "en",
+            "company_url": "",
+        }).encode("utf-8")
+
+        status, headers, payload = _request(
+            self.app,
+            "POST",
+            "/api/contact",
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+
+        self.assertEqual(status, 202)
+        self.assertEqual(headers["Access-Control-Allow-Origin"], "*")
+        data = json.loads(payload.decode("utf-8"))
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["status"], "email_placeholder")
+        self.assertEqual(data["email_to"], "tongxigogo@gmail.com")
+        self.assertEqual(data["submission"]["intent"], "website-development")
+
+    def test_contact_endpoint_rejects_invalid_or_spam_submission(self) -> None:
+        invalid = json.dumps({"name": "A", "contact": "", "intent": "bad", "message": "short"}).encode("utf-8")
+        status, _, payload = _request(
+            self.app,
+            "POST",
+            "/api/contact",
+            body=invalid,
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(status, 400)
+        self.assertFalse(json.loads(payload.decode("utf-8"))["ok"])
+
+        spam = json.dumps({
+            "name": "Spam Bot",
+            "contact": "bot@example.com",
+            "intent": "ip-collaboration",
+            "message": "This should be ignored by honeypot filtering.",
+            "company_url": "https://spam.example",
+        }).encode("utf-8")
+        status, _, payload = _request(
+            self.app,
+            "POST",
+            "/api/contact",
+            body=spam,
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(payload.decode("utf-8"))["status"], "ignored")
+
     def test_admin_meta_endpoint_returns_history_shape(self) -> None:
         cookie = self._login_cookie()
         status, _, payload = _request(self.app, "GET", "/admin/api/meta", headers={"Cookie": cookie})

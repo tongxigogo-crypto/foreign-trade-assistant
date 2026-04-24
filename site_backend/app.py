@@ -154,6 +154,13 @@ PUBLIC_API_HEADERS = [
     ("Access-Control-Allow-Headers", "Content-Type, Authorization"),
 ]
 
+CONTACT_INTENTS = {
+    "website-development",
+    "mini-program",
+    "product-information",
+    "ip-collaboration",
+}
+
 
 def _json_response(start_response: StartResponse, status: HTTPStatus, payload: dict | None = None, headers: list[tuple[str, str]] | None = None) -> Iterable[bytes]:
     body = b""
@@ -300,6 +307,48 @@ def _ai_core_placeholder_response(payload: dict, content: dict) -> dict:
         "site_context": {
             "brand": context["brand"],
             "product": context["product"],
+        },
+    }
+
+
+def _contact_placeholder_response(payload: dict) -> tuple[HTTPStatus, dict]:
+    if str(payload.get("company_url") or "").strip():
+        return HTTPStatus.OK, {"ok": True, "status": "ignored", "reason": "spam_filter"}
+
+    name = str(payload.get("name") or "").strip()
+    contact = str(payload.get("contact") or "").strip()
+    intent = str(payload.get("intent") or "").strip()
+    message = str(payload.get("message") or "").strip()
+    locale = str(payload.get("locale") or "en").strip().lower()
+
+    errors: dict[str, str] = {}
+    if len(name) < 2:
+        errors["name"] = "name_required"
+    if len(contact) < 5:
+        errors["contact"] = "contact_required"
+    if intent not in CONTACT_INTENTS:
+        errors["intent"] = "intent_required"
+    if len(message) < 10:
+        errors["message"] = "message_too_short"
+    if len(message) > 2000:
+        errors["message"] = "message_too_long"
+    if errors:
+        return HTTPStatus.BAD_REQUEST, {"ok": False, "status": "validation_error", "errors": errors}
+
+    return HTTPStatus.ACCEPTED, {
+        "ok": True,
+        "status": "email_placeholder",
+        "email_to": "tongxigogo@gmail.com",
+        "message": (
+            "已收到本地表单请求。部署后会通过邮件发送到 tongxigogo@gmail.com。"
+            if locale == "zh"
+            else "Local contact request received. After deployment, this will be sent to tongxigogo@gmail.com by email."
+        ),
+        "submission": {
+            "name": name,
+            "contact": contact,
+            "intent": intent,
+            "message_length": len(message),
         },
     }
 
@@ -2670,7 +2719,7 @@ def create_app(
         method = str(environ.get("REQUEST_METHOD", "GET")).upper()
         path = str(environ.get("PATH_INFO", "/"))
 
-        if method == "OPTIONS" and path in {"/api/ai-context", "/api/ai-core/message"}:
+        if method == "OPTIONS" and path in {"/api/ai-context", "/api/ai-core/message", "/api/contact"}:
             return _json_response(start_response, HTTPStatus.NO_CONTENT, headers=PUBLIC_API_HEADERS)
 
         if method == "GET" and path == "/api/ai-context":
@@ -2684,6 +2733,10 @@ def create_app(
                 _ai_core_placeholder_response(payload, store.load()),
                 headers=PUBLIC_API_HEADERS,
             )
+
+        if method == "POST" and path == "/api/contact":
+            status, payload = _contact_placeholder_response(_read_json(environ))
+            return _json_response(start_response, status, payload, headers=PUBLIC_API_HEADERS)
 
         if method == "GET" and path == "/api/content":
             return _json_response(start_response, HTTPStatus.OK, store.load())
