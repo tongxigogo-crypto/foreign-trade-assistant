@@ -230,6 +230,7 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Use `html[data-site-lang]` and a small shared `bilingual.js` helper for copy hydration and EN/CN button routing, but route buttons between files instead of relying on `?lang=` state.
   - Add a cache-busting query to the shared bilingual script during active local preview so browser cache does not hide recent text changes.
   - For image-led pet gallery cards, keep English titles and summaries short to avoid narrow-viewport word breaks; the homepage should remain visual-first.
+  - Until the CMS schema is truly bilingual, do not let old `site-content.json` string fields override the approved homepage copy; only merge the current managed gallery fields into the Chinese page.
 
 ## [2026-04-22 16:35:00] external-v66-preview-to-real-integration
 
