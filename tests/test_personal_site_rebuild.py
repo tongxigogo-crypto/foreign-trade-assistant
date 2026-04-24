@@ -116,6 +116,11 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('href="mailto:tongxigogo@gmail.com?subject=Tong%20Studio%20Inquiry"', html)
         self.assertIn("Email: tongxigogo@gmail.com", html)
         self.assertIn("WeChat: tong1390", html)
+        self.assertIn("contact-choice-grid", html)
+        self.assertIn("Website Development", html)
+        self.assertIn("Mini Program", html)
+        self.assertIn("Product Information", html)
+        self.assertIn("IP Collaboration", html)
         self.assertIn("Local-first · Multi-model compatible", html)
 
     def test_external_v66_has_bilingual_copy_runtime(self) -> None:
@@ -139,6 +144,9 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("indexV6.6_refined.html", script)
         self.assertIn("外贸助理", script)
         self.assertIn("Trade Assistant", script)
+        self.assertIn("contactChoices", script)
+        self.assertIn("网站开发", script)
+        self.assertIn("IP Collaboration", script)
 
     def test_external_v66_has_resource_priority_hints(self) -> None:
         html = EXTERNAL_V66.read_text(encoding="utf-8")
