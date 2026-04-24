@@ -138,14 +138,10 @@ def extract_content(html: str) -> dict:
 def _gallery_status_markup(status: str, entry_mode: str, template_path: str, card_id: str) -> str:
     if status == "live" and entry_mode == "template":
         href = f"{template_path}#{escape(card_id)}"
-        return f'<a class="pet-gallery-link" href="{href}"><span>已上线</span><span>→</span></a>'
+        return f'<a class="pet-gallery-link" href="{href}"><span>Live</span><span>&rarr;</span></a>'
     if status == "live":
-        return '<span class="pet-gallery-link is-coming"><span>已上线</span><span>·</span></span>'
-    return '<span class="pet-gallery-link is-coming"><span>敬请期待</span><span>·</span></span>'
-    if status == "live":
-        return '<span class="pet-gallery-link is-coming"><span>已上线</span><span>→</span></span>'
-    return '<span class="pet-gallery-link is-coming"><span>敬请期待</span><span>·</span></span>'
-
+        return '<span class="pet-gallery-link is-coming"><span>Live</span><span>&middot;</span></span>'
+    return '<span class="pet-gallery-link is-coming"><span>Coming soon</span><span>&middot;</span></span>'
 
 def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
     shape_a_styles = [
@@ -171,7 +167,7 @@ def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
     return f"""
                         <article class="pet-gallery-card">
                             <div class="pet-gallery-cover">
-                                <img class="pet-gallery-image" src="{escape(card.get("image", ""))}" alt="{escape(card.get("title", ""))} 封面图" loading="lazy" decoding="async">
+                                <img class="pet-gallery-image" src="{escape(card.get("image", ""))}" alt="{escape(card.get("title", ""))} cover image" loading="lazy" decoding="async">
                                 <div class="pet-gallery-shape a"{shape_a}></div>
                                 <div class="pet-gallery-shape b"{shape_b}></div>
                                 <div class="pet-gallery-shape c"></div>
@@ -193,7 +189,10 @@ def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
 
 
 def apply_content(html: str, content: dict) -> str:
-    zh = content.get("strings", {}).get("zh", {})
+    strings = content.get("strings", {})
+    zh = strings.get("zh", {})
+    en = strings.get("en", {})
+    primary = en if any(str(value).strip() for value in en.values()) else zh
     raw_images = content.get("images", {})
     images = {key: IMAGE_PATH_FIXUPS.get(value, value) for key, value in raw_images.items()}
     gallery = copy.deepcopy(V66_DEFAULT_CONTENT["pet_products_gallery"])
@@ -213,38 +212,38 @@ def apply_content(html: str, content: dict) -> str:
     html = _replace(
         r'(<div class="text-2xl font-black tracking-tighter text-gray-900">)(.*?)(</div>)',
         html,
-        rf"\1{zh.get('brand_name', '')}\3",
+        rf"\1{primary.get('brand_name', '')}\3",
     )
     html = _replace(
         r'(<div class="text-\[10px\] font-bold uppercase tracking-\[0\.28em\] text-slate-400">)(.*?)(</div>)',
         html,
-        rf"\1{zh.get('brand_tagline', '')}\3",
+        rf"\1{primary.get('brand_tagline', '')}\3",
     )
     html = _replace(
         r'(<h1 class="use-pretext text-5xl md:text-\[4\.4rem\] font-black mb-6 tracking-tighter leading-\[1\.06\]" style="color: #0F172A;">)(.*?)(</h1>)',
         html,
-        rf"\1{zh.get('hero_summary_title', '')}\3",
+        rf"\1{primary.get('hero_summary_title', '')}\3",
     )
     html = _replace(
         r'(<p class="use-pretext text-lg max-w-xl mx-auto font-medium leading-relaxed" style="color: #64748b;">)(.*?)(</p>)',
         html,
-        rf"\1{zh.get('hero_intro', '')}\3",
+        rf"\1{primary.get('hero_intro', '')}\3",
     )
     html = _replace(
         r'(<h2 class="use-pretext text-5xl md:text-6xl font-black tracking-tighter mb-6" style="color: #0F172A;">)(.*?)(</h2>)',
         html,
-        rf"\1{zh.get('hero_bridge', '')}\3",
+        rf"\1{primary.get('hero_bridge', '')}\3",
     )
     html = _replace(
         r'(<p class="use-pretext text-xl font-medium max-w-3xl mx-auto" style="color: #64748b; line-height: 1\.8;">)(.*?)(</p>)',
         html,
-        rf"\1{zh.get('hero_summary_body', '')}\3",
+        rf"\1{primary.get('hero_summary_body', '')}\3",
     )
 
     h3_pattern = r'(<h3 class="use-pretext text-2xl font-bold mb-4" style="color: #0F172A;">)(.*?)(</h3>)'
     p_pattern = r'(<p class="use-pretext text-sm" style="color: #64748b; line-height: 1\.8;">)(.*?)(</p>)'
-    feature_titles = [zh.get("trade_assistant_title", ""), zh.get("pet_trade_title", ""), zh.get("mini_program_title", "")]
-    feature_bodies = [zh.get("trade_assistant_body", ""), zh.get("pet_trade_body", ""), zh.get("mini_program_body", "")]
+    feature_titles = [primary.get("trade_assistant_title", ""), primary.get("pet_trade_title", ""), primary.get("mini_program_title", "")]
+    feature_bodies = [primary.get("trade_assistant_body", ""), primary.get("pet_trade_body", ""), primary.get("mini_program_body", "")]
     for idx, title in enumerate(feature_titles):
         html = _replace_nth(h3_pattern, html, lambda m, title=title: f"{m.group(1)}{title}{m.group(3)}", idx)
     for idx, body in enumerate(feature_bodies):
@@ -253,22 +252,22 @@ def apply_content(html: str, content: dict) -> str:
     html = _replace(
         r'(<section id="pet-ip".*?<h2 class="use-pretext text-5xl font-black tracking-tighter mb-6" style="color: #0F172A;">)(.*?)(</h2>)',
         html,
-        rf"\1{zh.get('pet_ip_title', '')}\3",
+        rf"\1{primary.get('pet_ip_title', '')}\3",
     )
     html = _replace(
         r'(<section id="pet-ip".*?<p class="use-pretext text-xl font-medium max-w-2xl mx-auto" style="color: #64748b;">)(.*?)(</p>)',
         html,
-        rf"\1{zh.get('pet_ip_body', '')}\3",
+        rf"\1{primary.get('pet_ip_body', '')}\3",
     )
     html = _replace(
         r'(<section class="py-40 px-8 relative z-20 flex items-center justify-center text-center">.*?<h2 class="use-pretext text-6xl font-black tracking-tighter mb-8 relative z-10" style="color: #0F172A;">)(.*?)(</h2>)',
         html,
-        rf"\1{zh.get('contact_title', '')}\3",
+        rf"\1{primary.get('contact_title', '')}\3",
     )
     html = _replace(
         r'(<section class="py-40 px-8 relative z-20 flex items-center justify-center text-center">.*?<p class="use-pretext text-xl font-medium mb-16 max-w-2xl mx-auto relative z-10" style="color: #64748b;">)(.*?)(</p>)',
         html,
-        rf"\1{zh.get('contact_body', '')}\3",
+        rf"\1{primary.get('contact_body', '')}\3",
     )
 
     local_img_pattern = r'(<img[^>]+src=")(\.\/[^"]+)("[^>]*>)'
@@ -303,7 +302,10 @@ PREVIEW_SCRIPT = """
   if (!raw) return;
   let payload;
   try { payload = JSON.parse(raw); } catch { return; }
-  const zh = payload?.strings?.zh || {};
+  const strings = payload?.strings || {};
+  const zh = strings?.zh || {};
+  const en = strings?.en || {};
+  const primary = Object.values(en).some((value) => String(value || "").trim()) ? en : zh;
   const images = payload?.images || {};
   const gallery = payload?.pet_products_gallery?.cards || [];
   const templatePath = payload?.pet_product_template?.path || './pet-product-template.html';
@@ -322,22 +324,22 @@ PREVIEW_SCRIPT = """
     const node = nodes[index];
     if (node && value) node.src = value;
   };
-  setText('nav .text-2xl.font-black', zh.brand_name);
-  setText('nav .text-\\[10px\\].font-bold', zh.brand_tagline);
-  setHtml('#sc-chaos h1.use-pretext', zh.hero_summary_title);
-  setHtml('#sc-chaos p.use-pretext', zh.hero_intro);
-  setHtml('#features h2.use-pretext', zh.hero_bridge);
-  setHtml('#features .text-xl.font-medium', zh.hero_summary_body);
-  setText('#features h3.use-pretext', zh.trade_assistant_title, 0);
-  setText('#features h3.use-pretext', zh.pet_trade_title, 1);
-  setText('#features h3.use-pretext', zh.mini_program_title, 2);
-  setText('#features p.use-pretext.text-sm', zh.trade_assistant_body, 0);
-  setText('#features p.use-pretext.text-sm', zh.pet_trade_body, 1);
-  setText('#features p.use-pretext.text-sm', zh.mini_program_body, 2);
-  setText('#pet-ip h2.use-pretext', zh.pet_ip_title);
-  setText('#pet-ip p.use-pretext.text-xl', zh.pet_ip_body);
-  setHtml('section.py-40 h2.use-pretext', zh.contact_title);
-  setHtml('section.py-40 p.use-pretext.text-xl', zh.contact_body);
+  setText('nav .text-2xl.font-black', primary.brand_name);
+  setText('nav .text-\\[10px\\].font-bold', primary.brand_tagline);
+  setHtml('#sc-chaos h1.use-pretext', primary.hero_summary_title);
+  setHtml('#sc-chaos p.use-pretext', primary.hero_intro);
+  setHtml('#features h2.use-pretext', primary.hero_bridge);
+  setHtml('#features .text-xl.font-medium', primary.hero_summary_body);
+  setText('#features h3.use-pretext', primary.trade_assistant_title, 0);
+  setText('#features h3.use-pretext', primary.pet_trade_title, 1);
+  setText('#features h3.use-pretext', primary.mini_program_title, 2);
+  setText('#features p.use-pretext.text-sm', primary.trade_assistant_body, 0);
+  setText('#features p.use-pretext.text-sm', primary.pet_trade_body, 1);
+  setText('#features p.use-pretext.text-sm', primary.mini_program_body, 2);
+  setText('#pet-ip h2.use-pretext', primary.pet_ip_title);
+  setText('#pet-ip p.use-pretext.text-xl', primary.pet_ip_body);
+  setHtml('section.py-40 h2.use-pretext', primary.contact_title);
+  setHtml('section.py-40 p.use-pretext.text-xl', primary.contact_body);
   setSrc('.core-avatar', images['home.hero']);
   setSrc('.workspace-shot img', images['home.trade_assistant']);
   setSrc('.ip-card-portrait img', images['home.pet_trade'], 0);
@@ -356,12 +358,12 @@ PREVIEW_SCRIPT = """
       if (node.tagName === 'A') {
         node.classList.remove('is-coming');
         node.setAttribute('href', `${templatePath}#${card.id || `card-${index + 1}`}`);
-        node.innerHTML = '<span>已上线</span><span>→</span>';
+        node.innerHTML = '<span>Live</span><span>→</span>';
       } else {
         const replacement = document.createElement('a');
         replacement.className = 'pet-gallery-link';
         replacement.href = `${templatePath}#${card.id || `card-${index + 1}`}`;
-        replacement.innerHTML = '<span>已上线</span><span>→</span>';
+        replacement.innerHTML = '<span>Live</span><span>→</span>';
         node.replaceWith(replacement);
       }
       return;
@@ -370,22 +372,22 @@ PREVIEW_SCRIPT = """
       if (node.tagName === 'A') {
         const replacement = document.createElement('span');
         replacement.className = 'pet-gallery-link is-coming';
-        replacement.innerHTML = '<span>已上线</span><span>·</span>';
+        replacement.innerHTML = '<span>Live</span><span>·</span>';
         node.replaceWith(replacement);
       } else {
         node.classList.add('is-coming');
-        node.innerHTML = '<span>已上线</span><span>·</span>';
+        node.innerHTML = '<span>Live</span><span>·</span>';
       }
       return;
     }
     if (node.tagName === 'A') {
       const replacement = document.createElement('span');
       replacement.className = 'pet-gallery-link is-coming';
-      replacement.innerHTML = '<span>敬请期待</span><span>·</span>';
+      replacement.innerHTML = '<span>Coming soon</span><span>·</span>';
       node.replaceWith(replacement);
     } else {
       node.classList.add('is-coming');
-      node.innerHTML = '<span>敬请期待</span><span>·</span>';
+      node.innerHTML = '<span>Coming soon</span><span>·</span>';
     }
   });
 })();

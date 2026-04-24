@@ -315,3 +315,21 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - Put the gallery preview ahead of the per-card forms so image dominance, title rhythm, and publish-state semantics are readable before operators dive into individual fields.
   - The backend preview should echo the homepage card grammar, not just show thumbnails; keep the kicker, cover title, title, summary, tag, and state chip in the mini-card so “display only” versus “template page” is obvious.
   - A horizontal preview rail inside the CMS is enough for this phase; there is no need to embed the full homepage iframe just to validate gallery composition.
+
+## [2026-04-24 12:26:00] split-english-site-and-chinese-wechat-page
+
+- status: confirmed_direction
+- summary: The personal site should ship as two coordinated experiences instead of one bilingual page: an English desktop-first independent site for SEO and overseas positioning, and a separate Chinese WeChat-friendly page for domestic trust-building and conversion.
+- learnings:
+  - Do not try to make one homepage simultaneously satisfy Google-facing English SEO and China-facing WeChat conversion; keep the two experiences separated at the page/template level even if they share one backend.
+  - Finish the English independent-site version first until it is launch-ready, then build the Chinese mobile-first WeChat page as the next phase.
+  - The future CMS should manage both `en` and `zh` variants from one system, but the Chinese page should be a purpose-built conversion page, not a direct visual copy of the English site.
+
+## [2026-04-24 13:18:00] english-launch-polish-needs-dom-targeted-replacements
+
+- status: confirmed_working
+- summary: For the external English launch shell, broad search-and-replace against historical mojibake is unreliable; the safe path is to patch real visible DOM nodes and the sync adapter together, then verify with a Unicode scan.
+- learnings:
+  - When polishing `C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html` and `pet-product-template.html`, check the live DOM text for remaining Han characters instead of assuming the content JSON already covers every visible label.
+  - Update `site_backend/v66_adapter.py` in the same run whenever a user-facing gallery alt, status chip, or preview label changes, otherwise the next CMS save can regress the homepage back to mixed-language output.
+  - Comments and local asset paths can stay Chinese for now; prioritize only visible launch copy, SEO text, CTA labels, and preview-state semantics.
