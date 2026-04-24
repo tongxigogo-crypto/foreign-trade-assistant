@@ -94,6 +94,28 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('fetchpriority="high"', html)
         self.assertIn('loading="lazy"', html)
 
+    def test_external_v66_has_launch_ready_navigation_and_ctas(self) -> None:
+        html = EXTERNAL_V66.read_text(encoding="utf-8")
+
+        self.assertIn('href="#pet-products-gallery"', html)
+        self.assertIn('href="#contact"', html)
+        self.assertIn('id="contact"', html)
+        self.assertIn('href="mailto:tongxigogo@gmail.com?subject=Trade%20Assistant%20Demo%20Request"', html)
+        self.assertIn('href="mailto:tongxigogo@gmail.com?subject=Tong%20Studio%20Inquiry"', html)
+        self.assertIn("Email: tongxigogo@gmail.com", html)
+        self.assertIn("WeChat: tong1390", html)
+        self.assertIn("Local-first · Multi-model compatible", html)
+
+    def test_external_v66_has_resource_priority_hints(self) -> None:
+        html = EXTERNAL_V66.read_text(encoding="utf-8")
+
+        self.assertIn('rel="preconnect" href="https://cdn.tailwindcss.com"', html)
+        self.assertIn('rel="preconnect" href="https://fonts.gstatic.com" crossorigin', html)
+        self.assertIn('rel="preconnect" href="https://cdn.jsdelivr.net"', html)
+        self.assertIn('rel="preconnect" href="https://cdnjs.cloudflare.com"', html)
+        self.assertIn('rel="preload" as="image" href="./小Q和豆子/豆子感谢.png" fetchpriority="high"', html)
+        self.assertIn('rel="preload" as="image" href="./小Q和豆子/APP.png" fetchpriority="high"', html)
+
     def test_external_v66_has_pet_products_gallery_section(self) -> None:
         html = EXTERNAL_V66.read_text(encoding="utf-8")
 

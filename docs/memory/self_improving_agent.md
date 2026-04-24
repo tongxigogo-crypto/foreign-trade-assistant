@@ -333,3 +333,12 @@ This file stores reusable learnings, corrections, and failure patterns for this 
   - When polishing `C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html` and `pet-product-template.html`, check the live DOM text for remaining Han characters instead of assuming the content JSON already covers every visible label.
   - Update `site_backend/v66_adapter.py` in the same run whenever a user-facing gallery alt, status chip, or preview label changes, otherwise the next CMS save can regress the homepage back to mixed-language output.
   - Comments and local asset paths can stay Chinese for now; prioritize only visible launch copy, SEO text, CTA labels, and preview-state semantics.
+
+## [2026-04-24 13:35:00] english-launch-cta-and-resource-gates
+
+- status: confirmed_working
+- summary: English launch readiness should treat navigation anchors, real contact links, and first-screen resource priority hints as regression-gated behavior, not one-off manual polish.
+- learnings:
+  - The external V6.6 homepage needs a real `#contact` section plus navigation entries for `#pet-products-gallery` and `#contact`; CTA-looking controls should be anchors with concrete `mailto:` targets until a form route exists.
+  - Keep lightweight resource hints in the HTML head for the current CDN dependencies and first-screen images; this is a low-risk performance improvement before any future bundling or framework migration.
+  - Add tests for these launch-facing behaviors because they live in the external page source and are easy to lose during later content syncs.
