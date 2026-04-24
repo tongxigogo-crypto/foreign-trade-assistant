@@ -35,6 +35,14 @@ For any new conversation in this worktree, read these sources first in this orde
 - Any publish/deploy recommendation is draft-first and confirmation-gated.
 - `ui_stitch_agent` owns Stitch-based UI polishing and hands off implementation-ready artifacts.
 
+## Engineering Discipline
+
+- Apply `karpathy-style-engineering` as a global execution constraint for implementation, debugging, and review work in this worktree.
+- Before coding, restate the target outcome, surface material assumptions, and prefer asking only when the missing detail changes the solution materially.
+- Prefer the simplest valid solution that satisfies the stated goal; avoid speculative abstraction, framework churn, and adjacent scope expansion.
+- Keep diffs narrow: touch only the files and code paths required for the task unless a directly blocking issue forces a wider change.
+- Do not claim completion without concrete verification against the requested outcome; if verification is partial, state the remaining assumption or risk explicitly.
+
 ## Source Of Truth
 
 - Product/brand intent in `site_ops/config/site-strategy.md`

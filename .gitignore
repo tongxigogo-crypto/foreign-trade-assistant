@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+
+hyperframes_shots/
+temp_video_keyframes/
+temp_video_review/
+temp_video_review_vidu2/
