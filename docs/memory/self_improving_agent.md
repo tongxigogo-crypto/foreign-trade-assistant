@@ -34,6 +34,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - The first-screen laptop intro now uses a fullscreen macOS-style software window. Preserve the pain cards and scrollytelling transition; edit the inner window copy through `hero_summary_title`, `hero_intro`, and `hero_subtitle`.
 - Keep the first-screen hero title on one line and attached to `use-pretext` so Douzi Core movement continues to affect the text layout.
 - The laptop/workspace panel should show credible operational details: customer context, inquiry input, quote/task suggestions, local-first and multi-model compatibility.
+- The user explicitly authorized proactive use of sub-agents and design plugins/skills when useful; do not wait for a reminder on future design, copy, SEO, backend, or QA splits.
 - Use one shared outer shell width for major mid-page sections; keep the hero laptop intentionally staged inside it.
 - Pet-products gallery belongs after the Pet IP section and should feel like an editorial/brand content rail, not a normal product grid.
 - Gallery behavior: hidden-scrollbar horizontal rail, gentle auto-drift, pause on hover/drag, pointer dragging supported.
