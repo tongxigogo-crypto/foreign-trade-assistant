@@ -21,8 +21,8 @@ V66_DEFAULT_CONTENT = {
             "hero_bridge": "不再是多一个工具，而是把所有文件同步在一个系统。",
             "hero_summary_title": "不再翻找，即刻响应",
             "hero_summary_body": "外贸助理把客户上下文、产品资料、报价历史和模型记忆收回同一个本地优先系统，让每一次跟进都从完整记录开始。",
-            "pet_ip_title": "产品形象展示",
-            "pet_ip_body": "小Q和豆子不是硬塞进来的吉祥物，而是 Tong工作室 的品牌识别锚点，负责把专业能力变得可被记住。",
+            "pet_ip_title": "懂<span class=\"title-accent\">代码</span>，也懂<span class=\"title-accent\">IP</span>",
+            "pet_ip_body": "小Q和豆子不是装饰角色，而是 Tong工作室 的品牌记忆点：一个负责温柔兜底，一个负责制造戏剧感，让技术能力更容易被记住。",
             "trade_assistant_title": "客户上下文快速恢复",
             "trade_assistant_body": "系统自动汇总历史沟通、产品信息、报价历史，消息许久的客户再联系，一键查看所有沟通记录。",
             "pet_trade_title": "报价与回复",
@@ -256,7 +256,7 @@ def apply_content(html: str, content: dict) -> str:
         html = _replace_nth(p_pattern, html, lambda m, body=body: f"{m.group(1)}{body}{m.group(3)}", idx)
 
     html = _replace(
-        r'(<section id="pet-ip".*?<h2 class="use-pretext text-5xl font-black tracking-tighter mb-6" style="color: #0F172A;">)(.*?)(</h2>)',
+        r'(<section id="pet-ip".*?<h2 class="(?:use-pretext )?text-5xl font-black tracking-tighter mb-6" style="color: #0F172A;">)(.*?)(</h2>)',
         html,
         rf"\1{primary.get('pet_ip_title', '')}\3",
     )
@@ -343,7 +343,7 @@ PREVIEW_SCRIPT = """
   setText('#features p.use-pretext.text-sm', primary.trade_assistant_body, 0);
   setText('#features p.use-pretext.text-sm', primary.pet_trade_body, 1);
   setText('#features p.use-pretext.text-sm', primary.mini_program_body, 2);
-  setText('#pet-ip h2.use-pretext', primary.pet_ip_title);
+  setHtml('#pet-ip h2', primary.pet_ip_title);
   setText('#pet-ip p.use-pretext.text-xl', primary.pet_ip_body);
   setHtml('section.py-40 h2.use-pretext', primary.contact_title);
   setHtml('section.py-40 p.use-pretext.text-xl', primary.contact_body);

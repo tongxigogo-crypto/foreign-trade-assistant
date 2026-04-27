@@ -103,6 +103,8 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("feature-architecture", html)
         self.assertIn("feature-track-card", html)
         self.assertIn("One system where every file stays in sync", html)
+        self.assertIn("title-accent", html)
+        self.assertIn("Understands <span", html)
         self.assertIn('fetchpriority="high"', html)
         self.assertIn('loading="lazy"', html)
 
@@ -157,6 +159,9 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("客户上下文快速恢复", script)
         self.assertIn("模型灵活性", script)
         self.assertIn("featureTrackSteps", script)
+        self.assertIn("懂<span", script)
+        self.assertIn("情绪稳定的犬界老大哥", script)
+        self.assertIn("鬼马机灵的闯祸发动机", script)
         self.assertIn("tong:ai-core-open", script)
         self.assertIn("/api/ai-core/message", script)
         self.assertIn("/api/content", script)
