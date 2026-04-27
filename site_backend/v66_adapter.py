@@ -19,7 +19,7 @@ V66_DEFAULT_CONTENT = {
             "hero_intro": "汇聚邮件、合同、报价与客户记录，把外贸人的经验沉淀成一个本地优先的私有工作台。",
             "hero_subtitle": "敏感资料默认本地处理，不用于云端训练；每一次回复，都更贴近你的业务语境和谈判风格。",
             "hero_bridge": "不是再加一个 AI，而是把外贸动作重新接回同一套工作流。",
-            "hero_summary_title": "不再翻找，<br>即刻响应",
+            "hero_summary_title": "不再翻找，即刻响应",
             "hero_summary_body": "客户资料、报价版本、邮件历史、待办任务和相关文件都在同一个 App 内处理，默认本地化保存与调用，不再担心商业内容被云端直接获取。豆子核心继续负责全局避障演示，但页面叙事已经回到真实产品。",
             "pet_ip_title": "产品形象展示",
             "pet_ip_body": "小Q和豆子不是硬塞进来的吉祥物，而是 Tong工作室 的品牌识别锚点，负责把专业能力变得可被记住。",
@@ -221,7 +221,7 @@ def apply_content(html: str, content: dict) -> str:
         rf"\1{primary.get('brand_tagline', '')}\3",
     )
     html = _replace(
-        r'(<h1 class="text-5xl md:text-\[4\.4rem\] font-black mb-6 tracking-tighter leading-\[1\.06\]" style="color: #0F172A;" aria-label=")(.*?)(">)(.*?)(</h1>)',
+        r'(<h1 class="(?:use-pretext )?text-5xl md:text-\[4\.4rem\] font-black mb-6 tracking-tighter leading-\[1\.06\]" style="color: #0F172A;" aria-label=")(.*?)(">)(.*?)(</h1>)',
         html,
         rf"\1{escape(primary.get('hero_summary_title', '').replace('<br>', ' '))}\3{primary.get('hero_summary_title', '')}\5",
     )
