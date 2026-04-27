@@ -29,6 +29,7 @@ EDITOR_SCHEMA = [
         "fields": [
             {"key": "hero_summary_title", "label": "首屏主标题", "type": "textarea", "rows": 3},
             {"key": "hero_intro", "label": "首屏说明", "type": "textarea", "rows": 4},
+            {"key": "hero_subtitle", "label": "首屏安全说明", "type": "textarea", "rows": 3},
             {"key": "hero_bridge", "label": "功能区标题", "type": "textarea", "rows": 3},
             {"key": "hero_summary_body", "label": "功能区说明", "type": "textarea", "rows": 4},
         ],

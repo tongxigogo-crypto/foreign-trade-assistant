@@ -14,6 +14,7 @@ DEFAULT_CONTENT: dict[str, Any] = {
         "zh": {
             "brand_name": "",
             "hero_intro": "",
+            "hero_subtitle": "",
             "hero_bridge": "",
             "hero_summary_title": "",
             "hero_summary_body": "",
@@ -31,6 +32,7 @@ DEFAULT_CONTENT: dict[str, Any] = {
         "en": {
             "brand_name": "",
             "hero_intro": "",
+            "hero_subtitle": "",
             "hero_bridge": "",
             "hero_summary_title": "",
             "hero_summary_body": "",

@@ -16,9 +16,10 @@ V66_DEFAULT_CONTENT = {
         "zh": {
             "brand_name": "Tong Studio",
             "brand_tagline": "Trade Assistant APP",
-            "hero_intro": "这不是再包一层 AI 聊天，而是把询盘、报价、邮件和跟进动作拉回同一条业务链路。默认本地优先，必要时再调用云端能力，当前版本已迭代到 v0.1.1-beta2-build39。",
+            "hero_intro": "汇聚邮件、合同、报价与客户记录，把外贸人的经验沉淀成一个本地优先的私有工作台。",
+            "hero_subtitle": "敏感资料默认本地处理，不用于云端训练；每一次回复，都更贴近你的业务语境和谈判风格。",
             "hero_bridge": "不是再加一个 AI，而是把外贸动作重新接回同一套工作流。",
-            "hero_summary_title": "把客户、报价、邮件和任务<br>收回同一个工作台",
+            "hero_summary_title": "不再翻找，<br>即刻响应",
             "hero_summary_body": "客户资料、报价版本、邮件历史、待办任务和相关文件都在同一个 App 内处理，默认本地化保存与调用，不再担心商业内容被云端直接获取。豆子核心继续负责全局避障演示，但页面叙事已经回到真实产品。",
             "pet_ip_title": "产品形象展示",
             "pet_ip_body": "小Q和豆子不是硬塞进来的吉祥物，而是 Tong工作室 的品牌识别锚点，负责把专业能力变得可被记住。",
@@ -220,14 +221,19 @@ def apply_content(html: str, content: dict) -> str:
         rf"\1{primary.get('brand_tagline', '')}\3",
     )
     html = _replace(
-        r'(<h1 class="use-pretext text-5xl md:text-\[4\.4rem\] font-black mb-6 tracking-tighter leading-\[1\.06\]" style="color: #0F172A;">)(.*?)(</h1>)',
+        r'(<h1 class="text-5xl md:text-\[4\.4rem\] font-black mb-6 tracking-tighter leading-\[1\.06\]" style="color: #0F172A;" aria-label=")(.*?)(">)(.*?)(</h1>)',
         html,
-        rf"\1{primary.get('hero_summary_title', '')}\3",
+        rf"\1{escape(primary.get('hero_summary_title', '').replace('<br>', ' '))}\3{primary.get('hero_summary_title', '')}\5",
     )
     html = _replace(
-        r'(<p class="use-pretext text-lg max-w-xl mx-auto font-medium leading-relaxed" style="color: #64748b;">)(.*?)(</p>)',
+        r'(<p class="hero-copy">)(.*?)(</p>)',
         html,
         rf"\1{primary.get('hero_intro', '')}\3",
+    )
+    html = _replace(
+        r'(<p class="hero-subtitle">)(.*?)(</p>)',
+        html,
+        rf"\1{primary.get('hero_subtitle', '')}\3",
     )
     html = _replace(
         r'(<h2 class="use-pretext text-5xl md:text-6xl font-black tracking-tighter mb-6" style="color: #0F172A;">)(.*?)(</h2>)',
@@ -326,8 +332,9 @@ PREVIEW_SCRIPT = """
   };
   setText('nav .text-2xl.font-black', primary.brand_name);
   setText('nav .text-\\[10px\\].font-bold', primary.brand_tagline);
-  setHtml('#sc-chaos h1.use-pretext', primary.hero_summary_title);
-  setHtml('#sc-chaos p.use-pretext', primary.hero_intro);
+  setHtml('#sc-chaos h1', primary.hero_summary_title);
+  setText('#sc-chaos .hero-copy', primary.hero_intro);
+  setText('#sc-chaos .hero-subtitle', primary.hero_subtitle);
   setHtml('#features h2.use-pretext', primary.hero_bridge);
   setHtml('#features .text-xl.font-medium', primary.hero_summary_body);
   setText('#features h3.use-pretext', primary.trade_assistant_title, 0);
