@@ -96,8 +96,10 @@ This file stores durable learnings for this worktree only. It is intentionally c
   - `POST /api/contact`
   - validates name/contact/intent/message
   - uses a honeypot field for simple spam filtering
-  - returns `email_placeholder`
+  - persists accepted homepage project feeds into `content/contact-submissions.jsonl`
+  - returns `feed_saved`
   - does not send email until deployment credentials are configured
+- Admin can review homepage project feeds through authenticated `GET /admin/api/contact-submissions` and the right-side inspector module.
 - Email target is `tongxigogo@gmail.com`.
 - WeChat QR should use a stable asset path: `小Q和豆子/wechat-qr-tong1390.jpg`.
 

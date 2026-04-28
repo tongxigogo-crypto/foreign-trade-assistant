@@ -29,8 +29,8 @@ V66_DEFAULT_CONTENT = {
             "pet_trade_body": "从询盘到报价，不只是数字，会连同 MOQ、SKU 资料、客户阶段和跟进建议一起生成，让每次回复都保持你自己的风格。",
             "mini_program_title": "模型灵活性",
             "mini_program_body": "不用再担心 AI 的更新，随时随地更换 AI，都可以立刻恢复全部记忆。",
-            "contact_title": "如果你也在做宠物用品外贸，<br>现在可以直接聊工作流和产品方案。",
-            "contact_body": "当前外贸助理已迭代到 v0.1.1-beta2-build39。你可以先从询盘分析、报价建议和任务推进聊起，也可以继续展开宠物 IP、工具链和后续供应链准备怎么串起来。",
+            "contact_title": "现在，<span>投喂你的项目吧！</span>",
+            "contact_body": "",
         },
         "en": {},
     },
@@ -266,14 +266,9 @@ def apply_content(html: str, content: dict) -> str:
         rf"\1{primary.get('pet_ip_body', '')}\3",
     )
     html = _replace(
-        r'(<section class="py-40 px-8 relative z-20 flex items-center justify-center text-center">.*?<h2 class="use-pretext text-6xl font-black tracking-tighter mb-8 relative z-10" style="color: #0F172A;">)(.*?)(</h2>)',
+        r'(<section id="contact".*?<h2 class="contact-feed-title relative z-10" data-contact-title>)(.*?)(</h2>)',
         html,
         rf"\1{primary.get('contact_title', '')}\3",
-    )
-    html = _replace(
-        r'(<section class="py-40 px-8 relative z-20 flex items-center justify-center text-center">.*?<p class="use-pretext text-xl font-medium mb-16 max-w-2xl mx-auto relative z-10" style="color: #64748b;">)(.*?)(</p>)',
-        html,
-        rf"\1{primary.get('contact_body', '')}\3",
     )
 
     local_img_pattern = r'(<img[^>]+src=")(\.\/[^"]+)("[^>]*>)'
@@ -345,8 +340,7 @@ PREVIEW_SCRIPT = """
   setText('#features p.use-pretext.text-sm', primary.mini_program_body, 2);
   setHtml('#pet-ip h2', primary.pet_ip_title);
   setText('#pet-ip p.use-pretext.text-xl', primary.pet_ip_body);
-  setHtml('section.py-40 h2.use-pretext', primary.contact_title);
-  setHtml('section.py-40 p.use-pretext.text-xl', primary.contact_body);
+  setHtml('#contact [data-contact-title]', primary.contact_title);
   setSrc('.core-avatar', images['home.hero']);
   setSrc('.workspace-shot img', images['home.trade_assistant']);
   setSrc('.ip-card-portrait img', images['home.pet_trade'], 0);

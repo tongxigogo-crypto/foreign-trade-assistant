@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from urllib.parse import parse_qs
 from http import HTTPStatus
 from pathlib import Path
@@ -162,6 +163,8 @@ CONTACT_INTENTS = {
     "ip-collaboration",
 }
 
+CONTACT_SUBMISSIONS_LIMIT = 50
+
 
 def _json_response(start_response: StartResponse, status: HTTPStatus, payload: dict | None = None, headers: list[tuple[str, str]] | None = None) -> Iterable[bytes]:
     body = b""
@@ -312,14 +315,52 @@ def _ai_core_placeholder_response(payload: dict, content: dict) -> dict:
     }
 
 
-def _contact_placeholder_response(payload: dict) -> tuple[HTTPStatus, dict]:
+def _contact_submissions_path(site_dir: Path) -> Path:
+    return site_dir / "content" / "contact-submissions.jsonl"
+
+
+def _append_contact_submission(site_dir: Path, submission: dict) -> None:
+    path = _contact_submissions_path(site_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(submission, ensure_ascii=False) + "\n")
+
+
+def _load_contact_submissions(site_dir: Path, limit: int = CONTACT_SUBMISSIONS_LIMIT) -> list[dict]:
+    path = _contact_submissions_path(site_dir)
+    if not path.exists():
+        return []
+    rows: list[dict] = []
+    with path.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            rows.append({
+                "id": item.get("id"),
+                "created_at": item.get("created_at"),
+                "name": item.get("name"),
+                "contact": item.get("contact"),
+                "intent": item.get("intent"),
+                "locale": item.get("locale"),
+                "source": item.get("source"),
+                "message": item.get("message"),
+            })
+    return list(reversed(rows[-limit:]))
+
+
+def _contact_placeholder_response(payload: dict, site_dir: Path | None = None) -> tuple[HTTPStatus, dict]:
     if str(payload.get("company_url") or "").strip():
         return HTTPStatus.OK, {"ok": True, "status": "ignored", "reason": "spam_filter"}
 
     name = str(payload.get("name") or "").strip()
     contact = str(payload.get("contact") or "").strip()
     intent = str(payload.get("intent") or "").strip()
-    message = str(payload.get("message") or "").strip()
+    message = str(payload.get("message") or intent or "Project feed").strip()
     locale = str(payload.get("locale") or "en").strip().lower()
 
     errors: dict[str, str] = {}
@@ -329,23 +370,38 @@ def _contact_placeholder_response(payload: dict) -> tuple[HTTPStatus, dict]:
         errors["contact"] = "contact_required"
     if intent not in CONTACT_INTENTS:
         errors["intent"] = "intent_required"
-    if len(message) < 10:
+    if len(message) < 3:
         errors["message"] = "message_too_short"
     if len(message) > 2000:
         errors["message"] = "message_too_long"
     if errors:
         return HTTPStatus.BAD_REQUEST, {"ok": False, "status": "validation_error", "errors": errors}
 
+    created_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+    submission = {
+        "id": f"feed-{created_at}-{abs(hash((name, contact, intent, message))) % 1000000:06d}",
+        "created_at": created_at,
+        "name": name,
+        "contact": contact,
+        "intent": intent,
+        "message": message,
+        "locale": locale if locale in {"en", "zh"} else "en",
+        "source": str(payload.get("source") or "homepage-contact")[:80],
+    }
+    if site_dir is not None:
+        _append_contact_submission(site_dir, submission)
+
     return HTTPStatus.ACCEPTED, {
         "ok": True,
-        "status": "email_placeholder",
+        "status": "feed_saved",
         "email_to": "tongxigogo@gmail.com",
         "message": (
-            "已收到本地表单请求。部署后会通过邮件发送到 tongxigogo@gmail.com。"
+            "????????????????????"
             if locale == "zh"
-            else "Local contact request received. After deployment, this will be sent to tongxigogo@gmail.com by email."
+            else "Feed received. Local preview saved it to the admin inbox."
         ),
         "submission": {
+            "id": submission["id"],
             "name": name,
             "contact": contact,
             "intent": intent,
@@ -1280,6 +1336,11 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             <div id="publish-history" class="history-list" style="margin-top: 14px;"></div>
           </div>
           <div class="inspector-panel">
+            <h3>投喂信息 / 最近提交</h3>
+            <p>这里显示首页表单提交的项目投喂，包含称呼、接收方式和项目类型。</p>
+            <div id="contact-submissions" class="history-list" style="margin-top: 14px;"></div>
+          </div>
+          <div class="inspector-panel">
             <h3>发布前检查</h3>
             <div id="warning-list" class="warning-list"></div>
             <p id="warning-ok" class="ok-note" hidden>当前内容没有发现明显的发布风险。</p>
@@ -1709,6 +1770,29 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
             <span>${formatTime(item.timestamp)}</span>
           </div>
         `).join("");
+      }
+
+      async function refreshContactSubmissions() {
+        const root = document.getElementById("contact-submissions");
+        if (!root) return;
+        try {
+          const response = await fetch("/admin/api/contact-submissions", { headers: buildHeaders() });
+          if (!response.ok) throw new Error("submissions_failed");
+          const payload = await response.json();
+          const items = Array.isArray(payload.items) ? payload.items : [];
+          if (!items.length) {
+            root.innerHTML = `<div class="history-item"><strong>暂无投喂</strong><span>首页表单提交后会显示在这里。</span></div>`;
+            return;
+          }
+          root.innerHTML = items.slice(0, 8).map((item) => `
+            <div class="history-item">
+              <strong>${item.name || "未命名"} · ${item.intent || "未选择类型"}</strong>
+              <span>${item.contact || "未留联系方式"} · ${formatTime(item.created_at)}</span>
+            </div>
+          `).join("");
+        } catch (error) {
+          root.innerHTML = `<div class="history-item"><strong>读取失败</strong><span>请确认后台登录状态和本地服务。</span></div>`;
+        }
       }
 
       function getDiffStats() {
@@ -2333,6 +2417,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         renderWarnings();
         renderDiffs();
         renderMeta();
+        refreshContactSubmissions();
         renderPreviewStatus();
       }
 
@@ -2736,7 +2821,7 @@ def create_app(
             )
 
         if method == "POST" and path == "/api/contact":
-            status, payload = _contact_placeholder_response(_read_json(environ))
+            status, payload = _contact_placeholder_response(_read_json(environ), resolved_site_dir)
             return _json_response(start_response, status, payload, headers=PUBLIC_API_HEADERS)
 
         if method == "GET" and path == "/api/content":
@@ -2765,6 +2850,13 @@ def create_app(
 
             if path == "/admin/api/meta" and method == "GET":
                 return _json_response(start_response, HTTPStatus.OK, store.load_meta())
+
+            if path == "/admin/api/contact-submissions" and method == "GET":
+                return _json_response(
+                    start_response,
+                    HTTPStatus.OK,
+                    {"items": _load_contact_submissions(resolved_site_dir)},
+                )
 
             if path == "/admin/api/publish" and method == "POST":
                 return _json_response(start_response, HTTPStatus.OK, store.publish())

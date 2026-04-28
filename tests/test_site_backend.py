@@ -137,9 +137,14 @@ class SiteBackendTests(unittest.TestCase):
         self.assertEqual(headers["Access-Control-Allow-Origin"], "*")
         data = json.loads(payload.decode("utf-8"))
         self.assertTrue(data["ok"])
-        self.assertEqual(data["status"], "email_placeholder")
+        self.assertEqual(data["status"], "feed_saved")
         self.assertEqual(data["email_to"], "tongxigogo@gmail.com")
         self.assertEqual(data["submission"]["intent"], "website-development")
+        submission_path = self.site_dir / "content" / "contact-submissions.jsonl"
+        self.assertTrue(submission_path.exists())
+        rows = [json.loads(line) for line in submission_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(rows[0]["contact"], "alex@example.com")
+        self.assertEqual(rows[0]["intent"], "website-development")
 
     def test_contact_endpoint_rejects_invalid_or_spam_submission(self) -> None:
         invalid = json.dumps({"name": "A", "contact": "", "intent": "bad", "message": "short"}).encode("utf-8")
@@ -169,6 +174,29 @@ class SiteBackendTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(payload.decode("utf-8"))["status"], "ignored")
+        self.assertFalse((self.site_dir / "content" / "contact-submissions.jsonl").exists())
+
+    def test_admin_contact_submissions_requires_auth_and_returns_recent_items(self) -> None:
+        body = json.dumps({
+            "name": "Alex Buyer",
+            "contact": "alex@example.com",
+            "intent": "product-information",
+            "message": "Need product information.",
+            "locale": "en",
+            "company_url": "",
+        }).encode("utf-8")
+        _request(self.app, "POST", "/api/contact", body=body, headers={"Content-Type": "application/json"})
+
+        status, _, _ = _request(self.app, "GET", "/admin/api/contact-submissions")
+        self.assertEqual(status, 401)
+
+        cookie = self._login_cookie()
+        status, _, payload = _request(self.app, "GET", "/admin/api/contact-submissions", headers={"Cookie": cookie})
+        self.assertEqual(status, 200)
+        data = json.loads(payload.decode("utf-8"))
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["intent"], "product-information")
+        self.assertEqual(data["items"][0]["contact"], "alex@example.com")
 
     def test_admin_meta_endpoint_returns_history_shape(self) -> None:
         cookie = self._login_cookie()
@@ -503,6 +531,8 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("preview-state", html)
         self.assertIn("preview-modal", html)
         self.assertIn("confirm-preview", html)
+        self.assertIn("投喂信息", html)
+        self.assertIn("contact-submissions", html)
         self.assertIn("gallery-preview-rail", html)
         self.assertIn("Homepage Gallery Preview", html)
 
