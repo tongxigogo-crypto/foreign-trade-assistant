@@ -91,6 +91,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - The template should remain CMS-driven: hero image/card, eyebrow, title, intro, CTA, specs, sections, care notes, and SEO metadata.
 - V6.7 pet poster detail pages should work as static hash routes first: `#mother-keepsake` and `#pet-keepsake` must render complete Chinese fallback content even when `/api/content` is unavailable.
 - Homepage pet poster navigation belongs on each live card's image and "View poster" link. Do not use the lower "Open template preview" note as the primary poster route.
+- If the pet gallery removes visible CTA buttons, keep `data-poster-href` on the image cover and a rail click handler that routes through `window.location.href`; the auto-scrolling rail can otherwise make plain anchors unreliable.
 - Keep a stable `data-poster-template="v67"` marker and `initPosterExperience()` in the shared poster page so tests can distinguish the approved V6.7 poster experience from the earlier generic scaffold.
 - Keep `robots.txt` and `sitemap.xml` synchronized when content/template publishing behavior changes.
 
