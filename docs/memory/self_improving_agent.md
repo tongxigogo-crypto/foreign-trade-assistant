@@ -41,6 +41,15 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - Early-stage pet product cards can be placeholders, but they must be honest: use `coming_soon` or template-preview states instead of fake finished detail links.
 - Short Chinese display headings may work better without pretext when pretext harms centered single-line typography.
 
+## V6.7 Concept Direction
+
+- The V6.7 concept is an isolated external prototype at `C:\Users\Administrator\Desktop\preson\indexV6.7_concept.html`, not a direct V6.6 replacement.
+- First concept pass uses HyperFrames as a design method only: composition-like scenes, timeline thinking, and video-style transitions implemented with normal HTML/CSS/GSAP/ScrollTrigger.
+- Do not build the actual HyperFrames project until after the website concept is reviewed, approved, and migrated back into V6.6.
+- The approved first-pass style is v0 / AI product launch: light canvas, soft glass UI, blue/violet glow, product workspace cards, camera push/pull, and UI regrouping.
+- First pass is desktop-first and uses abstract UI placeholders; real app screenshots, Xiao Q/Douzi assets, and pet product poster assets are connected later after motion direction approval.
+- Boot should be a very short brand flash, about 0.8 to 1.2 seconds, not a long system loading sequence.
+
 ## Backend And CMS Rules
 
 - The smallest reliable backend shape is Python stdlib WSGI: serve static external files, `/admin`, `/api/content`, asset upload, preview, and placeholder public APIs without adding unnecessary framework dependencies.
