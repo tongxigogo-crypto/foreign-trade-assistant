@@ -136,13 +136,10 @@ def extract_content(html: str) -> dict:
     return copy.deepcopy(V66_DEFAULT_CONTENT)
 
 
-def _gallery_status_markup(status: str, entry_mode: str, template_path: str, card_id: str) -> str:
+def _gallery_poster_href(status: str, entry_mode: str, template_path: str, card_id: str) -> str:
     if status == "live" and entry_mode == "template":
-        href = f"{template_path}#{escape(card_id)}"
-        return f'<a class="pet-gallery-link" href="{href}"><span>View poster</span><span>&rarr;</span></a>'
-    if status == "live":
-        return '<span class="pet-gallery-link is-coming"><span>Live</span><span>&middot;</span></span>'
-    return '<span class="pet-gallery-link is-coming"><span>Coming soon</span><span>&middot;</span></span>'
+        return f"{template_path}#{card_id}"
+    return ""
 
 def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
     shape_a_styles = [
@@ -159,16 +156,26 @@ def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
     ]
     shape_a = shape_a_styles[index] if index < len(shape_a_styles) else ""
     shape_b = shape_b_styles[index] if index < len(shape_b_styles) else ""
-    status_markup = _gallery_status_markup(
+    poster_href = _gallery_poster_href(
         card.get("status", "coming_soon"),
         card.get("entry_mode", "none"),
         template_path,
         card.get("id", f"card-{index + 1}"),
     )
+    escaped_href = escape(poster_href)
+    card_href_attr = f' data-poster-href="{escaped_href}"' if poster_href else ""
+    cover_href_attr = f' data-poster-href="{escaped_href}"' if poster_href else ""
+    image_markup = (
+        f'<a class="pet-gallery-image-link" href="{escaped_href}" aria-label="View {escape(card.get("title", ""))} poster">'
+        f'<img class="pet-gallery-image" src="{escape(card.get("image", ""))}" alt="{escape(card.get("title", ""))} cover image" loading="lazy" decoding="async">'
+        "</a>"
+        if poster_href
+        else f'<img class="pet-gallery-image" src="{escape(card.get("image", ""))}" alt="{escape(card.get("title", ""))} cover image" loading="lazy" decoding="async">'
+    )
     return f"""
-                        <article class="pet-gallery-card">
-                            <div class="pet-gallery-cover">
-                                <img class="pet-gallery-image" src="{escape(card.get("image", ""))}" alt="{escape(card.get("title", ""))} cover image" loading="lazy" decoding="async">
+                        <article class="pet-gallery-card"{card_href_attr}>
+                            <div class="pet-gallery-cover"{cover_href_attr}>
+                                {image_markup}
                                 <div class="pet-gallery-shape a"{shape_a}></div>
                                 <div class="pet-gallery-shape b"{shape_b}></div>
                                 <div class="pet-gallery-shape c"></div>
@@ -180,11 +187,6 @@ def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
                             </div>
                             <div class="pet-gallery-copy">
                                 <h3 class="use-pretext" style="color: #0F172A;">{escape(card.get("title", ""))}</h3>
-                                <p class="use-pretext" style="color: #64748b;">{escape(card.get("summary", ""))}</p>
-                                <div class="pet-gallery-footer">
-                                    <div class="pet-gallery-tag">{escape(card.get("tag", ""))}</div>
-                                    {status_markup}
-                                </div>
                             </div>
                         </article>"""
 
@@ -329,6 +331,33 @@ PREVIEW_SCRIPT = """
     const node = nodes[index];
     if (node && value) node.src = value;
   };
+  const setPosterRoute = (cardNode, posterHref, label) => {
+    if (!cardNode) return;
+    const cover = cardNode.querySelector('.pet-gallery-cover');
+    let image = cardNode.querySelector('.pet-gallery-image');
+    let imageLink = cardNode.querySelector('.pet-gallery-image-link');
+    if (posterHref) {
+      cardNode.dataset.posterHref = posterHref;
+      if (cover) cover.dataset.posterHref = posterHref;
+      if (image && !imageLink) {
+        imageLink = document.createElement('a');
+        imageLink.className = 'pet-gallery-image-link';
+        image.parentNode.insertBefore(imageLink, image);
+        imageLink.appendChild(image);
+      }
+      if (imageLink) {
+        imageLink.href = posterHref;
+        imageLink.setAttribute('aria-label', label);
+      }
+      return;
+    }
+    delete cardNode.dataset.posterHref;
+    if (cover) delete cover.dataset.posterHref;
+    if (imageLink) {
+      imageLink.removeAttribute('href');
+      imageLink.setAttribute('aria-disabled', 'true');
+    }
+  };
   setText('nav .text-2xl.font-black', primary.brand_name);
   setText('nav .text-\\[10px\\].font-bold', primary.brand_tagline);
   setHtml('#sc-chaos h1', primary.hero_summary_title);
@@ -354,46 +383,11 @@ PREVIEW_SCRIPT = """
     setText('#pet-products-gallery .pet-gallery-cover-chip', card.cover_label, index);
     setText('#pet-products-gallery .pet-gallery-cover-title', card.cover_title, index);
     setText('#pet-products-gallery .pet-gallery-copy h3.use-pretext', card.title, index);
-    setText('#pet-products-gallery .pet-gallery-copy p.use-pretext', card.summary, index);
-    setText('#pet-products-gallery .pet-gallery-tag', card.tag, index);
-    const links = document.querySelectorAll('#pet-products-gallery .pet-gallery-footer .pet-gallery-link');
-    const node = links[index];
-    if (!node) return;
-    if (card.status === 'live' && (card.entry_mode || 'none') === 'template') {
-      if (node.tagName === 'A') {
-        node.classList.remove('is-coming');
-        node.setAttribute('href', `${templatePath}#${card.id || `card-${index + 1}`}`);
-        node.innerHTML = '<span>Live</span><span>→</span>';
-      } else {
-        const replacement = document.createElement('a');
-        replacement.className = 'pet-gallery-link';
-        replacement.href = `${templatePath}#${card.id || `card-${index + 1}`}`;
-        replacement.innerHTML = '<span>Live</span><span>→</span>';
-        node.replaceWith(replacement);
-      }
-      return;
-    }
-    if (card.status === 'live') {
-      if (node.tagName === 'A') {
-        const replacement = document.createElement('span');
-        replacement.className = 'pet-gallery-link is-coming';
-        replacement.innerHTML = '<span>Live</span><span>·</span>';
-        node.replaceWith(replacement);
-      } else {
-        node.classList.add('is-coming');
-        node.innerHTML = '<span>Live</span><span>·</span>';
-      }
-      return;
-    }
-    if (node.tagName === 'A') {
-      const replacement = document.createElement('span');
-      replacement.className = 'pet-gallery-link is-coming';
-      replacement.innerHTML = '<span>Coming soon</span><span>·</span>';
-      node.replaceWith(replacement);
-    } else {
-      node.classList.add('is-coming');
-      node.innerHTML = '<span>Coming soon</span><span>·</span>';
-    }
+    const cardNode = document.querySelectorAll('#pet-products-gallery .pet-gallery-card')[index];
+    const posterHref = card.status === 'live' && (card.entry_mode || 'none') === 'template'
+      ? `${templatePath}#${card.id || `card-${index + 1}`}`
+      : '';
+    setPosterRoute(cardNode, posterHref, `View ${card.title || 'poster'} poster`);
   });
 })();
 </script>

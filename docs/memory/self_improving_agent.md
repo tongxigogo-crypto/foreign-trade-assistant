@@ -93,6 +93,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - Homepage pet poster navigation belongs on each live card's image and "View poster" link. Do not use the lower "Open template preview" note as the primary poster route.
 - If the pet gallery removes visible CTA buttons, keep `data-poster-href` on the image cover and a rail click handler that routes through `window.location.href`; the auto-scrolling rail can otherwise make plain anchors unreliable.
 - For the V6.6 pet gallery card body, "only keep the main title" means remove the per-card summary paragraph and bottom CTA/tag row; the card should show image plus `h3` only.
+- Keep `site_backend/v66_adapter.py` and preview runtime aligned with that title-only gallery shape; backend `apply_content()` must not regenerate footer links, status pills, tags, or card summaries after a CMS save.
 - Keep a stable `data-poster-template="v67"` marker and `initPosterExperience()` in the shared poster page so tests can distinguish the approved V6.7 poster experience from the earlier generic scaffold.
 - Keep `robots.txt` and `sitemap.xml` synchronized when content/template publishing behavior changes.
 

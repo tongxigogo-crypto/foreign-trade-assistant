@@ -426,7 +426,11 @@ class SiteBackendTests(unittest.TestCase):
 
         rendered = apply_content('<div class="pet-gallery-row">old</div>\n\n                    <div class="pet-gallery-note">', payload)
         self.assertIn('href="./pet-product-template.html#harness"', rendered)
-        self.assertIn("View poster", rendered)
+        self.assertIn('class="pet-gallery-card" data-poster-href="./pet-product-template.html#harness"', rendered)
+        self.assertIn('class="pet-gallery-image-link" href="./pet-product-template.html#harness"', rendered)
+        self.assertNotIn("View poster", rendered)
+        self.assertNotIn("pet-gallery-footer", rendered)
+        self.assertNotIn("Lightweight homepage summary", rendered)
 
     def test_bilingual_gallery_fields_persist_with_legacy_zh_mirror(self) -> None:
         cookie = self._login_cookie()
@@ -483,6 +487,8 @@ class SiteBackendTests(unittest.TestCase):
         rendered = apply_content('<div class="pet-gallery-row">old</div>\n\n                    <div class="pet-gallery-note">', payload)
         self.assertIn("English harness", rendered)
         self.assertIn('href="./pet-product-template.html#harness"', rendered)
+        self.assertIn('data-poster-href="./pet-product-template.html#harness"', rendered)
+        self.assertNotIn("pet-gallery-footer", rendered)
 
     def test_asset_upload_writes_file_and_returns_relative_path(self) -> None:
         cookie = self._login_cookie()
