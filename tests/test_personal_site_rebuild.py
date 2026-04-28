@@ -271,13 +271,20 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('spec-label-0', html)
         self.assertIn('care-title', html)
 
-    def test_external_download_page_exists_as_v67_placeholder(self) -> None:
+    def test_external_download_page_describes_invault_product(self) -> None:
         html = EXTERNAL_DOWNLOAD.read_text(encoding="utf-8")
 
         self.assertIn('html lang="zh-CN" data-download-page="v67"', html)
-        self.assertIn("<title>Tong Studio | 下载</title>", html)
-        self.assertIn("V6.7 Download", html)
-        self.assertIn("<h1>下载</h1>", html)
+        self.assertIn("<title>Tong Studio | InVault 外贸助理下载</title>", html)
+        self.assertIn("InVault / Local-first AI", html)
+        self.assertIn("<h1>外贸助理</h1>", html)
+        self.assertIn("本地私有 AI 业务参谋", html)
+        self.assertIn("Prompt 疲劳症", html)
+        self.assertIn("铁打的记忆，流水的模型", html)
+        self.assertIn("影子学习，长出你的商业直觉", html)
+        self.assertIn("本地优先，捍卫数据主权", html)
+        self.assertIn("可追溯决策", html)
+        self.assertIn("独立外贸 SOHO", html)
         self.assertIn("即将开放下载", html)
         self.assertIn('href="./indexV6.6_refined.html"', html)
 
