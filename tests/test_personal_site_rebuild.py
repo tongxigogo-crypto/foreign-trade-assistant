@@ -223,11 +223,14 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('class="pet-gallery-image-link" href="./pet-product-template.html#pet-keepsake"', html)
         self.assertIn('data-poster-href="./pet-product-template.html#mother-keepsake"', html)
         self.assertIn('data-poster-href="./pet-product-template.html#pet-keepsake"', html)
-        self.assertIn("window.location.href = cover.dataset.posterHref", html)
+        self.assertIn('class="pet-gallery-card" data-poster-href="./pet-product-template.html#mother-keepsake"', html)
+        self.assertIn("window.location.href = posterHref", html)
         self.assertIn("pointer-events: none", html)
+        self.assertNotIn(".pet-gallery-copy p", html)
         self.assertNotIn('href="./pet-product-template.html#mother-keepsake"><span>Open template preview</span>', html)
         self.assertNotIn('<span>View poster</span>', html)
         self.assertNotIn('<span>Coming soon</span>', html)
+        self.assertNotIn("A child drawing becomes an 18K gold-plated enamel necklace", html)
         self.assertNotIn("鏌ョ湅璇︽儏", html)
 
     def test_external_v66_uses_consistent_section_shells(self) -> None:
