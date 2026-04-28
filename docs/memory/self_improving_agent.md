@@ -72,6 +72,8 @@ This file stores durable learnings for this worktree only. It is intentionally c
 ## Pet Product Content Model
 
 - `pet_products_gallery` cards currently need: `id`, `image`, `cover_label`, `cover_title`, `title`, `summary`, `tag`, `status`, and `entry_mode`.
+- Pet product homepage assets should live under the external site asset directory, currently `C:\Users\Administrator\Desktop\preson\pet-product-assets\`, with stable relative URLs such as `./pet-product-assets/mother-keepsake-necklace.png`.
+- When changing homepage gallery cards, update all three layers together: static V6.6 HTML fallback, `bilingual.js`, and `content/site-content.json` plus `site_backend/v66_adapter.py` defaults, otherwise CMS preview/save can regress the visible homepage.
 - `status=live` does not automatically mean the card should navigate; `entry_mode` controls whether it opens the shared template.
 - A single `pet-product-template.html` is the correct first detail-page scaffold before generating many product pages.
 - The template should remain CMS-driven: hero image/card, eyebrow, title, intro, CTA, specs, sections, care notes, and SEO metadata.
