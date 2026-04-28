@@ -90,7 +90,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - A single `pet-product-template.html` is the correct first detail-page scaffold before generating many product pages.
 - The template should remain CMS-driven: hero image/card, eyebrow, title, intro, CTA, specs, sections, care notes, and SEO metadata.
 - V6.7 pet poster detail pages should work as static hash routes first: `#mother-keepsake` and `#pet-keepsake` must render complete Chinese fallback content even when `/api/content` is unavailable.
-- Homepage gallery "Open template preview" should land on `./pet-product-template.html#mother-keepsake`, not the bare template URL, so review starts from a real poster state.
+- Homepage pet poster navigation belongs on each live card's image and "View poster" link. Do not use the lower "Open template preview" note as the primary poster route.
 - Keep a stable `data-poster-template="v67"` marker and `initPosterExperience()` in the shared poster page so tests can distinguish the approved V6.7 poster experience from the earlier generic scaffold.
 - Keep `robots.txt` and `sitemap.xml` synchronized when content/template publishing behavior changes.
 

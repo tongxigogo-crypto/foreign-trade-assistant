@@ -219,7 +219,9 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertEqual(html.count('class="pet-gallery-link is-coming"'), 2)
         self.assertIn('href="./pet-product-template.html#mother-keepsake"', html)
         self.assertIn('href="./pet-product-template.html#pet-keepsake"', html)
-        self.assertIn('href="./pet-product-template.html#mother-keepsake"><span>Open template preview</span>', html)
+        self.assertIn('class="pet-gallery-image-link" href="./pet-product-template.html#mother-keepsake"', html)
+        self.assertIn('class="pet-gallery-image-link" href="./pet-product-template.html#pet-keepsake"', html)
+        self.assertNotIn('href="./pet-product-template.html#mother-keepsake"><span>Open template preview</span>', html)
         self.assertNotIn("鏌ョ湅璇︽儏", html)
 
     def test_external_v66_uses_consistent_section_shells(self) -> None:
