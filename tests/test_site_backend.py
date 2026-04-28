@@ -93,7 +93,7 @@ class SiteBackendTests(unittest.TestCase):
         data = json.loads(payload.decode("utf-8"))
         self.assertEqual(data["ai_core"]["id"], "douzi-core")
         self.assertEqual(data["ai_core"]["message_endpoint"], "/api/ai-core/message")
-        self.assertEqual(data["product"]["version"], "v0.1.1-beta2-build39")
+        self.assertEqual(data["product"]["version"], "v0.1.1 Beta")
         self.assertIn("en", data["site"]["languages"])
         self.assertIn("zh", data["site"]["languages"])
 

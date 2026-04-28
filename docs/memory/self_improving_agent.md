@@ -138,3 +138,10 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - Do not migrate to Next.js just for SEO before content volume and deployment needs justify it.
 - Do not build many pet product detail pages before the shared template and content workflow are stable.
 - Do not overbuild the admin UI into a full CMS platform before final homepage copy, deployment, and email delivery are settled.
+
+## V6.6/V6.7 Release Review Learnings
+
+- For external static pages under `C:\Users\Administrator\Desktop\preson`, production checks must include browser-rendered mobile review, not only file scans, because runtime language updates can override static HTML.
+- Keep fifth-screen pet gallery card titles as normal `h3` text, not `use-pretext`, so the global Pretext character engine stays focused on large narrative headings and cannot corrupt compact card titles.
+- Public homepage assets should use ASCII deploy paths such as `characters/douzi-thanks.png`; keep original Chinese asset folders untouched as source material, but do not regenerate publish HTML with Chinese paths.
+- Treat `InVault Trade Assistant` / `外贸助理` and `v0.1.1 Beta` as the current public naming/version pattern unless the user changes the release name.

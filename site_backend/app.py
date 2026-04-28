@@ -20,7 +20,7 @@ EDITOR_SCHEMA = [
         "description": "维护导航栏里的品牌名称与产品副标题。",
         "fields": [
             {"key": "brand_name", "label": "导航品牌名", "type": "text", "placeholder": "Tong Studio"},
-            {"key": "brand_tagline", "label": "导航副标题", "type": "text", "placeholder": "Trade Assistant APP"},
+            {"key": "brand_tagline", "label": "导航副标题", "type": "text", "placeholder": "InVault Trade Assistant"},
         ],
     },
     {
@@ -245,8 +245,8 @@ def _public_site_context(content: dict) -> dict:
             "pet_product_template": template.get("path") or "/pet-product-template.html",
         },
         "product": {
-            "name": "Trade Assistant",
-            "version": "v0.1.1-beta2-build39",
+            "name": "InVault Trade Assistant",
+            "version": "v0.1.1 Beta",
             "principles": ["local-first", "multi-model compatible", "desktop workspace"],
             "capabilities": [
                 "customer context archive",
@@ -396,7 +396,7 @@ def _contact_placeholder_response(payload: dict, site_dir: Path | None = None) -
         "status": "feed_saved",
         "email_to": "tongxigogo@gmail.com",
         "message": (
-            "????????????????????"
+            "Feed received. Local preview saved it to the admin inbox."
             if locale == "zh"
             else "Feed received. Local preview saved it to the admin inbox."
         ),

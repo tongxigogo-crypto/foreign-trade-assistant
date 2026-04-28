@@ -5,17 +5,13 @@ import re
 from html import escape
 from typing import Callable
 
-IMAGE_PATH_FIXUPS = {
-    "./灏廞鍜岃眴瀛?璞嗗瓙鎰熻阿.png": "./小Q和豆子/豆子感谢.png",
-    "./灏廞鍜岃眴瀛?APP.png": "./小Q和豆子/APP.png",
-    "./灏廞鍜岃眴瀛?灏廞浠嬬粛.png": "./小Q和豆子/小Q介绍.png",
-}
+IMAGE_PATH_FIXUPS = {}
 
 V66_DEFAULT_CONTENT = {
     "strings": {
         "zh": {
             "brand_name": "Tong Studio",
-            "brand_tagline": "Trade Assistant APP",
+            "brand_tagline": "InVault Trade Assistant",
             "hero_intro": "汇聚邮件、合同、报价与客户记录，把外贸人的经验沉淀成一个本地优先的私有工作台。",
             "hero_subtitle": "敏感资料默认本地处理，不用于云端训练；每一次回复，都更贴近你的业务语境和谈判风格。",
             "hero_bridge": "不再是多一个工具，而是把所有文件同步在一个系统。",
@@ -35,10 +31,10 @@ V66_DEFAULT_CONTENT = {
         "en": {},
     },
     "images": {
-        "home.hero": "./小Q和豆子/豆子感谢.png",
-        "home.trade_assistant": "./小Q和豆子/APP.png",
-        "home.pet_trade": "./小Q和豆子/小Q介绍.png",
-        "home.mini_program": "./小Q和豆子/豆子感谢.png",
+        "home.hero": "./characters/douzi-thanks.png",
+        "home.trade_assistant": "./characters/trade-assistant-app.png",
+        "home.pet_trade": "./characters/xiaoq-intro.png",
+        "home.mini_program": "./characters/douzi-thanks.png",
     },
     "pet_products_gallery": {
         "cards": [
@@ -186,7 +182,7 @@ def _gallery_card_markup(card: dict, index: int, template_path: str) -> str:
                                 </div>
                             </div>
                             <div class="pet-gallery-copy">
-                                <h3 class="use-pretext" style="color: #0F172A;">{escape(card.get("title", ""))}</h3>
+                                <h3 style="color: #0F172A;">{escape(card.get("title", ""))}</h3>
                             </div>
                         </article>"""
 
@@ -382,7 +378,7 @@ PREVIEW_SCRIPT = """
     setSrc('#pet-products-gallery .pet-gallery-image', card.image, index);
     setText('#pet-products-gallery .pet-gallery-cover-chip', card.cover_label, index);
     setText('#pet-products-gallery .pet-gallery-cover-title', card.cover_title, index);
-    setText('#pet-products-gallery .pet-gallery-copy h3.use-pretext', card.title, index);
+    setText('#pet-products-gallery .pet-gallery-copy h3', card.title, index);
     const cardNode = document.querySelectorAll('#pet-products-gallery .pet-gallery-card')[index];
     const posterHref = card.status === 'live' && (card.entry_mode || 'none') === 'template'
       ? `${templatePath}#${card.id || `card-${index + 1}`}`
