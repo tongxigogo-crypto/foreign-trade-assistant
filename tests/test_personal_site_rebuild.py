@@ -135,6 +135,22 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("/api/contact", EXTERNAL_BILINGUAL.read_text(encoding="utf-8"))
         self.assertNotIn("wechat-qr-tong1390.jpg", html)
 
+    def test_external_v66_has_v67_launch_migration_without_losing_ai_core(self) -> None:
+        html = EXTERNAL_V66.read_text(encoding="utf-8")
+        english_html = EXTERNAL_V66_EN.read_text(encoding="utf-8")
+
+        self.assertIn('data-v67-launch="migrated"', html)
+        self.assertIn('id="v67-boot"', html)
+        self.assertIn('id="v67-progress-bar"', html)
+        self.assertIn('data-v67-scene="hero"', html)
+        self.assertIn('function initV67LaunchExperience()', html)
+        self.assertIn('data-ai-assistant-mount="douzi-core"', html)
+        self.assertIn('class GlobalPretextEngine', html)
+        self.assertIn("document.querySelectorAll('.use-pretext')", html)
+        self.assertIn('data-v67-launch="migrated"', english_html)
+        self.assertIn('function initV67LaunchExperience()', english_html)
+        self.assertIn('data-ai-assistant-mount="douzi-core"', english_html)
+
     def test_external_v66_has_bilingual_copy_runtime(self) -> None:
         script = EXTERNAL_BILINGUAL.read_text(encoding="utf-8")
 
@@ -190,7 +206,7 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('id="pet-products-gallery"', html)
         self.assertIn("Pet Product Stories", html)
         self.assertIn("Pet Products / Editorial Gallery", html)
-        self.assertIn("mother-keepsake-necklace.png", html)
+        self.assertIn("custom-dog-keepsake-poster.png", html)
         self.assertIn("Wear Mom From a Child's Drawing", html)
         self.assertIn("Wear the Hero They Want to Become", html)
         self.assertIn("grid-auto-flow: column", html)
@@ -200,8 +216,9 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertGreaterEqual(html.count('class="pet-gallery-card"'), 4)
         self.assertGreaterEqual(html.count('class="pet-gallery-image"'), 4)
         self.assertIn('class="use-pretext" style="color: #0F172A;">', html)
-        self.assertGreaterEqual(html.count('class="pet-gallery-link is-coming"'), 4)
-        self.assertIn('href="./pet-product-template.html"', html)
+        self.assertEqual(html.count('class="pet-gallery-link is-coming"'), 2)
+        self.assertIn('href="./pet-product-template.html#mother-keepsake"', html)
+        self.assertIn('href="./pet-product-template.html#pet-keepsake"', html)
         self.assertNotIn("鏌ョ湅璇︽儏", html)
 
     def test_external_v66_uses_consistent_section_shells(self) -> None:
@@ -217,10 +234,13 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('<meta name="description"', html)
         self.assertIn('<link rel="canonical"', html)
         self.assertIn('application/ld+json', html)
-        self.assertIn('html lang="en"', html)
-        self.assertIn('Pet Product Template', html)
+        self.assertIn('html lang="zh-CN"', html)
+        self.assertIn('Custom Pet Keepsake Necklace Poster', html)
+        self.assertIn('Product', html)
         self.assertIn('Tong Studio', html)
         self.assertIn('/api/content', html)
+        self.assertIn('poster-stage', html)
+        self.assertIn('custom-dog-keepsake-poster.png', html)
         self.assertIn('product-hero-image', html)
         self.assertIn('product-eyebrow', html)
         self.assertIn('primary-cta', html)

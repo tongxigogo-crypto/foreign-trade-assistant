@@ -44,29 +44,29 @@ V66_DEFAULT_CONTENT = {
         "cards": [
             {
                 "id": "mother-keepsake",
-                "image": "./pet-product-assets/mother-keepsake-necklace.png",
+                "image": "./pet-product-assets/custom-dog-keepsake-poster.png",
                 "cover_label": "儿童手绘定制",
                 "cover_title": "妈妈项链",
                 "title": "把孩子画里的妈妈戴在身边",
                 "summary": "儿童手绘变成18K镀金珐琅项链，适合作为家庭纪念礼物。",
                 "tag": "18K / 珐琅 / 定制",
-                "status": "coming_soon",
-                "entry_mode": "none",
+                "status": "live",
+                "entry_mode": "template",
             },
             {
                 "id": "pet-keepsake",
-                "image": "./pet-product-assets/pet-keepsake-necklace.png",
+                "image": "./pet-product-assets/custom-dog-keepsake-poster.png",
                 "cover_label": "宠物纪念",
                 "cover_title": "童年",
                 "title": "把孩子的童年戴在身边",
                 "summary": "孩子画的小狗变成纪念项链，把宠物陪伴和家庭记忆做成产品故事。",
                 "tag": "宠物 / 纪念 / 礼物",
-                "status": "coming_soon",
-                "entry_mode": "none",
+                "status": "live",
+                "entry_mode": "template",
             },
             {
                 "id": "dog-photo-keepsake",
-                "image": "./pet-product-assets/dog-keepsake-real-photo.png",
+                "image": "./pet-product-assets/custom-dog-keepsake-poster.png",
                 "cover_label": "实拍样品",
                 "cover_title": "宠物",
                 "title": "把手绘宠物变成可佩戴纪念",
@@ -77,7 +77,7 @@ V66_DEFAULT_CONTENT = {
             },
             {
                 "id": "hero-keepsake",
-                "image": "./pet-product-assets/hero-keepsake-necklace.png",
+                "image": "./pet-product-assets/custom-dog-keepsake-poster.png",
                 "cover_label": "英雄定制",
                 "cover_title": "愿望",
                 "title": "把孩子想成为的人戴在身边",
@@ -139,7 +139,7 @@ def extract_content(html: str) -> dict:
 def _gallery_status_markup(status: str, entry_mode: str, template_path: str, card_id: str) -> str:
     if status == "live" and entry_mode == "template":
         href = f"{template_path}#{escape(card_id)}"
-        return f'<a class="pet-gallery-link" href="{href}"><span>Live</span><span>&rarr;</span></a>'
+        return f'<a class="pet-gallery-link" href="{href}"><span>View poster</span><span>&rarr;</span></a>'
     if status == "live":
         return '<span class="pet-gallery-link is-coming"><span>Live</span><span>&middot;</span></span>'
     return '<span class="pet-gallery-link is-coming"><span>Coming soon</span><span>&middot;</span></span>'
@@ -198,8 +198,12 @@ def apply_content(html: str, content: dict) -> str:
     images = {key: IMAGE_PATH_FIXUPS.get(value, value) for key, value in raw_images.items()}
     gallery = copy.deepcopy(V66_DEFAULT_CONTENT["pet_products_gallery"])
     incoming_gallery = content.get("pet_products_gallery", {})
+    incoming_cards = (
+        incoming_gallery.get("en", {}).get("cards")
+        or incoming_gallery.get("zh", {}).get("cards")
+        or incoming_gallery.get("cards", [])
+    )
     for index, card in enumerate(gallery["cards"]):
-        incoming_cards = incoming_gallery.get("cards", [])
         if index < len(incoming_cards) and isinstance(incoming_cards[index], dict):
             card.update(incoming_cards[index])
             if card.get("image"):

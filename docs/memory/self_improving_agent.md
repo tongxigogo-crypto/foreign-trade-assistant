@@ -49,6 +49,9 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - The approved first-pass style is v0 / AI product launch: light canvas, soft glass UI, blue/violet glow, product workspace cards, camera push/pull, and UI regrouping.
 - First pass is desktop-first and uses abstract UI placeholders; real app screenshots, Xiao Q/Douzi assets, and pet product poster assets are connected later after motion direction approval.
 - Boot should be a very short brand flash, about 0.8 to 1.2 seconds, not a long system loading sequence.
+- V6.7-to-V6.6 migration should enhance the existing V6.6 files with a launch layer instead of replacing them: preserve `#global-obstacle`, `data-ai-assistant-mount="douzi-core"`, `.use-pretext`, and `GlobalPretextEngine`.
+- Keep Chinese and English V6.6 pages synchronized for the launch layer (`data-v67-launch`, boot, progress, cursor, scene dots, and `initV67LaunchExperience`) so bilingual navigation does not switch into an older interaction model.
+- If `bilingual.js` has mojibake or syntax damage, fix it before visual migration because a broken runtime can prevent language copy, gallery link handling, contact form binding, and `window.TongAICore` from initializing.
 
 ## Backend And CMS Rules
 

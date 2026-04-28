@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 from wsgiref.util import setup_testing_defaults
 
 from site_backend.app import create_app
+from site_backend.v66_adapter import apply_content
 
 
 def _request(app, method: str, path: str, body: bytes = b"", headers: dict[str, str] | None = None) -> tuple[int, dict[str, str], bytes]:
@@ -423,6 +424,10 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("Sitemap:", robots)
         self.assertIn("pet-product-template.html", sitemap)
 
+        rendered = apply_content('<div class="pet-gallery-row">old</div>\n\n                    <div class="pet-gallery-note">', payload)
+        self.assertIn('href="./pet-product-template.html#harness"', rendered)
+        self.assertIn("View poster", rendered)
+
     def test_bilingual_gallery_fields_persist_with_legacy_zh_mirror(self) -> None:
         cookie = self._login_cookie()
         payload = {
@@ -475,6 +480,9 @@ class SiteBackendTests(unittest.TestCase):
         self.assertEqual(persisted["pet_products_gallery"]["zh"]["cards"][0]["title"], "中文胸背带")
         self.assertEqual(persisted["pet_products_gallery"]["en"]["cards"][0]["title"], "English harness")
         self.assertEqual(persisted["pet_products_gallery"]["cards"][0]["title"], "中文胸背带")
+        rendered = apply_content('<div class="pet-gallery-row">old</div>\n\n                    <div class="pet-gallery-note">', payload)
+        self.assertIn("English harness", rendered)
+        self.assertIn('href="./pet-product-template.html#harness"', rendered)
 
     def test_asset_upload_writes_file_and_returns_relative_path(self) -> None:
         cookie = self._login_cookie()
