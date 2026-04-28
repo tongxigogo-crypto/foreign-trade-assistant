@@ -95,6 +95,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - For the V6.6 pet gallery card body, "only keep the main title" means remove the per-card summary paragraph and bottom CTA/tag row; the card should show image plus `h3` only.
 - Keep `site_backend/v66_adapter.py` and preview runtime aligned with that title-only gallery shape; backend `apply_content()` must not regenerate footer links, status pills, tags, or card summaries after a CMS save.
 - Keep a stable `data-poster-template="v67"` marker and `initPosterExperience()` in the shared poster page so tests can distinguish the approved V6.7 poster experience from the earlier generic scaffold.
+- The homepage top-right CTA is now a download entry, not a demo booking mailto. Keep `data-i18n="navCta"` text as `Download` / `下载` and route it to `./download.html`; the download page can remain a V6.7-style placeholder until product details are ready.
 - Keep `robots.txt` and `sitemap.xml` synchronized when content/template publishing behavior changes.
 
 ## Contact And AI Core APIs

@@ -7,6 +7,7 @@ SITE_DIR = ROOT / "website_from_playground"
 EXTERNAL_V66 = Path(r"C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html")
 EXTERNAL_V66_EN = Path(r"C:\Users\Administrator\Desktop\preson\indexV6.6_refined_en.html")
 EXTERNAL_TEMPLATE = Path(r"C:\Users\Administrator\Desktop\preson\pet-product-template.html")
+EXTERNAL_DOWNLOAD = Path(r"C:\Users\Administrator\Desktop\preson\download.html")
 EXTERNAL_BILINGUAL = Path(r"C:\Users\Administrator\Desktop\preson\bilingual.js")
 
 
@@ -121,6 +122,8 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("bilingual.js", html)
         self.assertIn('href="#pet-products-gallery"', html)
         self.assertIn('href="#contact"', html)
+        self.assertIn('href="./download.html"', html)
+        self.assertIn('data-i18n="navCta">Download</a>', html)
         self.assertIn('id="contact"', html)
         self.assertIn("feed us your project", html)
         self.assertIn("contact-form-heading", html)
@@ -183,6 +186,8 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn("/api/content", script)
         self.assertIn("indexV6.6_refined_en.html", script)
         self.assertIn("indexV6.6_refined.html", script)
+        self.assertIn('navCta: "Download"', script)
+        self.assertIn('navCta: "下载"', script)
         self.assertIn("外贸助理", script)
         self.assertIn("Trade Assistant", script)
         self.assertIn("contactChoices", script)
@@ -265,6 +270,16 @@ class PersonalSiteRebuildTests(unittest.TestCase):
         self.assertIn('primary-cta', html)
         self.assertIn('spec-label-0', html)
         self.assertIn('care-title', html)
+
+    def test_external_download_page_exists_as_v67_placeholder(self) -> None:
+        html = EXTERNAL_DOWNLOAD.read_text(encoding="utf-8")
+
+        self.assertIn('html lang="zh-CN" data-download-page="v67"', html)
+        self.assertIn("<title>Tong Studio | 下载</title>", html)
+        self.assertIn("V6.7 Download", html)
+        self.assertIn("<h1>下载</h1>", html)
+        self.assertIn("即将开放下载", html)
+        self.assertIn('href="./indexV6.6_refined.html"', html)
 
 
 if __name__ == "__main__":
