@@ -9,6 +9,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - Keep the orchestrator responsible for end-to-end decisions; use specialist sub-agents only when work naturally splits into independent strategy, content, SEO, UI, implementation, QA, release, or analytics tracks.
 - Apply `karpathy-style-engineering` globally: restate the target, choose the smallest valid change, avoid speculative refactors, and verify before claiming completion.
 - Do not release, deploy, or write under `site_ops/output/` without explicit user confirmation.
+- For local Remotion projects on this Windows machine, `render`/`still` may hang unless the CLI is passed `--browser-executable="C:\Program Files\Google\Chrome\Application\chrome.exe"`; `@remotion/zod-types@4.0.456` should be paired with `zod@4.3.6` to avoid npm peer-resolution loops.
 
 ## Current Source Of Truth
 
