@@ -10,6 +10,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - Apply `karpathy-style-engineering` globally: restate the target, choose the smallest valid change, avoid speculative refactors, and verify before claiming completion.
 - Do not release, deploy, or write under `site_ops/output/` without explicit user confirmation.
 - For local Remotion projects on this Windows machine, `render`/`still` may hang unless the CLI is passed `--browser-executable="C:\Program Files\Google\Chrome\Application\chrome.exe"`; `@remotion/zod-types@4.0.456` should be paired with `zod@4.3.6` to avoid npm peer-resolution loops.
+- For user-requested V6.6 visual experiments based on `C:\Users\Administrator\Desktop\preson`, prefer an isolated output folder under `E:\网页测试\...` first. Preserve the source V6.6 files, copy only needed assets, and implement first-screen cockpit/app prototypes with static HTML/CSS/JS unless video rendering or true timeline export is explicitly required.
 
 ## Current Source Of Truth
 
