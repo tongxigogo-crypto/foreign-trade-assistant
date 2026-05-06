@@ -13,6 +13,7 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - For isolated static previews served through `python -m http.server`, cache-bust linked CSS and JS when iterating (`?v=...`) and verify the loaded `href/src` in the browser before diagnosing stale visual behavior as a code regression.
 - For pointer-drag UI such as Douzi/AI Core, synthetic `dispatchEvent()` may not exercise pointer capture correctly; use real Playwright mouse movement to verify draggable behavior.
 - When turning V6.6 experiments into left-nav single-viewport previews, verify at the user's apparent browser width as well as standard desktop; fixed-size center compositions can leave large white areas on wide Chrome windows unless the root shell is fixed to the viewport and the stage owns the full remaining canvas.
+- For V6.6 left-navigation rebuilds, preserve the original `#hero-section` contract instead of approximating it: `min-h-[350vh]`, inner `sticky top-0 h-screen w-full`, `#impact-1..4`, and the GSAP ScrollTrigger timeline must remain on window scroll. Do not move scrolling into an internal container unless ScrollTrigger is reconfigured with that scroller.
 - For user-requested V6.6 visual experiments based on `C:\Users\Administrator\Desktop\preson`, prefer an isolated output folder under `E:\网页测试\...` first. Preserve the source V6.6 files, copy only needed assets, and implement first-screen cockpit/app prototypes with static HTML/CSS/JS unless video rendering or true timeline export is explicitly required.
 
 ## Current Source Of Truth
