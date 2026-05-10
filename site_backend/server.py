@@ -26,6 +26,18 @@ def _normalize_path_info(raw_path: str) -> str:
 def create_site_server(root_dir: Path, admin_password: str | None = None, session_secret: str | None = None):
     external_site_dir = Path(os.environ.get("SITE_MANAGED_DIR", r"C:\Users\Administrator\Desktop\preson"))
     external_index = Path(os.environ.get("SITE_MANAGED_HTML", str(external_site_dir / "indexV6.6_refined.html")))
+    external_en = Path(os.environ.get("SITE_MANAGED_HTML_EN", str(external_site_dir / "index_en.html")))
+    if not external_en.exists():
+        external_en = external_site_dir / "indexV6.6_refined_en.html"
+    template_path = external_site_dir / "pet-product-template.html"
+    sync_html_env = os.environ.get("SITE_SYNC_HTML")
+    sync_html = (
+        sync_html_env.lower() in {"1", "true", "yes", "on"}
+        if sync_html_env is not None
+        else external_index.name.startswith("indexV6.6_refined")
+    )
+    response_adapter = apply_content if sync_html else None
+    sync_adapter = apply_content if sync_html else None
     resolved_password = admin_password or os.environ.get("SITE_ADMIN_PASSWORD", "change-me")
     resolved_secret = session_secret or os.environ.get("SITE_ADMIN_SESSION_SECRET", "local-session-secret")
     store = ContentStore(
@@ -33,7 +45,7 @@ def create_site_server(root_dir: Path, admin_password: str | None = None, sessio
         default_content=V66_DEFAULT_CONTENT,
         source_html_path=external_index,
         extract_callback=extract_content,
-        sync_callback=apply_content,
+        sync_callback=sync_adapter,
     )
     backend_app = create_app(
         root_dir=root_dir,
@@ -43,7 +55,12 @@ def create_site_server(root_dir: Path, admin_password: str | None = None, sessio
         default_content=V66_DEFAULT_CONTENT,
         source_html_path=external_index,
         extract_callback=extract_content,
-        sync_callback=apply_content,
+        sync_callback=sync_adapter,
+        site_routes={
+            "zh": "/",
+            "en": f"/{external_en.name}" if external_en.exists() else "/indexV6.6_refined_en.html",
+            "template": f"/{template_path.name}",
+        },
     )
 
     def app(environ: dict, start_response: StartResponse) -> Iterable[bytes]:
@@ -62,7 +79,7 @@ def create_site_server(root_dir: Path, admin_password: str | None = None, sessio
 
         if target == external_index:
             body_text = target.read_text(encoding="utf-8")
-            managed_html = apply_content(body_text, store.load())
+            managed_html = response_adapter(body_text, store.load()) if response_adapter else body_text
             managed_html = managed_html.replace("</body>", PREVIEW_SCRIPT + "\n</body>")
             body = managed_html.encode("utf-8")
         else:

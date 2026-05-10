@@ -222,10 +222,11 @@ def _authed(environ: dict, admin_password: str, session_secret: str) -> bool:
     return is_token_authenticated(token, admin_password, session_secret)
 
 
-def _public_site_context(content: dict) -> dict:
+def _public_site_context(content: dict, site_routes: dict[str, str] | None = None) -> dict:
     strings = content.get("strings", {})
     gallery = content.get("pet_products_gallery", {})
     template = content.get("pet_product_template", {})
+    routes = site_routes or {}
     return {
         "schema_version": "2026-04-24.ai-core.v1",
         "brand": {
@@ -239,10 +240,10 @@ def _public_site_context(content: dict) -> dict:
         "site": {
             "languages": ["en", "zh"],
             "home": {
-                "zh": "/",
-                "en": "/indexV6.6_refined_en.html",
+                "zh": routes.get("zh") or "/",
+                "en": routes.get("en") or "/indexV6.6_refined_en.html",
             },
-            "pet_product_template": template.get("path") or "/pet-product-template.html",
+            "pet_product_template": template.get("path") or routes.get("template") or "/pet-product-template.html",
         },
         "product": {
             "name": "InVault Trade Assistant",
@@ -481,7 +482,12 @@ def _login_page() -> str:
 </html>"""
 
 
-def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict | None = None) -> str:
+def _editor_page(
+    content: dict,
+    auth_token: str | None = None,
+    admin_meta: dict | None = None,
+    site_routes: dict[str, str] | None = None,
+) -> str:
     template = """<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -1939,10 +1945,16 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         `;
       }
 
+      const siteRoutes = __SITE_ROUTES_JSON__;
+
       function previewUrl(target = currentLang) {
-        if (target === "en") return "/indexV6.6_refined_en.html?preview=1";
-        if (target === "template") return "/pet-product-template.html?preview=1";
-        return "/?preview=1";
+        const base = target === "en"
+          ? (siteRoutes.en || "/indexV6.6_refined_en.html")
+          : target === "template"
+            ? (siteRoutes.template || "/pet-product-template.html")
+            : (siteRoutes.zh || "/");
+        const separator = base.includes("?") ? "&" : "?";
+        return `${base}${separator}preview=1`;
       }
 
       function launchPreviewWindow(target = currentLang) {
@@ -2778,6 +2790,7 @@ def _editor_page(content: dict, auth_token: str | None = None, admin_meta: dict 
         .replace("__GALLERY_SCHEMA__", json.dumps(GALLERY_SECTION, ensure_ascii=False))
         .replace("__TEMPLATE_SCHEMA__", json.dumps(TEMPLATE_SECTION, ensure_ascii=False))
         .replace("__META_JSON__", json.dumps(admin_meta or {"updated_at": None, "history": []}, ensure_ascii=False))
+        .replace("__SITE_ROUTES_JSON__", json.dumps(site_routes or {}, ensure_ascii=False))
         .replace("__TOKEN_JSON__", json.dumps(auth_token or "", ensure_ascii=False))
     )
 
@@ -2791,8 +2804,14 @@ def create_app(
     source_html_path: Path | None = None,
     extract_callback=None,
     sync_callback=None,
+    site_routes: dict[str, str] | None = None,
 ):
     resolved_site_dir = site_dir or (root_dir / "website_from_playground")
+    resolved_site_routes = site_routes or {
+        "zh": "/",
+        "en": "/indexV6.6_refined_en.html",
+        "template": "/pet-product-template.html",
+    }
     store = ContentStore(
         resolved_site_dir,
         default_content=default_content,
@@ -2809,7 +2828,12 @@ def create_app(
             return _json_response(start_response, HTTPStatus.NO_CONTENT, headers=PUBLIC_API_HEADERS)
 
         if method == "GET" and path == "/api/ai-context":
-            return _json_response(start_response, HTTPStatus.OK, _public_site_context(store.load()), headers=PUBLIC_API_HEADERS)
+            return _json_response(
+                start_response,
+                HTTPStatus.OK,
+                _public_site_context(store.load(), resolved_site_routes),
+                headers=PUBLIC_API_HEADERS,
+            )
 
         if method == "POST" and path == "/api/ai-core/message":
             payload = _read_json(environ)
@@ -2887,6 +2911,7 @@ def create_app(
                     store.load(),
                     _get_query_token(environ) or _get_bearer_token(environ),
                     store.load_meta(),
+                    resolved_site_routes,
                 ),
             )
 
