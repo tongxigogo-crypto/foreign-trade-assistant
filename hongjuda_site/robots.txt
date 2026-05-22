@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.hongjuda-materials.com/sitemap.xml

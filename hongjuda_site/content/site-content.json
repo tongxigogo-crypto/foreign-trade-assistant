@@ -1,0 +1,118 @@
+{
+  "company": {
+    "name_zh": "苏州宏聚达装饰材料有限公司",
+    "name_en": "SuZhou hongjuda decorative material co.,ltd",
+    "short_name": "Hongjuda",
+    "email": "sales@hongjuda-materials.com",
+    "phone": "+86 512 0000 0000",
+    "address": "Suzhou, Jiangsu, China",
+    "summary": "A Suzhou-based decorative material supplier focused on WPC decking, exterior cladding, acoustic slat wall panels, fluted panels, fencing and project-ready composite systems."
+  },
+  "hero": {
+    "kicker": "WPC Decking / Acoustic Panels / Decorative Material Systems",
+    "title": "Factory-direct decorative material systems for exterior and interior projects.",
+    "subtitle": "We help distributors, contractors and project owners source durable WPC decking, exterior wall cladding, acoustic slat panels and matching decorative profiles from one responsive Suzhou team.",
+    "primary_cta": "Request a Quote",
+    "secondary_cta": "View Products",
+    "image": "./assets/images/hero-wpc-facade.webp"
+  },
+  "proof": [
+    {
+      "title": "Factory coordination",
+      "body": "Profile matching, sample preparation and project packaging are coordinated around real delivery needs.",
+      "icon": "./assets/icons/factory.png"
+    },
+    {
+      "title": "Project-grade testing",
+      "body": "Material recommendations can align with UV, moisture, acoustic, fire-rating and installation requirements.",
+      "icon": "./assets/icons/testing.png"
+    },
+    {
+      "title": "Sustainable materials",
+      "body": "Composite wood-plastic and PET-backed decorative systems reduce maintenance and support long service life.",
+      "icon": "./assets/icons/eco.png"
+    }
+  ],
+  "products": [
+    {
+      "name": "Co-extrusion WPC Decking",
+      "category": "Outdoor WPC",
+      "summary": "Low-maintenance decking with wood texture, stain resistance and stable outdoor performance.",
+      "image": "./assets/images/product-wpc-decking.webp"
+    },
+    {
+      "name": "Exterior Fluted Wall Cladding",
+      "category": "Facade / Wall",
+      "summary": "Decorative fluted profiles for villas, commercial facades, balcony walls and landscape projects.",
+      "image": "./assets/images/product-fluted-cladding.webp"
+    },
+    {
+      "name": "Acoustic Slat Wall Panels",
+      "category": "Interior Acoustic",
+      "summary": "Wood-look slats with PET acoustic backing for offices, hotels, studios and residential interiors.",
+      "image": "./assets/images/product-acoustic-slat.webp"
+    },
+    {
+      "name": "Interior WPC Fluted Panels",
+      "category": "Interior Decorative",
+      "summary": "Lightweight decorative wall panels for quick installation and consistent indoor visual rhythm.",
+      "image": "./assets/images/product-acoustic-slat.webp"
+    },
+    {
+      "name": "Composite Privacy Fencing",
+      "category": "Outdoor Systems",
+      "summary": "Modular fencing systems for gardens, residential communities and commercial boundary projects.",
+      "image": "./assets/images/product-privacy-fence.webp"
+    },
+    {
+      "name": "Pergola, Tubes and Matching Profiles",
+      "category": "Project Accessories",
+      "summary": "Coordinated profiles and accessories to keep outdoor spaces visually consistent across zones.",
+      "image": "./assets/images/factory-material-wall.webp"
+    }
+  ],
+  "cases": [
+    {
+      "title": "Resort Terrace Decking",
+      "location": "Outdoor hospitality project",
+      "product": "Co-extrusion WPC decking",
+      "result": "Barefoot-friendly surface, consistent color and lower maintenance than timber.",
+      "image": "./assets/images/case-resort-decking.webp"
+    },
+    {
+      "title": "Commercial Lobby Feature Wall",
+      "location": "Interior public space",
+      "product": "Acoustic slat wall panels",
+      "result": "Warmer visual finish with improved sound absorption for high-traffic interiors.",
+      "image": "./assets/images/case-commercial-wall.webp"
+    },
+    {
+      "title": "Private Villa Facade",
+      "location": "Residential exterior",
+      "product": "Exterior fluted cladding",
+      "result": "Wood-look facade rhythm with improved weather resistance and simplified maintenance.",
+      "image": "./assets/images/case-villa-cladding.webp"
+    },
+    {
+      "title": "Factory Supply Program",
+      "location": "Distributor sourcing",
+      "product": "Mixed WPC and decorative profiles",
+      "result": "Unified sample, quote and packaging workflow for repeat wholesale orders.",
+      "image": "./assets/images/factory-line.webp"
+    }
+  ],
+  "faq": [
+    {
+      "question": "What does Hongjuda supply?",
+      "answer": "Hongjuda supplies WPC decking, exterior cladding, acoustic slat wall panels, fluted decorative panels, privacy fencing and matching composite profiles."
+    },
+    {
+      "question": "Who is the site for?",
+      "answer": "The site is built for distributors, contractors, designers, builders and project buyers who need factory-direct decorative material sourcing from Suzhou, China."
+    },
+    {
+      "question": "Can products be customized?",
+      "answer": "Customization can include color, profile, length, packaging, sample sets and project documentation depending on product type and order quantity."
+    }
+  ]
+}

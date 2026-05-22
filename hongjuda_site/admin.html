@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>宏聚达内容管理后台</title>
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+      body { background: #f5f7fb; }
+      .admin-shell { max-width: 1180px; margin: 0 auto; padding: 30px 18px 70px; }
+      .admin-head { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 22px; }
+      .admin-grid { display: grid; grid-template-columns: 260px 1fr; gap: 18px; }
+      .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+      .tabs { display: grid; gap: 8px; }
+      .tabs button { text-align: left; border: 1px solid var(--line); background: #fff; border-radius: var(--radius); padding: 12px; cursor: pointer; }
+      .tabs button.is-active { background: var(--graphite); color: #fff; border-color: var(--graphite); }
+      .editor-list { display: grid; gap: 16px; }
+      .row-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 12px; }
+      .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      .status { min-height: 26px; color: var(--green); font-weight: 700; }
+      pre { white-space: pre-wrap; background: #111; color: #eee; padding: 14px; border-radius: var(--radius); overflow: auto; }
+      @media (max-width: 860px) { .admin-grid, .field-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="admin-shell">
+      <div class="admin-head">
+        <div>
+          <p class="kicker">Local CMS</p>
+          <h1>宏聚达内容管理后台</h1>
+          <p>通过本地服务器打开时，可保存到 <code>content/site-content.json</code> 并上传图片到 <code>assets/uploads/</code>。</p>
+        </div>
+        <a class="button secondary" style="color:#172033;border-color:#d9dee8" href="./index.html" target="_blank">预览首页</a>
+      </div>
+      <div class="admin-grid">
+        <aside class="panel tabs">
+          <button data-tab="hero" class="is-active">首页首屏</button>
+          <button data-tab="products">产品</button>
+          <button data-tab="cases">客户案例</button>
+          <button data-tab="faq">AI / SEO 问答</button>
+          <button data-tab="json">JSON 高级编辑</button>
+        </aside>
+        <section class="panel">
+          <div id="editor"></div>
+          <div class="actions">
+            <button class="button primary" id="save">保存到内容文件</button>
+            <button class="button" id="download" type="button">下载 JSON 备份</button>
+            <label class="button" style="background:#f3f4f6;color:#172033">导入 JSON<input id="import" type="file" accept="application/json" hidden></label>
+          </div>
+          <p class="status" id="status"></p>
+        </section>
+      </div>
+    </main>
+    <script src="./admin.js"></script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Hongjuda Decorative Material Site API",
+    "version": "0.1.0",
+    "description": "Local content and asset management endpoints for 苏州宏聚达装饰材料有限公司."
+  },
+  "paths": {
+    "/api/content": {
+      "get": {
+        "summary": "Read public site content",
+        "responses": {
+          "200": {
+            "description": "Current editable website content"
+          }
+        }
+      },
+      "put": {
+        "summary": "Save edited site content in local preview",
+        "responses": {
+          "200": {
+            "description": "Merged content document"
+          }
+        }
+      }
+    },
+    "/api/assets": {
+      "post": {
+        "summary": "Upload a local image asset",
+        "responses": {
+          "200": {
+            "description": "Relative asset path"
+          }
+        }
+      }
+    }
+  }
+}
