@@ -5,9 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 from urllib.parse import urlsplit
+from unittest.mock import patch
 from wsgiref.util import setup_testing_defaults
 
 from site_backend.app import create_app
+from site_backend.content_store import ContentStore
+from site_backend.server import create_site_server
 from site_backend.v66_adapter import apply_content
 
 
@@ -83,6 +86,31 @@ class SiteBackendTests(unittest.TestCase):
         self.assertIn("en", data["strings"])
         self.assertIn("zh", data["pet_products_gallery"])
         self.assertIn("en", data["pet_products_gallery"])
+
+    def test_content_store_accepts_utf8_bom_json_files(self) -> None:
+        content_dir = self.site_dir / "content"
+        content_dir.mkdir(parents=True, exist_ok=True)
+        (content_dir / "site-content.json").write_text(
+            '\ufeff{"strings":{"en":{"hero_intro":"BOM safe"}}}',
+            encoding="utf-8",
+        )
+
+        data = ContentStore(self.site_dir).load()
+
+        self.assertEqual(data["strings"]["en"]["hero_intro"], "BOM safe")
+
+    def test_site_server_requires_explicit_admin_credentials(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {
+                "SITE_ADMIN_PASSWORD": "",
+                "SITE_ADMIN_SESSION_SECRET": "",
+                "SITE_ALLOW_INSECURE_DEFAULT_ADMIN": "",
+            },
+            clear=False,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "SITE_ADMIN_PASSWORD must be set"):
+                create_site_server(self.root)
 
     def test_public_ai_context_endpoint_exposes_assistant_contract(self) -> None:
         status, headers, payload = _request(self.app, "GET", "/api/ai-context")

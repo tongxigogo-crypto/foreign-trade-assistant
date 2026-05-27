@@ -38,8 +38,24 @@ def create_site_server(root_dir: Path, admin_password: str | None = None, sessio
     )
     response_adapter = apply_content if sync_html else None
     sync_adapter = apply_content if sync_html else None
-    resolved_password = admin_password or os.environ.get("SITE_ADMIN_PASSWORD", "change-me")
-    resolved_secret = session_secret or os.environ.get("SITE_ADMIN_SESSION_SECRET", "local-session-secret")
+    resolved_password = admin_password or os.environ.get("SITE_ADMIN_PASSWORD")
+    if not resolved_password:
+        if os.environ.get("SITE_ALLOW_INSECURE_DEFAULT_ADMIN") == "1":
+            resolved_password = "change-me"
+        else:
+            raise RuntimeError(
+                "SITE_ADMIN_PASSWORD must be set before starting the admin server. "
+                "For isolated local experiments only, set SITE_ALLOW_INSECURE_DEFAULT_ADMIN=1."
+            )
+    resolved_secret = session_secret or os.environ.get("SITE_ADMIN_SESSION_SECRET")
+    if not resolved_secret:
+        if os.environ.get("SITE_ALLOW_INSECURE_DEFAULT_ADMIN") == "1":
+            resolved_secret = "local-session-secret"
+        else:
+            raise RuntimeError(
+                "SITE_ADMIN_SESSION_SECRET must be set before starting the admin server. "
+                "Use a long random value such as [guid]::NewGuid().ToString('N') in PowerShell."
+            )
     store = ContentStore(
         external_site_dir,
         default_content=V66_DEFAULT_CONTENT,

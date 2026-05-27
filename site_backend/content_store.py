@@ -197,7 +197,7 @@ class ContentStore:
                 extracted = self.extract_callback(self.source_html_path.read_text(encoding="utf-8"))
                 return self._merge_content(extracted)
             return copy.deepcopy(self.default_content)
-        with self.content_path.open("r", encoding="utf-8") as fh:
+        with self.content_path.open("r", encoding="utf-8-sig") as fh:
             data = json.load(fh)
         return self._merge_content(data)
 
@@ -222,7 +222,7 @@ class ContentStore:
     def load_meta(self) -> dict[str, Any]:
         if not self.meta_path.exists():
             return {"updated_at": None, "history": []}
-        with self.meta_path.open("r", encoding="utf-8") as fh:
+        with self.meta_path.open("r", encoding="utf-8-sig") as fh:
             data = json.load(fh)
         return {"updated_at": data.get("updated_at"), "history": list(data.get("history", []))}
 
