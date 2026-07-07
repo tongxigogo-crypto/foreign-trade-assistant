@@ -1,20 +1,20 @@
-# Site Publishing Multi-Agent Workspace
+# 网站发布多 Agent 工作区
 
-## Mission
+## 使命
 
-Build, deploy, and iteratively improve a personal website with a coordinated professional agent system.
+通过协调一致的专业 Agent 系统，构建、部署并迭代改进个人网站。
 
-## Startup Priority
+## 启动优先级
 
-For any new conversation in this worktree, read these sources first in this order:
+在此 worktree 中开始任何新对话时，请首先按以下顺序阅读这些来源：
 
 1. `AGENTS.md`
 2. `docs/memory/self_improving_agent.md`
 3. `site_ops/config/site-strategy.md`
 4. `site_ops/config/publishing-policy.json`
-5. Latest outputs under `site_ops/output/`
+5. `site_ops/output/` 下的最新输出
 
-## Required Agents
+## 必需的 Agent
 
 - orchestrator
 - strategy_agent
@@ -26,71 +26,71 @@ For any new conversation in this worktree, read these sources first in this orde
 - release_agent
 - analytics_agent
 
-## Collaboration Rules
+## 协作规则
 
-- Orchestrator is the only end-to-end workflow coordinator.
-- Specialist agents stay in-domain and return structured status when data is missing.
-- Shared business objects should be defined once and reused.
-- Machine handoff must prefer structured outputs.
-- Any publish/deploy recommendation is draft-first and confirmation-gated.
-- `ui_stitch_agent` owns Stitch-based UI polishing and hands off implementation-ready artifacts.
+- Orchestrator 是唯一的端到端工作流协调者。
+- 专业 Agent 应专注于各自领域，并在缺少数据时返回结构化状态。
+- 共享业务对象应只定义一次并重复使用。
+- 机器间交接必须优先采用结构化输出。
+- 任何发布或部署建议都应先以草案形式提出，并通过确认门控制。
+- `ui_stitch_agent` 负责基于 Stitch 的 UI 润色，并交付可直接实施的产物。
 
-## Engineering Discipline
+## 工程纪律
 
-- Apply `karpathy-style-engineering` as a global execution constraint for implementation, debugging, and review work in this worktree.
-- Before coding, restate the target outcome, surface material assumptions, and prefer asking only when the missing detail changes the solution materially.
-- Prefer the simplest valid solution that satisfies the stated goal; avoid speculative abstraction, framework churn, and adjacent scope expansion.
-- Keep diffs narrow: touch only the files and code paths required for the task unless a directly blocking issue forces a wider change.
-- Do not claim completion without concrete verification against the requested outcome; if verification is partial, state the remaining assumption or risk explicitly.
+- 将 `karpathy-style-engineering` 作为此 worktree 中实施、调试和审查工作的全局执行约束。
+- 编码前，重新陈述目标结果，明确重要假设；只有当缺失信息会实质性改变解决方案时才优先提问。
+- 优先采用满足既定目标的最简单有效方案；避免推测性抽象、框架反复更换以及扩大相邻范围。
+- 保持差异范围精简：除非存在直接阻塞问题而不得不扩大修改，否则只触及任务所需的文件和代码路径。
+- 未针对请求的结果进行具体验证，不得声称完成；如果仅完成部分验证，应明确说明仍存在的假设或风险。
 
-## Source Of Truth
+## 事实来源
 
-- Product/brand intent in `site_ops/config/site-strategy.md`
-- Publishing policy in `site_ops/config/publishing-policy.json`
-- Stitch UI polishing rules in `site_ops/config/stitch-integration.json`
-- Repository code is source of truth for shipped site behavior
-- Performance and content outcomes are advisory until release confirmation
+- 产品及品牌意图以 `site_ops/config/site-strategy.md` 为准
+- 发布策略以 `site_ops/config/publishing-policy.json` 为准
+- Stitch UI 润色规则以 `site_ops/config/stitch-integration.json` 为准
+- 仓库代码是已发布网站行为的事实来源
+- 在发布确认前，性能和内容结果仅作为建议
 
-## Scope Control
+## 范围控制
 
-- Default scope is personal site publishing and iteration only.
-- Exclude foreign-trade workflows unless explicitly requested.
-- Keep each release cycle auditable and reversible.
+- 默认范围仅限个人网站的发布和迭代。
+- 除非明确要求，否则排除外贸工作流。
+- 确保每个发布周期都可审计、可回退。
 
-## Security Rules
+## 安全规则
 
-- Never commit secrets, tokens, passwords, or raw credentials.
-- Load sensitive values from `.env` or secret stores.
-- Mask sensitive values in logs.
+- 切勿提交密钥、令牌、密码或原始凭据。
+- 从 `.env` 或密钥存储中加载敏感值。
+- 在日志中遮蔽敏感值。
 
-## User Confirmation Gate
+## 用户确认门
 
-- Keep self-improving invocation enabled.
-- Keep automatic git commit enabled when repository files are modified.
-- Any release-impacting action requires explicit user confirmation first.
-- Writing files under `site_ops/output/` or changing runtime state requires explicit confirmation first.
+- 保持 self-improving 调用处于启用状态。
+- 修改仓库文件时，保持自动 git commit 处于启用状态。
+- 任何影响发布的操作都必须先获得用户明确确认。
+- 向 `site_ops/output/` 写入文件或更改运行时状态，必须先获得明确确认。
 
-## Self-Improving Rule
+## Self-Improving 规则
 
-- Do not wait for the user to request memory updates.
-- After any substantial run, actively record reusable learnings, corrected assumptions, and repeated failure patterns into `docs/memory/self_improving_agent.md`.
-- If a rule, workflow, or output pattern proves useful, persist it in the worktree immediately.
-- Do not iterate the agent system mechanically after every run. First summarize the new evidence, separate reusable learning from one-off task detail, and update memory or harness rules only when the learning changes future execution.
-- Improve the harness from observed real-agent execution: capture the selected specialists, task boundaries, handoff shape, verification evidence, and failure or confirmation behavior before changing orchestration code or contracts.
+- 不要等待用户提出记忆更新请求。
+- 在任何实质性运行之后，主动将可复用的经验、修正后的假设和重复出现的失败模式记录到 `docs/memory/self_improving_agent.md`。
+- 如果某项规则、工作流或输出模式被证明有用，应立即将其持久化到 worktree 中。
+- 不要在每次运行后机械地迭代 Agent 系统。应先汇总新证据，将可复用经验与一次性任务细节分开；只有当经验会改变未来执行时，才更新记忆或 harness 规则。
+- 根据观察到的真实 Agent 执行改进 harness：在修改编排代码或契约之前，记录所选专业 Agent、任务边界、交接形式、验证证据，以及失败或确认行为。
 
 
-## Autonomous Parallelism Rule
+## 自主并行规则
 
-- Orchestrator should proactively decide when sub-agents are useful for the current task.
-- Do not wait for the user to request sub-agents when the work naturally splits into independent strategy, content, SEO, UI, implementation, QA, release, or analytics tracks.
-- Dispatch only the minimum useful set of specialist agents. The registered full agent roster is a capability map, not a requirement that every task invoke every role.
-- For medium or large tasks that naturally split, run only independent specialist tracks in parallel, then merge their outputs through the orchestrator.
-- Keep sub-agent work scoped, structured, and auditable.
-- User reminder is not required; proactive sub-agent orchestration is expected behavior in this worktree.
+- Orchestrator 应主动判断当前任务何时适合使用子 Agent。
+- 当工作可自然拆分为独立的策略、内容、SEO、UI、实施、QA、发布或分析轨道时，不要等待用户提出使用子 Agent 的请求。
+- 只调度最少且有用的专业 Agent。已注册的完整 Agent 名单是能力图谱，并不意味着每项任务都必须调用所有角色。
+- 对于可自然拆分的中型或大型任务，只并行运行相互独立的专业轨道，然后由 orchestrator 汇总其输出。
+- 子 Agent 工作应范围明确、结构化且可审计。
+- 无需用户提醒；在此 worktree 中，主动编排子 Agent 是预期行为。
 
-## Harness Improvement Rule
+## Harness 改进规则
 
-- Treat `site_ops/config/agent-registry.json` as the available role registry, not proof that a role executed.
-- A harness update must be grounded in a real run and should record: task type, agents actually used, why each was selected, structured handoffs, verification performed, and any blocking confirmation gate.
-- Prefer small contract, test, or routing improvements that fix an observed gap. Do not add speculative roles, states, artifacts, or workflow branches.
-- Distinguish repository-declared agents from agents actually dispatched in reports and handoffs.
+- 将 `site_ops/config/agent-registry.json` 视为可用角色注册表，而不是某个角色已执行的证明。
+- harness 更新必须基于一次真实运行，并应记录：任务类型、实际使用的 Agent、选择各 Agent 的原因、结构化交接、完成的验证，以及任何阻塞性的确认门。
+- 优先进行小范围的契约、测试或路由改进，以修复观察到的缺口。不要添加推测性的角色、状态、产物或工作流分支。
+- 在报告和交接中，应区分仓库声明的 Agent 与实际调度的 Agent。

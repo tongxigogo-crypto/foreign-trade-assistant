@@ -1,170 +1,170 @@
-# Self Improving Agent Memory
+# 自我改进 Agent 记忆
 
-This file stores durable learnings for this worktree only. It is intentionally compressed: keep rules that should affect future work, not a full run log.
+此文件仅存储此工作树的持久学习内容。它是有意压缩的：保留应该影响未来工作的规则，而不是完整的运行日志。
 
-## Persistent Rules
+## 持久规则
 
-- Record reusable lessons after substantial runs without waiting for the user to ask.
-- Prefer stable project rules, corrected assumptions, and repeated failure patterns over chronological detail.
-- Keep the orchestrator responsible for end-to-end decisions; use specialist sub-agents only when work naturally splits into independent strategy, content, SEO, UI, implementation, QA, release, or analytics tracks.
-- Treat the full agent registry as a capability map, not a mandatory execution checklist. Dispatch only the minimum specialists needed for the task and report which agents actually ran.
-- Self-improvement must be evidence-driven: summarize new learning first, exclude one-off details, then update memory or harness rules only when future execution should change.
-- Improve the harness incrementally from real runs by capturing agent selection, task boundaries, structured handoffs, verification evidence, and confirmation or failure behavior; avoid speculative orchestration expansion.
-- Apply `karpathy-style-engineering` globally: restate the target, choose the smallest valid change, avoid speculative refactors, and verify before claiming completion.
-- Do not release, deploy, or write under `site_ops/output/` without explicit user confirmation.
-- For local Remotion projects on this Windows machine, `render`/`still` may hang unless the CLI is passed `--browser-executable="C:\Program Files\Google\Chrome\Application\chrome.exe"`; `@remotion/zod-types@4.0.456` should be paired with `zod@4.3.6` to avoid npm peer-resolution loops.
-- For isolated static previews served through `python -m http.server`, cache-bust linked CSS and JS when iterating (`?v=...`) and verify the loaded `href/src` in the browser before diagnosing stale visual behavior as a code regression.
-- For pointer-drag UI such as Douzi/AI Core, synthetic `dispatchEvent()` may not exercise pointer capture correctly; use real Playwright mouse movement to verify draggable behavior.
-- When turning V6.6 experiments into left-nav single-viewport previews, verify at the user's apparent browser width as well as standard desktop; fixed-size center compositions can leave large white areas on wide Chrome windows unless the root shell is fixed to the viewport and the stage owns the full remaining canvas.
-- For V6.6 left-navigation rebuilds, preserve the original `#hero-section` contract instead of approximating it: `min-h-[350vh]`, inner `sticky top-0 h-screen w-full`, `#impact-1..4`, and the GSAP ScrollTrigger timeline must remain on window scroll. Do not move scrolling into an internal container unless ScrollTrigger is reconfigured with that scroller.
-- For user-requested V6.6 visual experiments based on `C:\Users\Administrator\Desktop\preson`, prefer an isolated output folder under `E:\网页测试\...` first. Preserve the source V6.6 files, copy only needed assets, and implement first-screen cockpit/app prototypes with static HTML/CSS/JS unless video rendering or true timeline export is explicitly required.
+- 在完成实质性运行后记录可复用经验，无需等待用户提出要求。
+- 优先记录稳定的项目规则、已纠正的假设和重复出现的失败模式，而不是按时间顺序记录细节。
+- 由 orchestrator 负责端到端决策；仅当工作自然拆分为相互独立的策略、内容、SEO、UI、实现、QA、发布或分析任务时，才使用专业子 Agent。
+- 将完整的 Agent 注册表视为能力地图，而不是强制执行清单。仅调度任务所需的最少专业 Agent，并报告实际运行的 Agent。
+- Self-improvement 必须由证据驱动：先汇总新学到的内容，排除一次性细节；仅当未来执行方式应当改变时，才更新记忆或 harness 规则。
+- 根据真实运行增量完善 harness，记录 Agent 选择、任务边界、结构化交接、验证证据，以及确认或失败行为；避免推测性扩展编排架构。
+- 全局应用 `karpathy-style-engineering`：重申目标，选择最小的有效更改，避免推测性重构，并在声明完成之前进行验证。
+- 未经用户明确确认，请勿在 `site_ops/output/` 下发布、部署或写入。
+- 对于此 Windows 计算机上的本地 Remotion 项目，`render`/`still` 可能会挂起，除非 CLI 通过 `--browser-executable="C:\Program Files\Google\Chrome\Application\chrome.exe"`； `@remotion/zod-types@4.0.456` 应与 `zod@4.3.6` 配对，以避免 npm 对等解析循环。
+- 对于通过 `python -m http.server` 提供的隔离静态预览，迭代时缓存无效链接 CSS 和 JS (`?v=...`)，并在将过时的视觉行为诊断为代码回归之前验证浏览器中加载的 `href/src`。
+- 对于豆子/AI Core等指针拖动UI，合成的`dispatchEvent()`可能无法正确执行指针捕获；使用真实的 Playwright 鼠标移动来验证可拖动行为。
+- 将 V6.6 实验转为左导航单视口预览时，在用户的浏览器表观宽度以及标准桌面上进行验证；固定大小的中心合成可能会在宽 Chrome 窗口上留下大的白色区域，除非根 shell 固定到视口并且舞台拥有完整的剩余画布。
+- 对于 V6.6 左导航重建，保留原始 `#hero-section` 合约而不是近似它：`min-h-[350vh]`、内部 `sticky top-0 h-screen w-full`、`#impact-1..4` 和 GSAP ScrollTrigger 时间轴必须保留在窗口滚动上。不要将滚动移动到内部容器中，除非使用该滚动器重新配置 ScrollTrigger。
+- 对于用户请求的基于 `C:\Users\Administrator\Desktop\preson` 的 V6.6 可视化实验，优先选择 `E:\网页测试\...` 下的独立输出文件夹。保留源 V6.6 文件，仅复制所需的资源，并使用静态 HTML/CSS/JS 实现首屏驾驶舱/应用程序原型，除非明确需要视频渲染或真正的时间轴导出。
 
-## Current Source Of Truth
+## 当前事实来源
 
-- The active external homepage source is `C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html`.
-- The English independent-site sibling is `C:\Users\Administrator\Desktop\preson\indexV6.6_refined_en.html`.
-- The shared runtime is `C:\Users\Administrator\Desktop\preson\bilingual.js`.
-- The local backend/admin source lives in `site_backend/`.
-- Do not silently substitute `website_from_playground/` as the publish target when the user is reviewing the external V6.6 files.
-- Preserve original Gemini/prototype drafts; write major iterations into refined siblings unless the user explicitly asks to overwrite.
+- 活动的外部主页来源是 `C:\Users\Administrator\Desktop\preson\indexV6.6_refined.html`。
+- 英文独立网站兄弟是 `C:\Users\Administrator\Desktop\preson\indexV6.6_refined_en.html`。
+- 共享运行时是 `C:\Users\Administrator\Desktop\preson\bilingual.js`。
+- 本地后端/管理源位于 `site_backend/`。
+- 当用户查看外部 V6.6 文件时，不要默默地替换 `website_from_playground/` 作为发布目标。
+- 保留原始Gemini/原型草稿；将主要迭代写入精炼同级中，除非用户明确要求覆盖。
 
-## Product And Brand Direction
+## 产品及品牌方向
 
-- The site is Tong Studio / Tong工作室, centered on real work: Trade Assistant, pet product trade, pet IP, and future mini-program/website development services.
-- Avoid reverting to generic AI SaaS marketing. The page should stay bright, soft-tech, glassy, product-narrative, and desktop-first.
-- Xiao Q and Douzi are brand memory assets, not decorative mascots. Use real local images when available; do not replace them with letter placeholders.
-- Douzi Core is a floating mascot-shaped AI core. Keep the elliptical obstacle model aligned with the real mascot silhouette.
-- The Chinese and English experiences should be coordinated but not identical: English is for independent-site/Google SEO; the future Chinese version should be WeChat-friendly and conversion-oriented.
+- 该网站为童工作室/童工作室，以现实工作为中心：贸易助理、宠物产品贸易、宠物IP、以及未来的小程序/网站开发服务。
+- 避免恢复到通用的 AI SaaS 营销。页面应该保持明亮、软技术、透明、产品叙述和桌面优先。
+- 小Q和豆子是品牌记忆资产，不是装饰吉祥物。如果可用，请使用真实的本地图像；不要用字母占位符替换它们。
+- 豆子核心是一个漂浮的吉祥物形状的AI核心。保持椭圆形障碍物模型与真实吉祥物轮廓对齐。
+- 中英文体验要协调但不完全相同：英文为独立站/Google SEO；未来的中文版本应该是微信友好且以转化为导向的。
 
-## External V6.6 Homepage Rules
+## 外部V6.6首页规则
 
-- Keep the existing GSAP/scrollytelling shell and pretext interaction unless the user explicitly asks for a structural rewrite.
-- The first screen should feel like a real Trade Assistant workspace, not a generic concept dashboard.
-- The first-screen laptop intro now uses a fullscreen macOS-style software window. Preserve the pain cards and scrollytelling transition; edit the inner window copy through `hero_summary_title`, `hero_intro`, and `hero_subtitle`.
-- Keep the first-screen hero title on one line and attached to `use-pretext` so Douzi Core movement continues to affect the text layout.
-- The laptop/workspace panel should show credible operational details: customer context, inquiry input, quote/task suggestions, local-first and multi-model compatibility.
-- The user explicitly authorized proactive use of sub-agents and design plugins/skills when useful; do not wait for a reminder on future design, copy, SEO, backend, or QA splits.
-- Use one shared outer shell width for major mid-page sections; keep the hero laptop intentionally staged inside it.
-- Pet-products gallery belongs after the Pet IP section and should feel like an editorial/brand content rail, not a normal product grid.
-- Gallery behavior: hidden-scrollbar horizontal rail, gentle auto-drift, pause on hover/drag, pointer dragging supported.
-- Early-stage pet product cards can be placeholders, but they must be honest: use `coming_soon` or template-preview states instead of fake finished detail links.
-- Short Chinese display headings may work better without pretext when pretext harms centered single-line typography.
+- 保留现有的 GSAP/scrolllytelling shell 和借口交互，除非用户明确要求进行结构重写。
+- 第一个屏幕应该感觉像一个真正的贸易助理工作区，而不是通用概念仪表板。
+- 第一屏笔记本电脑现在使用全屏 macOS 风格的软件窗口。保留疼痛卡和滚动式过渡；通过 `hero_summary_title`、`hero_intro` 和 `hero_subtitle` 编辑内部窗口副本。
+- 将首屏英雄标题保留在一行并附加到 `use-pretext`，以便豆子核心的移动继续影响文本布局。
+- 笔记本电脑/工作区面板应显示可信的操作细节：客户背景、查询输入、报价/任务建议、本地优先和多模型兼容性。
+- 用户明确授权主动使用子代理并在有用时设计插件/技能；不要等待有关未来设计、文案、SEO、后端或 QA 拆分的提醒。
+- 对主要的中间页面部分使用一个共享的外壳宽度；特意将英雄笔记本电脑放在里面。
+- 宠物产品库属于宠物 IP 部分，应该感觉像是一个社论/品牌内容栏，而不是正常的产品网格。
+- 图库行为：隐藏滚动条水平导轨、温和的自动漂移、悬停/拖动时暂停、支持指针拖动。
+- 早期宠物产品卡可以是占位符，但它们必须诚实：使用 `coming_soon` 或模板预览状态，而不是虚假的成品详细链接。
+- 当借口损害居中单行排版时，简短的中文显示标题可能会在没有借口的情况下效果更好。
 
-## V6.7 Concept Direction
+## V6.7 概念方向
 
-- The V6.7 concept is an isolated external prototype at `C:\Users\Administrator\Desktop\preson\indexV6.7_concept.html`, not a direct V6.6 replacement.
-- First concept pass uses HyperFrames as a design method only: composition-like scenes, timeline thinking, and video-style transitions implemented with normal HTML/CSS/GSAP/ScrollTrigger.
-- Do not build the actual HyperFrames project until after the website concept is reviewed, approved, and migrated back into V6.6.
-- The approved first-pass style is v0 / AI product launch: light canvas, soft glass UI, blue/violet glow, product workspace cards, camera push/pull, and UI regrouping.
-- First pass is desktop-first and uses abstract UI placeholders; real app screenshots, Xiao Q/Douzi assets, and pet product poster assets are connected later after motion direction approval.
-- Boot should be a very short brand flash, about 0.8 to 1.2 seconds, not a long system loading sequence.
-- V6.7-to-V6.6 migration should enhance the existing V6.6 files with a launch layer instead of replacing them: preserve `#global-obstacle`, `data-ai-assistant-mount="douzi-core"`, `.use-pretext`, and `GlobalPretextEngine`.
-- Keep Chinese and English V6.6 pages synchronized for the launch layer (`data-v67-launch`, boot, progress, cursor, scene dots, and `initV67LaunchExperience`) so bilingual navigation does not switch into an older interaction model.
-- If `bilingual.js` has mojibake or syntax damage, fix it before visual migration because a broken runtime can prevent language copy, gallery link handling, contact form binding, and `window.TongAICore` from initializing.
+- V6.7 概念是 `C:\Users\Administrator\Desktop\preson\indexV6.7_concept.html` 的独立外部原型，而不是直接替代 V6.6。
+- 第一个概念阶段仅使用 HyperFrames 作为设计方法：类似合成的场景、时间线思维以及使用普通 HTML/CSS/GSAP/ScrollTrigger 实现的视频风格过渡。
+- 在网站概念经过审核、批准并迁移回 V6.6 之前，不要构建实际的 HyperFrames 项目。
+- 批准的第一关风格是 v0 / AI 产品发布：浅色画布、软玻璃 UI、蓝色/紫色发光、产品工作区卡、相机推/拉和 UI 重组。
+- 第一遍是桌面优先，并使用抽象 UI 占位符；真实应用截图、小Q/豆子资源、宠物产品海报资源等动作方向审核通过后进行连接。
+- 启动应该是一个非常短的品牌闪存，大约0.8到1.2秒，而不是一个很长的系统加载序列。
+- V6.7 到 V6.6 的迁移应使用启动层增强现有的 V6.6 文件，而不是替换它们：保留 `#global-obstacle`、`data-ai-assistant-mount="douzi-core"`、`.use-pretext` 和 `GlobalPretextEngine`。
+- 启动层（`data-v67-launch`、启动、进度、光标、场景点和 `initV67LaunchExperience`）保持中英文 V6.6 页面同步，这样双语导航就不会切换到旧的交互模型。
+- 如果 `bilingual.js` 存在 mojibake 或语法损坏，请在可视化迁移之前修复它，因为损坏的运行时可能会阻止语言复制、图库链接处理、联系表单绑定和 `window.TongAICore` 初始化。
 
-## Backend And CMS Rules
+## 后端和 CMS 规则
 
-- The smallest reliable backend shape is Python stdlib WSGI: serve static external files, `/admin`, `/api/content`, asset upload, preview, and placeholder public APIs without adding unnecessary framework dependencies.
-- Preview/publish must target the real external V6.6 files and their `content/site-content.json`, not a disconnected repo demo.
-- Admin preview should show draft-vs-saved state, image reachability, and open preview only after warning on draft changes or asset risks.
-- When local preview seems unchanged, check for stale `site_backend.server` processes before assuming the code failed.
-- Normalize Windows/Chinese-path static serving: recover `PATH_INFO` with `latin-1 -> utf-8` where needed and unquote before resolving files.
-- Keep `site_backend/v66_adapter.py` aligned with user-facing homepage/card/template changes, or the next CMS save can regress visible copy and links.
+- 最小的可靠后端形状是 Python stdlib WSGI：提供静态外部文件、`/admin`、`/api/content`、资产上传、预览和占位符公共 API，无需添加不必要的框架依赖项。
+- 预览/发布必须针对真实的外部 V6.6 文件及其 `content/site-content.json`，而不是断开连接的存储库演示。
+- 管理预览应显示草稿与保存状态、图像可达性，并且仅在草稿更改或资产风险警告后才打开预览。
+- 当本地预览看起来没有变化时，在假设代码失败之前检查是否有过时的 `site_backend.server` 进程。
+- 规范化 Windows/中文路径静态服务：在需要时使用 `latin-1 -> utf-8` 恢复 `PATH_INFO`，并在解析文件之前取消引用。
+- 使 `site_backend/v66_adapter.py` 与面向用户的主页/卡片/模板更改保持一致，否则下一个 CMS 保存可能会回归可见的副本和链接。
 
-## Bilingual CMS Contract
+## 双语 CMS 契约
 
-- Store homepage gallery cards as `pet_products_gallery.zh.cards` and `pet_products_gallery.en.cards`.
-- Mirror legacy `pet_products_gallery.cards` from Chinese only for backward compatibility.
-- Frontend runtime should prefer localized gallery cards; only Chinese may fall back to legacy `cards`, otherwise English can inherit Chinese placeholder copy.
-- Admin preview targets must be concrete:
-  - Chinese homepage: `/?preview=1`
-  - English homepage: `/indexV6.6_refined_en.html?preview=1`
-  - Template page: `/pet-product-template.html?preview=1`
-- Use `localStorage.site_content_preview` for draft-only preview; it must not overwrite saved content.
+- 将主页图库卡存储为`pet_products_gallery.zh.cards`和`pet_products_gallery.en.cards`。
+- 镜像旧版 `pet_products_gallery.cards` 的中文版本，仅用于向后兼容。
+- 前端运行时应该更喜欢本地化的图库卡；只有中文可以回退到旧版 `cards`，否则英文可以继承中文占位符副本。
+- 管理员预览目标必须具体：
+  - 中文主页：`/?preview=1`
+  - 英文主页：`/indexV6.6_refined_en.html?preview=1`
+  - 模板页面：`/pet-product-template.html?preview=1`
+- 使用`localStorage.site_content_preview`进行草稿预览；它不能覆盖保存的内容。
 
-## SEO And Launch Readiness
+## SEO 和启动准备
 
-- For the current static architecture, prioritize direct semantic improvements over framework migration: title, description, canonical, JSON-LD, precise alt text, aria labels, resource hints, and sitemap/robots.
-- Keep above-the-fold Douzi and app images high priority; lazy-load below-the-fold IP/gallery assets.
-- English launch polish should target real visible DOM nodes and adapter code; do not rely on broad string replacement against historical mojibake.
-- Verify UTF-8 and mojibake from actual source bytes or decoded HTTP responses. PowerShell display can be misleading.
-- External-file regressions should use stable structural markers or English strings where possible.
+- 对于当前的静态架构，优先考虑直接语义改进而不是框架迁移：标题、描述、规范、JSON-LD、精确的替代文本、咏叹调标签、资源提示和站点地图/机器人。
+- 保持首屏豆子和应用图片的优先级；延迟加载首屏 IP/图库资源。
+- 英文启动抛光应针对真实可见的 DOM 节点和适配器代码；不要依赖于对历史 mojibake 的宽字符串替换。
+- 从实际源字节或解码的 HTTP 响应验证 UTF-8 和 mojibake。 PowerShell 显示可能会产生误导。
+- 外部文件回归应尽可能使用稳定的结构标记或英文字符串。
 
-## Pet Product Content Model
+## 宠物产品内容模型
 
-- `pet_products_gallery` cards currently need: `id`, `image`, `cover_label`, `cover_title`, `title`, `summary`, `tag`, `status`, and `entry_mode`.
-- Pet product homepage assets should live under the external site asset directory, currently `C:\Users\Administrator\Desktop\preson\pet-product-assets\`, with stable relative URLs such as `./pet-product-assets/mother-keepsake-necklace.png`.
-- When changing homepage gallery cards, update all three layers together: static V6.6 HTML fallback, `bilingual.js`, and `content/site-content.json` plus `site_backend/v66_adapter.py` defaults, otherwise CMS preview/save can regress the visible homepage.
-- `status=live` does not automatically mean the card should navigate; `entry_mode` controls whether it opens the shared template.
-- A single `pet-product-template.html` is the correct first detail-page scaffold before generating many product pages.
-- The template should remain CMS-driven: hero image/card, eyebrow, title, intro, CTA, specs, sections, care notes, and SEO metadata.
-- V6.7 pet poster detail pages should work as static hash routes first: `#mother-keepsake` and `#pet-keepsake` must render complete Chinese fallback content even when `/api/content` is unavailable.
-- Homepage pet poster navigation belongs on each live card's image and "View poster" link. Do not use the lower "Open template preview" note as the primary poster route.
-- If the pet gallery removes visible CTA buttons, keep `data-poster-href` on the image cover and a rail click handler that routes through `window.location.href`; the auto-scrolling rail can otherwise make plain anchors unreliable.
-- For the V6.6 pet gallery card body, "only keep the main title" means remove the per-card summary paragraph and bottom CTA/tag row; the card should show image plus `h3` only.
-- Keep `site_backend/v66_adapter.py` and preview runtime aligned with that title-only gallery shape; backend `apply_content()` must not regenerate footer links, status pills, tags, or card summaries after a CMS save.
-- Keep a stable `data-poster-template="v67"` marker and `initPosterExperience()` in the shared poster page so tests can distinguish the approved V6.7 poster experience from the earlier generic scaffold.
-- The homepage top-right CTA is now a download entry, not a demo booking mailto. Keep `data-i18n="navCta"` text as `Download` / `下载` and route it to `./download.html`; the download page introduces InVault / 外贸助理 as a local-first private AI business advisor until installer details are ready.
-- Keep `robots.txt` and `sitemap.xml` synchronized when content/template publishing behavior changes.
+- `pet_products_gallery` 卡目前需要：`id`、`image`、`cover_label`、`cover_title`、`title`、`summary`、`tag`、 `status` 和 `entry_mode`。
+- 宠物产品主页资产应位于外部站点资产目录下，目前为 `C:\Users\Administrator\Desktop\preson\pet-product-assets\`，具有稳定的相对 URL，例如 `./pet-product-assets/mother-keepsake-necklace.png`。
+- 更改主页图库卡时，一起更新所有三个层：静态 V6.6 HTML 后备、`bilingual.js` 和 `content/site-content.json` 加上 `site_backend/v66_adapter.py` 默认值，否则 CMS 预览/保存可以回归可见主页。
+- `status=live` 并不自动意味着该卡应该导航； `entry_mode`控制是否打开共享模板。
+- 在生成许多产品页面之前，单个 `pet-product-template.html` 是正确的第一个详细页面支架。
+- 模板应保持 CMS 驱动：英雄图像/卡片、眉毛、标题、简介、CTA、规格、部分、注意事项和 SEO 元数据。
+- V6.7宠物海报详细信息页面应首先作为静态哈希路由工作：即使`/api/content`不可用，`#mother-keepsake`和`#pet-keepsake`也必须呈现完整的中文后备内容。
+- 主页宠物海报导航属于每个活卡的图像和“查看海报”链接。不要使用下方的“打开模板预览”注释作为主要海报路线。
+- 如果宠物图库删除了可见的 CTA 按钮，请将 `data-poster-href` 保留在图像封面上，并保留通过 `window.location.href` 的轨道单击处理程序；否则，自动滚动轨道可能会使普通锚点变得不可靠。
+- 对于V6.6宠物图库卡体，“仅保留主标题”意味着删除每卡摘要段落和底部CTA/标签行；该卡应仅显示图像加上 `h3`。
+- 保持 `site_backend/v66_adapter.py` 和预览运行时与仅标题画廊形状保持一致； CMS 保存后，后端 `apply_content()` 不得重新生成页脚链接、状态丸、标签或卡片摘要。
+- 在共享海报页面中保留稳定的 `data-poster-template="v67"` 标记和 `initPosterExperience()` ，以便测试可以将批准的 V6.7 海报体验与早期的通用脚手架区分开来。
+- 主页右上角的CTA现在是下载入口，而不是演示预订mailto。将 `data-i18n="navCta"` 文本保留为 `Download` / `下载` 并将其路由到 `./download.html`；下载页面介绍了 InVault / 外贸助理作为本地优先的私人人工智能业务顾问，直到安装程序详细信息准备就绪。
+- 当内容/模板发布行为发生变化时，保持 `robots.txt` 和 `sitemap.xml` 同步。
 
-## Contact And AI Core APIs
+## 联系人和 AI 核心 API
 
-- Douzi AI Core is currently a reserved assistant mount, not a live chat product.
-- Frontend contract: `data-ai-assistant-mount="douzi-core"` and `window.TongAICore.context()` / `window.TongAICore.send()`.
-- Public AI placeholders:
+- 豆子AI Core目前是预留助手坐骑，并非即时聊天产品。
+- 前端合约：`data-ai-assistant-mount="douzi-core"` 和 `window.TongAICore.context()` / `window.TongAICore.send()`。
+- 公共 AI 占位符：
   - `GET /api/ai-context`
   - `POST /api/ai-core/message`
-- The AI message endpoint must not call external models until a model adapter is explicitly added.
-- Contact intent slugs are stable:
+- 在显式添加模型适配器之前，AI 消息端点不得调用外部模型。
+- 联系意图段头稳定：
   - `website-development`
   - `mini-program`
   - `product-information`
   - `ip-collaboration`
-- Current contact endpoint is placeholder-only:
+- 当前联系人端点仅占位符：
   - `POST /api/contact`
-  - validates name/contact/intent/message
-  - uses a honeypot field for simple spam filtering
-  - persists accepted homepage project feeds into `content/contact-submissions.jsonl`
-  - returns `feed_saved`
-  - does not send email until deployment credentials are configured
-- Admin can review homepage project feeds through authenticated `GET /admin/api/contact-submissions` and the right-side inspector module.
-- Email target is `tongxigogo@gmail.com`.
-- WeChat QR should use a stable asset path: `小Q和豆子/wechat-qr-tong1390.jpg`.
+  - 验证姓名/联系人/意图/消息
+  - 使用蜜罐字段进行简单的垃圾邮件过滤
+  - 将接受的主页项目保留到输入中`content/contact-submissions.jsonl`
+  - 返回 `feed_saved`
+  - 在配置部署凭据之前不发送电子邮件
+- 管理员可以通过经过身份验证的 `GET /admin/api/contact-submissions` 和右侧检查器模块查看主页项目提要。
+- 电子邮件目标是 `tongxigogo@gmail.com`。
+- 微信二维码应使用稳定的资产路径：`小Q和豆子/wechat-qr-tong1390.jpg`。
 
-## Deployment Direction
+## 部署方向
 
-- Recommended free/low-cost shape for this project: Cloudflare Pages + Cloudflare Workers + Resend.
-- GitHub Pages is not enough for real form submission because it cannot run `/api/contact`.
-- Deployment email sending should use environment variables, not committed secrets:
+- 此项目推荐的免费/低成本形状：Cloudflare Pages + Cloudflare Workers + Resend。
+- GitHub Pages 不足以用于真正的表单提交，因为它无法运行 `/api/contact`。
+- 部署电子邮件发送应使用环境变量，而不是提交机密：
   - `RESEND_API_KEY`
   - `CONTACT_TO_EMAIL=tongxigogo@gmail.com`
   - `CONTACT_FROM_EMAIL=<verified sender>`
-- Add stronger spam protection later with Cloudflare Turnstile if submissions become public-facing and noisy.
+- 如果提交内容变得面向公众且嘈杂，稍后可以使用 Cloudflare Turnstile 添加更强大的垃圾邮件防护。
 
-## Retired Or Deprioritized Directions
+## 停用或取消优先级的方向
 
-- Do not revive the heavy game-plaza homepage direction unless the user explicitly asks; current approved direction is V6.6 scrollytelling/product narrative.
-- Do not migrate to Next.js just for SEO before content volume and deployment needs justify it.
-- Do not build many pet product detail pages before the shared template and content workflow are stable.
-- Do not overbuild the admin UI into a full CMS platform before final homepage copy, deployment, and email delivery are settled.
+- 除非用户明确要求，否则不要恢复繁重的游戏广场主页方向；目前批准的方向是V6.6 滚动讲述/产品叙述。
+- 在内容量和部署需求证明其合理性之前，不要仅仅为了 SEO 而迁移到 Next.js。
+- 在共享模板和内容工作流程稳定之前，不要构建许多宠物产品详细信息页面。
+- 在最终主页复制、部署和电子邮件发送解决之前，不要将管理 UI 过度构建为完整的 CMS 平台。
 
-## V6.6/V6.7 Release Review Learnings
+## V6.6/V6.7 发布审核学习
 
-- For external static pages under `C:\Users\Administrator\Desktop\preson`, production checks must include browser-rendered mobile review, not only file scans, because runtime language updates can override static HTML.
-- Keep fifth-screen pet gallery card titles as normal `h3` text, not `use-pretext`, so the global Pretext character engine stays focused on large narrative headings and cannot corrupt compact card titles.
-- Public homepage assets should use ASCII deploy paths such as `characters/douzi-thanks.png`; keep original Chinese asset folders untouched as source material, but do not regenerate publish HTML with Chinese paths.
-- Treat `InVault Trade Assistant` / `外贸助理` and `v0.1.1 Beta` as the current public naming/version pattern unless the user changes the release name.
-- When adopting an externally repaired single-file prototype such as `geminiV7.1.html`, copy it into a fresh output folder and migrate its asset directories first, then replace placeholder cards with real assets before QA. Fullscreen checks must measure both `main` and the pinned ScrollTrigger container: fixed left-navigation layouts should use `calc(100vw - var(--left-nav-width))`, not `calc(100% - ...)`, because ScrollTrigger pin wrappers can otherwise produce horizontal overflow.
-- Configurable prototype parameters should be connected to runtime behavior, not only declared. For the Gemini V7.1 rebuild, `window.V66_CONFIG.animation` drives boot delay, hero impact scale, scroll length, APP demo delay, and gallery drag speed.
-- For pinned single-viewport GSAP prototypes, left-nav clicks should drive the GSAP timeline to a settled scene time rather than relying only on programmatic `window.scrollTo()`. Some browser/ScrollTrigger states can update active navigation without actually scrolling, leaving a half-transition scene. Verify by checking the target section `getBoundingClientRect().y === 0` after each nav click in the shortest supported desktop viewport.
-- When a repaired prototype simplifies original copy, compare against both `indexV6.6_refined.html` and `indexV6.6_refined_en.html` before accepting it. Preserve the original V6.6 content contracts: feature explanation copy, IP character descriptions, 4-card pet product rail, product note, and full contact form fields.
-- The practical lesson from `forrestchang/andrej-karpathy-skills` is to make implementation changes assumption-light, minimal, and verification-driven. Apply that here by fixing only the failing behavior and proving it with concrete browser measurements/screenshots before summarizing.
-- If a prototype iteration drifts from the user's intended base, stop patching that branch. Copy the last approved base into a fresh output folder, keep the original source folder untouched, and apply only the requested delta. For the V6.6 left-nav task, the correct delta is: keep `v66-original-leftnav-rebuild`, add the Gemini-style APP interaction to the second screen, and expose language switching through local `index.html` / `index_en.html` reloads so Pretext headings are rebuilt cleanly.
-- For the V6.6 Gemini panel request, "replace the panel" means the opened laptop panel `#sc-stable` inside the hero sequence, not the whole second screen. Preserve the original second screen and replace only the workbench mockup at runtime if that avoids touching the large historical HTML block.
-- When enlarging the V6.6 laptop/APP mockup inside a left-nav shell, preserve the original `920 / 592` laptop aspect ratio with responsive `width: min(...)` instead of freehand width/height scaling. Validate `documentElement.scrollWidth === viewport width`, `main.right === viewport right`, and the embedded APP grid `scrollWidth <= clientWidth`; also cache-bust CSS links after changing shared panel breakpoints.
-- For external V6.6 admin adaptation, preserve the legacy default backend target at `C:\Users\Administrator\Desktop\preson` unless the user explicitly changes it. New isolated output folders should be served by `SITE_MANAGED_DIR` + `SITE_MANAGED_HTML`; if the entry is the modern `index.html`, treat `content/site-content.json` and `/api/content` as the runtime source and avoid old `apply_content()` HTML rewrites unless `SITE_SYNC_HTML=1` is explicitly set.
-- When a user provides a non-site deliverable path such as `E:\CodexWorkspace`, create the final project directly in a sibling folder under that path instead of inside `site-publishing`; if a temporary repo-local folder was created, move it out and verify the repo-local path no longer exists before finalizing.
-- For interactive PPT-style deliverables, keep static page images clean by default and move dramatic "pop out of screen" effects into click/hover detail states. When the user says a reference effect is correct, reuse the effect language without baking it into every slide background.
-- When a later document replaces only UI/layout direction for an external PPT/web-deck deliverable, preserve previously approved interaction and asset rules unless the user explicitly cancels them. For the car science deck, V3 Apple/Guizang-style layout changed the page composition, while the earlier rules still governed hotspot behavior, simulated-real photo assets, F1 imagery, aero airflow, and click-triggered pop-out details.
-- For a new company independent-site build based on a prior static template, prefer a self-contained sibling such as `hongjuda_site/` with `index.html`, `content/site-content.json`, `admin.html`, `local_server.py`, `llms.txt`, `robots.txt`, `sitemap.xml`, and `api/openapi.json`. Do not reuse the Tong Studio V6.6 backend adapter when the schema is product/company-site content rather than pet/Tong content; keep local admin/API stdlib WSGI and deployment static-first.
-- Before launch review, harden local admin defaults: require `SITE_ADMIN_PASSWORD` and `SITE_ADMIN_SESSION_SECRET` unless an explicit local-only insecure opt-in is set, and read CMS JSON/meta with `utf-8-sig` so Windows-saved BOM files do not break `/api/content` or `/api/ai-context`.
+- 对于 `C:\Users\Administrator\Desktop\preson` 下的外部静态页面，生产检查必须包括浏览器渲染的移动审核，而不仅仅是文件扫描，因为运行时语言更新可以覆盖静态 HTML。
+- 将第五屏宠物图库卡标题保留为正常的 `h3` 文本，而不是 `use-pretext`，因此全局 Pretext 字符引擎始终专注于大型叙事标题，并且不会损坏紧凑的卡标题。
+- 公共主页资产应使用 ASCII 部署路径，例如 `characters/douzi-thanks.png`；保持原始中文资产文件夹作为源材料不变，但不重新生成带有中文路径的发布 HTML。
+- 将 `InVault Trade Assistant` / `外贸助理` 和 `v0.1.1 Beta` 视为当前公共命名/版本模式，除非用户更改版本名称。
+- 当采用外部修复的单文件原型（例如 `geminiV7.1.html`）时，将其复制到新的输出文件夹中并首先迁移其资产目录，然后在 QA 之前将占位卡替换为真实资产。全屏检查必须测量 `main` 和固定的 ScrollTrigger 容器：固定的左侧导航布局应使用 `calc(100vw - var(--left-nav-width))`，而不是 `calc(100% - ...)`，因为 ScrollTrigger 引脚包装器可能会产生水平溢出。
+- 可配置的原型参数应该连接到运行时行为，而不仅仅是声明。对于 Gemini V7.1 重建，`window.V66_CONFIG.animation` 驱动启动延迟、英雄冲击规模、滚动长度、APP 演示延迟和图库拖动速度。
+- 对于固定的单视口 GSAP 原型，左导航单击应将 GSAP 时间线驱动到固定的场景时间，而不是仅依赖于编程 `window.scrollTo()`。某些浏览器/ScrollTrigger 状态可以更新活动导航而无需实际滚动，从而留下半过渡场景。每次在支持的最短桌面视口中单击导航后，通过检查目标部分 `getBoundingClientRect().y === 0` 进行验证。
+- 当修复后的原型简化了原始副本时，请在接受之前与 `indexV6.6_refined.html` 和 `indexV6.6_refined_en.html` 进行比较。保留原始 V6.6 内容合同：功能说明副本、IP 角色描述、4 卡宠物产品导轨、产品说明和完整的联系表单字段。
+- `forrestchang/andrej-karpathy-skills` 的实际教训是使实施变更变得轻量、最小化和验证驱动。通过仅修复失败的行为并在总结之前使用具体的浏览器测量/屏幕截图来证明它，从而在此处应用该方法。
+- 如果原型迭代偏离了用户的预期基础，请停止修补该分支。将最后批准的基础复制到新的输出文件夹中，保持原始源文件夹不变，并仅应用请求的增量。对于 V6.6 左侧导航任务，正确的增量是：保留 `v66-original-leftnav-rebuild`，将 Gemini 风格的 APP 交互添加到第二个屏幕，并通过本地 `index.html` / `index_en.html` 重新加载公开语言切换，以便干净地重建 Pretext 标题。
+- 对于V6.6 Gemini 面板请求，“更换面板”是指英雄序列内打开的笔记本电脑面板`#sc-stable`，而不是整个第二屏幕。保留原始的第二个屏幕，并在运行时仅替换工作台模型（如果这样可以避免接触大型历史 HTML 块）。
+- 在左侧导航外壳内放大 V6.6 笔记本电脑/APP 模型时，保留原始 `920 / 592` 笔记本电脑的宽高比，并使用响应式 `width: min(...)`，而不是徒手缩放宽度/高度。验证`documentElement.scrollWidth === viewport width`、`main.right === viewport right`、以及嵌入式APP网格`scrollWidth <= clientWidth`；更改共享面板断点后还会缓存 CSS 链接。
+- 对于外部 V6.6 管理适配，保留 `C:\Users\Administrator\Desktop\preson` 的旧版默认后端目标，除非用户明确更改它。新的隔离输出文件夹应由 `SITE_MANAGED_DIR` + `SITE_MANAGED_HTML` 提供服务；如果条目是现代 `index.html`，则将 `content/site-content.json` 和 `/api/content` 视为运行时源，并避免旧的 `apply_content()` HTML 重写，除非显式设置 `SITE_SYNC_HTML=1`。
+- 当用户提供非站点可交付路径（例如 `E:\CodexWorkspace`）时，直接在该路径下的同级文件夹中创建最终项目，而不是在 `site-publishing` 内部；如果创建了临时存储库本地文件夹，请将其移出并在最终确定之前验证存储库本地路径不再存在。
+- 对于交互式 PPT 样式的交付成果，默认情况下保持静态页面图像干净，并将戏剧性的“弹出屏幕”效果移动到单击/悬停细节状态。当用户说参考效果是正确的时，请重复使用效果语言，而无需将其烘焙到每个幻灯片背景中。
+- 当后续文档仅替换外部 PPT/web-deck 可交付成果的 UI/布局方向时，保留先前批准的交互和资产规则，除非用户明确取消它们。对于汽车科学展板，V3 Apple/Guizang 风格的布局改变了页面构成，而早期的规则仍然控制热点行为、模拟真实照片资源、F1 图像、空气流动和点击触发的弹出细节。
+- 对于基于先前静态模板的新公司独立站点构建，更喜欢独立的同级，例如 `hongjuda_site/` 与 `index.html`、`content/site-content.json`、`admin.html`、`local_server.py`、`llms.txt`、`robots.txt`、`sitemap.xml` 和`api/openapi.json`。当架构是产品/公司站点内容而不是宠物/Tong 内容时，请勿重复使用 Tong Studio V6.6 后端适配器；保持本地管理/API stdlib WSGI 和部署静态优先。
+- 在启动审核之前，强化本地管理员默认设置：需要 `SITE_ADMIN_PASSWORD` 和 `SITE_ADMIN_SESSION_SECRET`，除非设置了明确的仅本地不安全选择加入，并使用 `utf-8-sig` 读取 CMS JSON/元，以便 Windows 保存的 BOM 文件不会破坏 `/api/content` 或 `/api/ai-context`。
