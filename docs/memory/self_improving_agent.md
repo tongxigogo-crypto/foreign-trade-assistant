@@ -7,6 +7,9 @@ This file stores durable learnings for this worktree only. It is intentionally c
 - Record reusable lessons after substantial runs without waiting for the user to ask.
 - Prefer stable project rules, corrected assumptions, and repeated failure patterns over chronological detail.
 - Keep the orchestrator responsible for end-to-end decisions; use specialist sub-agents only when work naturally splits into independent strategy, content, SEO, UI, implementation, QA, release, or analytics tracks.
+- Treat the full agent registry as a capability map, not a mandatory execution checklist. Dispatch only the minimum specialists needed for the task and report which agents actually ran.
+- Self-improvement must be evidence-driven: summarize new learning first, exclude one-off details, then update memory or harness rules only when future execution should change.
+- Improve the harness incrementally from real runs by capturing agent selection, task boundaries, structured handoffs, verification evidence, and confirmation or failure behavior; avoid speculative orchestration expansion.
 - Apply `karpathy-style-engineering` globally: restate the target, choose the smallest valid change, avoid speculative refactors, and verify before claiming completion.
 - Do not release, deploy, or write under `site_ops/output/` without explicit user confirmation.
 - For local Remotion projects on this Windows machine, `render`/`still` may hang unless the CLI is passed `--browser-executable="C:\Program Files\Google\Chrome\Application\chrome.exe"`; `@remotion/zod-types@4.0.456` should be paired with `zod@4.3.6` to avoid npm peer-resolution loops.

@@ -75,12 +75,22 @@ For any new conversation in this worktree, read these sources first in this orde
 - Do not wait for the user to request memory updates.
 - After any substantial run, actively record reusable learnings, corrected assumptions, and repeated failure patterns into `docs/memory/self_improving_agent.md`.
 - If a rule, workflow, or output pattern proves useful, persist it in the worktree immediately.
+- Do not iterate the agent system mechanically after every run. First summarize the new evidence, separate reusable learning from one-off task detail, and update memory or harness rules only when the learning changes future execution.
+- Improve the harness from observed real-agent execution: capture the selected specialists, task boundaries, handoff shape, verification evidence, and failure or confirmation behavior before changing orchestration code or contracts.
 
 
 ## Autonomous Parallelism Rule
 
 - Orchestrator should proactively decide when sub-agents are useful for the current task.
 - Do not wait for the user to request sub-agents when the work naturally splits into independent strategy, content, SEO, UI, implementation, QA, release, or analytics tracks.
-- Default behavior for medium or large site tasks is to dispatch the minimum useful set of specialist agents in parallel, then merge their outputs back through the orchestrator.
+- Dispatch only the minimum useful set of specialist agents. The registered full agent roster is a capability map, not a requirement that every task invoke every role.
+- For medium or large tasks that naturally split, run only independent specialist tracks in parallel, then merge their outputs through the orchestrator.
 - Keep sub-agent work scoped, structured, and auditable.
 - User reminder is not required; proactive sub-agent orchestration is expected behavior in this worktree.
+
+## Harness Improvement Rule
+
+- Treat `site_ops/config/agent-registry.json` as the available role registry, not proof that a role executed.
+- A harness update must be grounded in a real run and should record: task type, agents actually used, why each was selected, structured handoffs, verification performed, and any blocking confirmation gate.
+- Prefer small contract, test, or routing improvements that fix an observed gap. Do not add speculative roles, states, artifacts, or workflow branches.
+- Distinguish repository-declared agents from agents actually dispatched in reports and handoffs.
