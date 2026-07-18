@@ -2,10 +2,10 @@
   "schema_version": 1,
   "workspace": "site-publishing",
   "peer_workspace": "video_workflow",
-  "skill_path": "skills/scroll-world/SKILL.md",
+  "skill_path": ".agents/skills/scroll-world/SKILL.md",
   "peer_skill_path": "skills/scroll-world/SKILL.md",
   "source_commit": "2912048246d057cdfe134dfc0b4dfb7e6a12f30e",
-  "local_skill_tree_sha256": "cb20e38ea7748e28abf5b153fe5416d7b4936f615a3a3c5afcb4574ccc711d84",
+  "local_skill_tree_sha256": "0671b362ecffe8e64f3c8a0fde7ee99a1f1d30c30b754d050af1af6d5d5ef232",
   "peer_skill_tree_sha256": "42f35c894ad88b37a0e09502561d2f208d20086441d127be937873e50e22b8ea",
   "max_hops": 1,
   "capability_owners": {

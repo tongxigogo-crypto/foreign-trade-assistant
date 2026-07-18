@@ -1,0 +1,7 @@
+interface:
+  display_name: "Scroll World"
+  short_description: "Build seamless scroll-driven cinematic websites"
+  default_prompt: "Use $scroll-world to plan and build a seamless scroll-driven camera journey for this website."
+
+policy:
+  allow_implicit_invocation: true
