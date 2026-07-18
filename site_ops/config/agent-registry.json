@@ -19,5 +19,8 @@
     "qa_agent",
     "release_agent",
     "analytics_agent"
-  ]
+  ],
+  "linked_skills": {
+    "scroll-world": "site_ops/config/scroll-world-link.json"
+  }
 }

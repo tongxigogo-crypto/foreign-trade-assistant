@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "workspace": "site-publishing",
+  "peer_workspace": "video_workflow",
+  "skill_path": "skills/scroll-world/SKILL.md",
+  "peer_skill_path": "skills/scroll-world/SKILL.md",
+  "source_commit": "2912048246d057cdfe134dfc0b4dfb7e6a12f30e",
+  "local_skill_tree_sha256": "cb20e38ea7748e28abf5b153fe5416d7b4936f615a3a3c5afcb4574ccc711d84",
+  "peer_skill_tree_sha256": "42f35c894ad88b37a0e09502561d2f208d20086441d127be937873e50e22b8ea",
+  "max_hops": 1,
+  "capability_owners": {
+    "web_scroll_runtime": "site-publishing",
+    "camera_chain": "video_workflow",
+    "native_mobile_chain": "video_workflow",
+    "seam_qa": "shared"
+  },
+  "handoff_contract": {
+    "required_fields": [
+      "project_id",
+      "capability",
+      "brief",
+      "art_direction",
+      "scene_order",
+      "aspect_ratio",
+      "render_model",
+      "boundary_frame_policy",
+      "artifacts",
+      "acceptance_checks"
+    ],
+    "boundary_frame_policy": "actual_rendered_frames_only",
+    "release_confirmation_required": true
+  }
+}
