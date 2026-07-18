@@ -12,6 +12,7 @@
 - 根据真实运行增量完善 harness，记录 Agent 选择、任务边界、结构化交接、验证证据，以及确认或失败行为；避免推测性扩展编排架构。
 - 小红书组图类任务可采用按需 harness：orchestrator 负责视觉方向与最终整合，`content_agent` 独立产出卡片文案和视频旁白，`qa_agent` 提供发布硬门禁；无需调用完整网站发布角色。为节省生图额度并保持风格统一，可先生成两张 2×2 的 3:4 母版，再用 `ffmpeg` 按精确坐标拆成 8 张独立 3:4 卡片；拆图后必须检查尺寸、文字、正反面逻辑和“概念/非实物”标识。
 - 全局应用 `karpathy-style-engineering`：重申目标，选择最小的有效更改，避免推测性重构，并在声明完成之前进行验证。
+- `scroll-world` 作为项目级按需 skill 使用：网站任务可采用其完整的预渲染连续镜头与滚动 scrub 引擎；先确认 Higgsfield 预算、桌面/原生 9:16 范围和镜头架构，所有接缝必须使用相邻成片的真实边界帧验证，不要把原始场景静帧当作连接端点。
 - 未经用户明确确认，请勿在 `site_ops/output/` 下发布、部署或写入。
 - 对于此 Windows 计算机上的本地 Remotion 项目，`render`/`still` 可能会挂起，除非 CLI 通过 `--browser-executable="C:\Program Files\Google\Chrome\Application\chrome.exe"`； `@remotion/zod-types@4.0.456` 应与 `zod@4.3.6` 配对，以避免 npm 对等解析循环。
 - 对于通过 `python -m http.server` 提供的隔离静态预览，迭代时缓存无效链接 CSS 和 JS (`?v=...`)，并在将过时的视觉行为诊断为代码回归之前验证浏览器中加载的 `href/src`。
