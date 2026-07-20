@@ -1,0 +1,3 @@
+[submodule "docs/team-knowledge"]
+	path = docs/team-knowledge
+	url = https://github.com/tong-codex/team-codex-knowledge.git
