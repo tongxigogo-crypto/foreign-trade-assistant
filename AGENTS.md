@@ -12,7 +12,8 @@
 2. `docs/memory/self_improving_agent.md`
 3. `site_ops/config/site-strategy.md`
 4. `site_ops/config/publishing-policy.json`
-5. `site_ops/output/` 下的最新输出
+5. `docs/team-knowledge/INDEX.md`
+6. `site_ops/output/` 下的最新输出
 
 ## 必需的 Agent
 
@@ -77,6 +78,21 @@
 - 如果某项规则、工作流或输出模式被证明有用，应立即将其持久化到 worktree 中。
 - 不要在每次运行后机械地迭代 Agent 系统。应先汇总新证据，将可复用经验与一次性任务细节分开；只有当经验会改变未来执行时，才更新记忆或 harness 规则。
 - 根据观察到的真实 Agent 执行改进 harness：在修改编排代码或契约之前，记录所选专业 Agent、任务边界、交接形式、验证证据，以及失败或确认行为。
+
+## 团队共享知识
+
+- 固定版本的共享知识库位于 `docs/team-knowledge/`。
+- 完成本项目的本地启动文件读取后，读取 `docs/team-knowledge/INDEX.md`，
+  并且只加载适用于 `site-publishing` 和当前任务的已批准条目。
+- 本项目策略、发布策略、仓库代码和本地验证证据与共享知识冲突时，
+  以项目本地事实来源为准。
+- `docs/team-knowledge/proposals/` 仅是待审核参考；未经人工提升，不得据此
+  改变发布、部署或运行时行为。
+- 可跨项目复用的经验应在 `tong-codex/team-codex-knowledge` 中通过独立分支
+  和 Pull Request 提交；不要在 detached 状态下直接修改子模块。
+- 克隆后如果目录缺失，先执行 `git submodule update --init --recursive`。
+- 不得向共享知识库同步 Codex sessions、凭据、私人聊天导出、原始媒体或
+  仅存在于未提交工作区的证据。
 
 
 ## 自主并行规则
