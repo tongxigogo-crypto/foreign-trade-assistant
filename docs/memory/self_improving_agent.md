@@ -173,3 +173,4 @@
 - 当后续文档仅替换外部 PPT/web-deck 可交付成果的 UI/布局方向时，保留先前批准的交互和资产规则，除非用户明确取消它们。对于汽车科学展板，V3 Apple/Guizang 风格的布局改变了页面构成，而早期的规则仍然控制热点行为、模拟真实照片资源、F1 图像、空气流动和点击触发的弹出细节。
 - 对于基于先前静态模板的新公司独立站点构建，更喜欢独立的同级，例如 `hongjuda_site/` 与 `index.html`、`content/site-content.json`、`admin.html`、`local_server.py`、`llms.txt`、`robots.txt`、`sitemap.xml` 和`api/openapi.json`。当架构是产品/公司站点内容而不是宠物/Tong 内容时，请勿重复使用 Tong Studio V6.6 后端适配器；保持本地管理/API stdlib WSGI 和部署静态优先。
 - 在启动审核之前，强化本地管理员默认设置：需要 `SITE_ADMIN_PASSWORD` 和 `SITE_ADMIN_SESSION_SECRET`，除非设置了明确的仅本地不安全选择加入，并使用 `utf-8-sig` 读取 CMS JSON/元，以便 Windows 保存的 BOM 文件不会破坏 `/api/content` 或 `/api/ai-context`。
+- 对滚动叙事 3D H5 继续开发前，先用实际挂载代码和 E2E 合同校正外部 UI 评审的功能基线；闲置的热点、影片或收尾组件不能仅因评审报告仍提到它们就恢复。全屏桌面画布不得无条件拦截普通滚轮：保留纵向滚动进入后续章节，把 3D 缩放限定为 `Control/Command + 滚轮`，并提供可聚焦画布、方向键环视、`+/-` 缩放、`Home` 复位及读屏说明。资产升级后应同步更新 `verify:glb` 的节点、材质、尺寸和海报合同，避免验收通过但自动验证仍绑定旧模型。
