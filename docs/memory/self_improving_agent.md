@@ -166,6 +166,7 @@
 - 在左侧导航外壳内放大 V6.6 笔记本电脑/APP 模型时，保留原始 `920 / 592` 笔记本电脑的宽高比，并使用响应式 `width: min(...)`，而不是徒手缩放宽度/高度。验证`documentElement.scrollWidth === viewport width`、`main.right === viewport right`、以及嵌入式APP网格`scrollWidth <= clientWidth`；更改共享面板断点后还会缓存 CSS 链接。
 - 对于外部 V6.6 管理适配，保留 `C:\Users\Administrator\Desktop\preson` 的旧版默认后端目标，除非用户明确更改它。新的隔离输出文件夹应由 `SITE_MANAGED_DIR` + `SITE_MANAGED_HTML` 提供服务；如果条目是现代 `index.html`，则将 `content/site-content.json` 和 `/api/content` 视为运行时源，并避免旧的 `apply_content()` HTML 重写，除非显式设置 `SITE_SYNC_HTML=1`。
 - 当用户提供非站点可交付路径（例如 `E:\CodexWorkspace`）时，直接在该路径下的同级文件夹中创建最终项目，而不是在 `site-publishing` 内部；如果创建了临时存储库本地文件夹，请将其移出并在最终确定之前验证存储库本地路径不再存在。
+- 对移动端曲面产品 3D 的高清文字修复，先分离“源图质量、曲面几何贴合、atlas 有效纹素和压缩”四层证据。若 GLB 已有权威 UV 烘焙文字，不要再叠加单一透明平面；平面会在斜侧或上下环视时悬浮/穿模。优先保留真实曲面 UV，提高 atlas 分辨率与采样质量，并在 KTX2/ETC1S 移动预算内用正面、45°、侧面、背面和上下极限环视做验收。
 - 对于交互式 PPT 样式的交付成果，默认情况下保持静态页面图像干净，并将戏剧性的“弹出屏幕”效果移动到单击/悬停细节状态。当用户说参考效果是正确的时，请重复使用效果语言，而无需将其烘焙到每个幻灯片背景中。
 - 当后续文档仅替换外部 PPT/web-deck 可交付成果的 UI/布局方向时，保留先前批准的交互和资产规则，除非用户明确取消它们。对于汽车科学展板，V3 Apple/Guizang 风格的布局改变了页面构成，而早期的规则仍然控制热点行为、模拟真实照片资源、F1 图像、空气流动和点击触发的弹出细节。
 - 对于基于先前静态模板的新公司独立站点构建，更喜欢独立的同级，例如 `hongjuda_site/` 与 `index.html`、`content/site-content.json`、`admin.html`、`local_server.py`、`llms.txt`、`robots.txt`、`sitemap.xml` 和`api/openapi.json`。当架构是产品/公司站点内容而不是宠物/Tong 内容时，请勿重复使用 Tong Studio V6.6 后端适配器；保持本地管理/API stdlib WSGI 和部署静态优先。
