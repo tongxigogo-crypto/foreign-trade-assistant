@@ -1,18 +1,24 @@
 /**
- * Generic material take-off engine.
+ * Product accessory (BOM) engine.
  *
- * This file contains no product data and no business rules. A product is
- * described by a plain object (see `data/product-master.example.js`) and this
- * engine turns that description plus user input into a quantity list.
+ * The problem this solves: a customer orders one product, but shipping and
+ * installing it needs a set of accessories. A salesperson who does not know the
+ * product well forgets one — a bracket, a screw pack, a tube of sealant — and the
+ * order goes out short.
  *
- * Design constraints:
- *   - no DOM access, so the engine can run under Node for verification;
- *   - no network access, no dependencies;
- *   - works both as a plain <script> (window.TradeEngine) and under Node
- *     (module.exports), because the delivered artefact is opened by
- *     double-clicking index.html over file://;
- *   - rounding is explicit per line item, with an epsilon guard so that
- *     `10.0000000001` does not round up to 11.
+ * So this engine does not just multiply. It checks that every accessory declared
+ * as required actually came out above zero, and it reports the ones that did not.
+ *
+ * No product data lives in this file. A product is described by a plain object
+ * (see `data/product-master.example.js`).
+ *
+ * Constraints:
+ *   - no DOM, so the engine runs under Node for verification;
+ *   - no dependencies, no network;
+ *   - works as a plain <script> (window.TradeEngine) and under Node
+ *     (module.exports), because the delivered artefact is opened by double-click
+ *     over file://;
+ *   - rounding carries an epsilon guard so float noise cannot add a unit.
  */
 (function (root, factory) {
   var api = factory();
@@ -24,7 +30,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  /** Rounding tolerance. Absorbs float error from division before ceiling. */
+  /** Rounding tolerance. Absorbs float error before ceiling. */
   var EPSILON = 1e-9;
 
   var ROUNDING = {
@@ -46,8 +52,12 @@
     return Object.prototype.hasOwnProperty.call(object, key);
   }
 
+  function isNonEmptyString(value) {
+    return typeof value === 'string' && value.trim() !== '';
+  }
+
   /**
-   * Validate an input definition list from a product object.
+   * Validate the input definitions.
    * @returns {string[]} error messages, empty when valid
    */
   function validateInputs(inputs) {
@@ -62,14 +72,14 @@
         errors.push(label + ' must be an object');
         return;
       }
-      if (typeof input.id !== 'string' || input.id.trim() === '') {
+      if (!isNonEmptyString(input.id)) {
         errors.push(label + '.id must be a non-empty string');
       } else if (seen[input.id]) {
         errors.push(label + '.id duplicates ' + input.id);
       } else {
         seen[input.id] = true;
       }
-      if (typeof input.label !== 'string' || input.label.trim() === '') {
+      if (!isNonEmptyString(input.label)) {
         errors.push(label + '.label must be a non-empty string');
       }
       if (input.min !== undefined && typeof input.min !== 'number') {
@@ -86,45 +96,71 @@
   }
 
   /**
-   * Validate a product definition before it is used.
-   * @returns {{ valid: boolean, errors: string[] }}
+   * Validate a product definition.
+   * @returns {{ valid: boolean, errors: string[], inputIds: string[] }}
    */
   function validateProduct(product) {
     var errors = [];
     if (!product || typeof product !== 'object') {
-      return { valid: false, errors: ['product must be an object'] };
+      return { valid: false, errors: ['product must be an object'], inputIds: [] };
     }
-    if (typeof product.id !== 'string' || product.id.trim() === '') {
-      errors.push('product.id must be a non-empty string');
-    }
-    if (typeof product.name !== 'string' || product.name.trim() === '') {
-      errors.push('product.name must be a non-empty string');
-    }
-    errors = errors.concat(validateInputs(product.inputs));
+    if (!isNonEmptyString(product.id)) errors.push('product.id must be a non-empty string');
+    if (!isNonEmptyString(product.name)) errors.push('product.name must be a non-empty string');
 
-    if (!Array.isArray(product.items) || product.items.length === 0) {
-      errors.push('product.items must be a non-empty array');
+    var inputErrors = validateInputs(product.inputs);
+    errors = errors.concat(inputErrors);
+    var inputIds = Array.isArray(product.inputs)
+      ? product.inputs.map(function (input) {
+          return input && input.id;
+        }).filter(isNonEmptyString)
+      : [];
+    var inputIdSet = {};
+    inputIds.forEach(function (id) {
+      inputIdSet[id] = true;
+    });
+
+    var accessories = product.accessories;
+    if (!Array.isArray(accessories) || accessories.length === 0) {
+      errors.push('product.accessories must be a non-empty array');
     } else {
       var seen = {};
-      product.items.forEach(function (item, index) {
-        var label = 'items[' + index + ']';
+      accessories.forEach(function (item, index) {
+        var label = 'accessories[' + index + ']';
         if (!item || typeof item !== 'object') {
           errors.push(label + ' must be an object');
           return;
         }
-        if (typeof item.id !== 'string' || item.id.trim() === '') {
+        if (!isNonEmptyString(item.id)) {
           errors.push(label + '.id must be a non-empty string');
         } else if (seen[item.id]) {
           errors.push(label + '.id duplicates ' + item.id);
         } else {
           seen[item.id] = true;
         }
-        if (typeof item.label !== 'string' || item.label.trim() === '') {
-          errors.push(label + '.label must be a non-empty string');
+        if (!isNonEmptyString(item.label)) errors.push(label + '.label must be a non-empty string');
+
+        var per = item.per;
+        if (per !== undefined) {
+          if (!per || typeof per !== 'object') {
+            errors.push(label + '.per must be an object mapping input ids to factors');
+          } else {
+            Object.keys(per).forEach(function (key) {
+              if (!inputIdSet[key]) {
+                errors.push(label + '.per references unknown input "' + key + '"');
+              }
+              if (typeof per[key] !== 'number' || !Number.isFinite(per[key])) {
+                errors.push(label + '.per.' + key + ' must be a finite number');
+              }
+            });
+          }
         }
-        if (typeof item.compute !== 'function') {
-          errors.push(label + '.compute must be a function');
+        if (item.fixed !== undefined && (typeof item.fixed !== 'number' || item.fixed < 0)) {
+          errors.push(label + '.fixed must be a non-negative number when present');
         }
+        if (per === undefined && item.fixed === undefined) {
+          errors.push(label + ' declares neither per nor fixed, so it can never produce a quantity');
+        }
+
         var rounding = item.rounding === undefined ? 'ceil' : item.rounding;
         if (!has(ROUNDING, rounding)) {
           errors.push(label + '.rounding must be one of ' + Object.keys(ROUNDING).join(', '));
@@ -135,12 +171,12 @@
       });
     }
 
-    return { valid: errors.length === 0, errors: errors };
+    return { valid: errors.length === 0, errors: errors, inputIds: inputIds };
   }
 
   /**
-   * Coerce and range-check user input against the product's input definitions.
-   * Missing or empty values are reported, never silently zeroed.
+   * Coerce and range-check user input. Missing required values are reported,
+   * never silently replaced with zero.
    * @returns {{ values: Object, errors: string[] }}
    */
   function normalizeValues(product, raw) {
@@ -183,7 +219,34 @@
   }
 
   /**
-   * Run a product's take-off.
+   * Compute one accessory line.
+   *   raw = Σ(per[inputId] × values[inputId]) + fixed
+   */
+  function computeLine(item, values) {
+    var total = item.fixed === undefined ? 0 : item.fixed;
+    var sources = [];
+
+    if (item.per) {
+      Object.keys(item.per).forEach(function (key) {
+        var contribution = item.per[key] * values[key];
+        if (item.per[key] !== 0) {
+          sources.push(key + ' × ' + item.per[key]);
+        }
+        total += contribution;
+      });
+    }
+    if (item.fixed !== undefined && item.fixed !== 0) {
+      sources.push('固定 ' + item.fixed);
+    }
+
+    return { raw: total, sources: sources };
+  }
+
+  /**
+   * Run the accessory calculation.
+   *
+   * Returned `missing` is the point of this engine: every accessory marked
+   * `required` whose quantity came out at zero.
    *
    * @param {object} product Validated product definition.
    * @param {object} raw Raw user input.
@@ -192,83 +255,153 @@
   function calculate(product, raw, options) {
     options = options || {};
     var applyOverage = options.applyOverage !== false;
-    var empty = { ok: false, errors: [], warnings: [], rows: [], summary: { lineCount: 0, valueByUnit: {} } };
+    var failure = { ok: false, errors: [], warnings: [], lines: [], missing: [], groups: [] };
 
     var check = validateProduct(product);
     if (!check.valid) {
-      empty.errors = check.errors;
-      return empty;
+      failure.errors = check.errors;
+      return failure;
     }
 
     var normalized = normalizeValues(product, raw);
     if (normalized.errors.length > 0) {
-      empty.errors = normalized.errors;
-      return empty;
+      failure.errors = normalized.errors;
+      return failure;
     }
 
     var values = normalized.values;
-    var spec = product.spec || {};
-    var ctx = {
-      values: values,
-      spec: spec,
-      ceil: ROUNDING.ceil,
-      floor: ROUNDING.floor,
-      round: ROUNDING.round,
-      /** Square metres from millimetre dimensions. */
-      areaM2: function (widthMm, lengthMm) {
-        return (widthMm * lengthMm) / 1000000;
-      },
-    };
-
-    var rows = [];
+    var lines = [];
     var warnings = [];
-    var valueByUnit = {};
+    var missing = [];
+    var groupOrder = [];
+    var groupTotals = {};
 
-    product.items.forEach(function (item) {
-      var rawValue;
+    product.accessories.forEach(function (item) {
+      var computed;
       try {
-        rawValue = item.compute(ctx);
+        computed = computeLine(item, values);
       } catch (error) {
-        warnings.push(item.label + ' failed to compute: ' + (error && error.message ? error.message : String(error)));
+        warnings.push(item.label + ' 计算出错：' + (error && error.message ? error.message : String(error)));
         return;
       }
 
-      if (!Number.isFinite(rawValue)) {
-        warnings.push(item.label + ' produced a non-finite value; check the formula');
+      if (!Number.isFinite(computed.raw)) {
+        warnings.push(item.label + ' 算出了非有限值，请检查公式系数');
         return;
       }
 
       var rounding = item.rounding === undefined ? 'ceil' : item.rounding;
       var overage = item.overage === undefined ? 0 : item.overage;
-      var withOverage = applyOverage ? rawValue * (1 + overage) : rawValue;
+      var withOverage = applyOverage ? computed.raw * (1 + overage) : computed.raw;
       var quantity = ROUNDING[rounding](withOverage);
 
       if (quantity < 0) {
-        warnings.push(item.label + ' produced a negative quantity; check the input signs');
+        warnings.push(item.label + ' 算出了负数，请检查输入');
       }
 
-      var unit = item.unit || '';
-      valueByUnit[unit] = (valueByUnit[unit] || 0) + quantity;
+      var group = item.group || '其他';
+      if (!has(groupTotals, group)) {
+        groupTotals[group] = { group: group, lines: 0 };
+        groupOrder.push(group);
+      }
+      groupTotals[group].lines += 1;
 
-      rows.push({
+      // The whole reason this engine exists.
+      if (item.required === true && quantity === 0) {
+        missing.push({
+          id: item.id,
+          label: item.label,
+          unit: item.unit || '',
+          reason: '必配项数量为 0',
+        });
+      }
+
+      lines.push({
         id: item.id,
         label: item.label,
-        unit: unit,
-        raw: Number(rawValue.toFixed(4)),
+        group: group,
+        unit: item.unit || '',
+        required: item.required === true,
+        raw: Number(computed.raw.toFixed(4)),
         quantity: quantity,
         rounding: rounding,
         overage: overage,
+        sources: computed.sources,
         note: item.note,
       });
+    });
+
+    var groups = groupOrder.map(function (name) {
+      return groupTotals[name];
     });
 
     return {
       ok: true,
       errors: [],
       warnings: warnings,
-      rows: rows,
-      summary: { lineCount: rows.length, valueByUnit: valueByUnit },
+      lines: lines,
+      missing: missing,
+      groups: groups,
     };
+  }
+
+  /** Escape a value for CSV. */
+  function csvCell(value) {
+    var text = value === undefined || value === null ? '' : String(value);
+    if (/[",\n\r]/.test(text)) {
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
+    return text;
+  }
+
+  /**
+   * Build a CSV the salesperson can paste into a quotation sheet or hand to
+   * production. Columns: 分组, 配件, 数量, 单位, 备注.
+   *
+   * @param {Array} lines Result lines from `calculate`.
+   * @param {{ productName?: string, meta?: string }} [header]
+   */
+  function toCSV(lines, header) {
+    header = header || {};
+    var rows = [];
+    if (header.productName) {
+      rows.push([csvCell('产品'), csvCell(header.productName)].join(','));
+    }
+    if (header.meta) {
+      rows.push([csvCell('说明'), csvCell(header.meta)].join(','));
+    }
+    if (rows.length > 0) rows.push('');
+
+    rows.push(['分组', '配件', '数量', '单位', '备注'].map(csvCell).join(','));
+    (lines || []).forEach(function (line) {
+      rows.push(
+        [line.group, line.label, line.quantity, line.unit, line.required ? '必配' : ''].map(csvCell).join(','),
+      );
+    });
+    return rows.join('\r\n');
+  }
+
+  /**
+   * Plain-text table for pasting into a chat window or a document.
+   */
+  function toPlainText(lines, header) {
+    header = header || {};
+    var out = [];
+    if (header.productName) out.push(header.productName);
+    if (header.meta) out.push(header.meta);
+    if (out.length > 0) out.push('');
+
+    (lines || []).forEach(function (line) {
+      out.push(
+        (line.group ? '[' + line.group + '] ' : '') +
+          line.label +
+          '：' +
+          line.quantity +
+          ' ' +
+          (line.unit || ''),
+      );
+    });
+    return out.join('\n');
   }
 
   return {
@@ -278,5 +411,7 @@
     validateProduct: validateProduct,
     normalizeValues: normalizeValues,
     calculate: calculate,
+    toCSV: toCSV,
+    toPlainText: toPlainText,
   };
 });

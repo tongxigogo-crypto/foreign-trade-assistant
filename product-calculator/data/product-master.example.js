@@ -1,20 +1,22 @@
 /**
- * EXAMPLE product definition — all numbers below are invented.
+ * EXAMPLE product definition — every number below is invented.
  *
- * Copy this file to `product-master.js` and replace the spec and the formulas
- * with your own. Nothing here represents a real product, a real supplier, or a
- * real price.
+ * Copy this file to `product-master.js` and replace the parts and factors with
+ * your own. Nothing here represents a real product, a real supplier, or a real
+ * price.
  *
  * A product definition has three parts:
- *   spec   — dimensions and constants the formulas read
- *   inputs — what the salesperson types in
- *   items  — what gets calculated, one line per material
+ *   inputs      — what the salesperson types in (order quantity, dimensions)
+ *   accessories — the parts that must ship with it
+ *   groups      — how the accessory rows are grouped in the output
  *
- * Each item's `compute(ctx)` receives:
- *   ctx.values  — validated numeric user input, keyed by input id
- *   ctx.spec    — this product's spec object
- *   ctx.ceil / ctx.floor / ctx.round — rounding helpers
- *   ctx.areaM2(widthMm, lengthMm)    — square metres from millimetre dimensions
+ * Each accessory's quantity is:
+ *   Σ (per[inputId] × inputValue) + fixed
+ * then multiplied by (1 + overage) and rounded.
+ *
+ * `required: true` is the important field. If a required accessory computes to
+ * zero, the result reports it as a missing part instead of quietly shipping an
+ * incomplete set.
  */
 (function (root, factory) {
   var product = factory();
@@ -26,75 +28,134 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  // One panel covers this much wall after the overlap is removed.
-  var COVER_WIDTH_MM = 145;
-  var PANEL_LENGTH_MM = 2900;
-  var COVERAGE_PER_PANEL_M2 = (COVER_WIDTH_MM / 1000) * (PANEL_LENGTH_MM / 1000);
-
   return {
-    id: 'demo-wall-panel',
-    name: '示例墙板（虚构数据，仅演示格式）',
-    specNote: 'Replace every number in this file with your own product data.',
-    spec: {
-      panelWidthMm: 159,
-      panelLengthMm: PANEL_LENGTH_MM,
-      coverWidthMm: COVER_WIDTH_MM,
-      coveragePerPanelM2: COVERAGE_PER_PANEL_M2,
-      clipsPerM2: 12,
-      sealantM2PerTube: 8,
-    },
+    id: 'demo-sliding-door',
+    name: '示例推拉门套件（虚构数据，仅演示格式）',
+    unitLabel: '套',
+    specNote: 'Replace every number and label in this file with your own product data.',
     inputs: [
       {
-        id: 'areaM2',
-        label: '施工面积',
-        unit: 'm²',
-        min: 0.1,
+        id: 'quantity',
+        label: '订购数量',
+        unit: '套',
+        min: 1,
         max: 100000,
-        step: 0.1,
-        placeholder: '例如 100',
+        step: 1,
+        default: 1,
+        placeholder: '例如 10',
       },
       {
-        id: 'wastePercent',
-        label: '损耗率',
-        unit: '%',
-        min: 0,
-        max: 30,
-        step: 0.5,
+        id: 'widthM',
+        label: '单套宽度',
+        unit: 'm',
+        min: 0.3,
+        max: 6,
+        step: 0.05,
         required: false,
-        default: 5,
+        default: 1.2,
+        hint: '影响导轨、密封条这类按米计算的配件',
       },
     ],
-    items: [
+    accessories: [
+      // —— 主体 ——
       {
-        id: 'panel',
-        label: '主材板',
-        unit: '块',
-        rounding: 'ceil',
-        note: '面积 ÷ 单板有效覆盖面积，含损耗率',
-        compute: function (ctx) {
-          var covered = ctx.values.areaM2 * (1 + ctx.values.wastePercent / 100);
-          return covered / ctx.spec.coveragePerPanelM2;
-        },
+        id: 'frame',
+        label: '门框',
+        unit: '件',
+        group: '主体',
+        required: true,
+        per: { quantity: 1 },
+        note: '每套一件',
       },
       {
-        id: 'clip',
-        label: '固定卡扣',
+        id: 'door-leaf',
+        label: '门扇',
+        unit: '件',
+        group: '主体',
+        required: true,
+        per: { quantity: 1 },
+      },
+      {
+        id: 'track',
+        label: '导轨',
+        unit: '米',
+        group: '主体',
+        required: true,
+        per: { quantity: 1, widthM: 1 },
+        note: '每套按宽度取米数',
+      },
+
+      // —— 五金 ——
+      {
+        id: 'roller-top',
+        label: '上滑轮',
         unit: '个',
-        rounding: 'ceil',
-        note: '面积 × 每平方米用量',
-        compute: function (ctx) {
-          return ctx.values.areaM2 * ctx.spec.clipsPerM2;
-        },
+        group: '五金',
+        required: true,
+        per: { quantity: 2 },
+      },
+      {
+        id: 'roller-bottom',
+        label: '下滑轮',
+        unit: '个',
+        group: '五金',
+        required: true,
+        per: { quantity: 2 },
+      },
+      {
+        id: 'handle',
+        label: '拉手',
+        unit: '个',
+        group: '五金',
+        required: true,
+        per: { quantity: 1 },
+      },
+      {
+        id: 'screw-pack',
+        label: '安装螺丝包',
+        unit: '包',
+        group: '五金',
+        required: true,
+        per: { quantity: 1 },
+        overage: 0.05,
+        note: '含 5% 备损',
+      },
+
+      // —— 辅料 ——
+      {
+        id: 'seal-strip',
+        label: '密封条',
+        unit: '米',
+        group: '辅料',
+        required: true,
+        per: { widthM: 2 },
+        note: '两侧各一条',
       },
       {
         id: 'sealant',
         label: '密封胶',
         unit: '支',
-        rounding: 'ceil',
-        note: '面积 ÷ 每支可施工面积',
-        compute: function (ctx) {
-          return ctx.values.areaM2 / ctx.spec.sealantM2PerTube;
-        },
+        group: '辅料',
+        required: false,
+        per: { quantity: 0.5 },
+        note: '每两套一支，选配',
+      },
+      {
+        id: 'carton',
+        label: '包装箱',
+        unit: '个',
+        group: '辅料',
+        required: true,
+        per: { quantity: 1 },
+      },
+      {
+        id: 'manual',
+        label: '安装说明书',
+        unit: '份',
+        group: '辅料',
+        required: false,
+        fixed: 1,
+        note: '每个订单一份，与数量无关',
       },
     ],
   };

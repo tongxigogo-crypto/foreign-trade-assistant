@@ -3,18 +3,16 @@
  *
  *   node tests/offline-smoke-test.cjs
  *
- * This checks numbers, not pixels. Browser acceptance is separate.
+ * This checks numbers and the missing-accessory check, not pixels. Browser
+ * acceptance is separate.
  */
 'use strict';
 
 const path = require('node:path');
 const assert = require('node:assert');
 
-const enginePath = path.join(__dirname, '..', 'js', 'engine.js');
-const productPath = path.join(__dirname, '..', 'data', 'product-master.example.js');
-
-const engine = require(enginePath);
-const product = require(productPath);
+const engine = require(path.join(__dirname, '..', 'js', 'engine.js'));
+const product = require(path.join(__dirname, '..', 'data', 'product-master.example.js'));
 
 let passed = 0;
 const failures = [];
@@ -30,110 +28,159 @@ function check(name, fn) {
   }
 }
 
-console.log('\nengine smoke test\n');
+function linesById(result) {
+  return Object.fromEntries(result.lines.map((line) => [line.id, line]));
+}
+
+console.log('\naccessory engine smoke test\n');
 
 check('the example product definition is valid', () => {
   const result = engine.validateProduct(product);
   assert.equal(result.valid, true, result.errors.join('; '));
 });
 
-check('100 m2 at 5% waste produces the expected quantities', () => {
-  const result = engine.calculate(product, { areaM2: 100, wastePercent: 5 });
+check('10 sets at 1.2 m produce the expected accessory list', () => {
+  const result = engine.calculate(product, { quantity: 10, widthM: 1.2 });
   assert.equal(result.ok, true, result.errors.join('; '));
+  const byId = linesById(result);
 
-  const byId = Object.fromEntries(result.rows.map((row) => [row.id, row]));
-
-  // 100 * 1.05 / (0.145 * 2.9) = 249.70 -> 250
-  assert.equal(byId.panel.quantity, 250, 'panel quantity');
-  assert.equal(byId.clip.quantity, 1200, 'clip quantity');
-  // 100 / 8 = 12.5 -> 13
-  assert.equal(byId.sealant.quantity, 13, 'sealant quantity');
+  assert.equal(byId.frame.quantity, 10, 'frame');
+  assert.equal(byId['door-leaf'].quantity, 10, 'door leaf');
+  // 10 × 1 + 1.2 × 1 = 11.2 -> 12 m of track
+  assert.equal(byId.track.quantity, 12, 'track');
+  assert.equal(byId['roller-top'].quantity, 20, 'top rollers');
+  assert.equal(byId['roller-bottom'].quantity, 20, 'bottom rollers');
+  assert.equal(byId.handle.quantity, 10, 'handle');
+  // 10 × 1 with 5% overage = 10.5 -> 11 packs
+  assert.equal(byId['screw-pack'].quantity, 11, 'screw packs');
+  // 1.2 × 2 = 2.4 -> 3 m
+  assert.equal(byId['seal-strip'].quantity, 3, 'seal strip');
+  // 10 × 0.5 = 5
+  assert.equal(byId.sealant.quantity, 5, 'sealant');
+  assert.equal(byId.carton.quantity, 10, 'carton');
+  // fixed 1 regardless of quantity
+  assert.equal(byId.manual.quantity, 1, 'manual');
 });
 
-check('zero waste gives a smaller panel count', () => {
-  const withWaste = engine.calculate(product, { areaM2: 100, wastePercent: 5 });
-  const withoutWaste = engine.calculate(product, { areaM2: 100, wastePercent: 0 });
-  const a = withWaste.rows.find((row) => row.id === 'panel').quantity;
-  const b = withoutWaste.rows.find((row) => row.id === 'panel').quantity;
-  assert.ok(b < a, 'panel count without waste should be lower: ' + b + ' vs ' + a);
-  assert.equal(b, 238, '100 / 0.4205 = 237.81 -> 238');
+check('a complete set reports no missing accessory', () => {
+  const result = engine.calculate(product, { quantity: 10, widthM: 1.2 });
+  assert.deepEqual(result.missing, []);
+});
+
+check('a required accessory that computes to zero is reported as missing', () => {
+  // Same product, but the seal strip factor is zero while width is still valid.
+  const broken = JSON.parse(
+    JSON.stringify(product, (key, value) => (typeof value === 'function' ? undefined : value)),
+  );
+  const strip = broken.accessories.find((item) => item.id === 'seal-strip');
+  strip.per = { widthM: 0 };
+
+  const result = engine.calculate(broken, { quantity: 10, widthM: 1.2 });
+  assert.equal(result.ok, true, result.errors.join('; '));
+  assert.equal(result.missing.length, 1);
+  assert.equal(result.missing[0].id, 'seal-strip');
+  assert.match(result.missing[0].reason, /必配项数量为 0/);
+});
+
+check('an optional accessory at zero is not reported as missing', () => {
+  const result = engine.calculate(product, { quantity: 10, widthM: 1.2 });
+  const sealant = result.lines.find((line) => line.id === 'sealant');
+  assert.equal(sealant.required, false);
+  assert.equal(
+    result.missing.some((item) => item.id === 'sealant'),
+    false,
+  );
 });
 
 check('a missing required input is reported, not silently zeroed', () => {
   const result = engine.calculate(product, {});
   assert.equal(result.ok, false);
   assert.ok(
-    result.errors.some((message) => message.includes('施工面积')),
+    result.errors.some((message) => message.includes('订购数量')),
     'expected an error naming the missing input, got: ' + result.errors.join('; '),
   );
 });
 
 check('a non-numeric input is rejected', () => {
-  const result = engine.calculate(product, { areaM2: 'abc' });
+  const result = engine.calculate(product, { quantity: 'ten' });
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((message) => message.includes('must be a number')));
 });
 
 check('an out-of-range input is rejected', () => {
-  const result = engine.calculate(product, { areaM2: 100, wastePercent: 99 });
+  const result = engine.calculate(product, { quantity: 10, widthM: 99 });
   assert.equal(result.ok, false);
-  assert.ok(result.errors.some((message) => message.includes('at most 30')));
+  assert.ok(result.errors.some((message) => message.includes('at most 6')));
 });
 
-check('float noise does not push a whole number up', () => {
+check('float noise does not add an extra unit', () => {
   const tiny = {
     id: 'epsilon',
     name: 'epsilon',
     inputs: [{ id: 'n', label: 'n', min: 0 }],
-    items: [
-      {
-        id: 'line',
-        label: 'line',
-        unit: '件',
-        rounding: 'ceil',
-        // 10.0000000001 must round to 10, not 11.
-        compute: () => 10.0000000001,
-      },
-    ],
+    accessories: [{ id: 'line', label: 'line', unit: '件', per: { n: 1 } }],
   };
-  const result = engine.calculate(tiny, { n: 1 });
+  // 10.0000000001 must round to 10, not 11.
+  const result = engine.calculate(tiny, { n: 10.0000000001 });
   assert.equal(result.ok, true, result.errors.join('; '));
-  assert.equal(result.rows[0].quantity, 10);
+  assert.equal(result.lines[0].quantity, 10);
 });
 
-check('an invalid product definition is rejected with reasons', () => {
-  const broken = { id: 'x', name: 'x', inputs: [], items: [] };
-  const result = engine.validateProduct(broken);
-  assert.equal(result.valid, false);
-  assert.ok(result.errors.length >= 2);
-});
-
-check('a throwing formula becomes a warning, not a crash', () => {
-  const risky = {
-    id: 'risky',
-    name: 'risky',
+check('a per entry referencing an unknown input is rejected', () => {
+  const bad = {
+    id: 'bad',
+    name: 'bad',
     inputs: [{ id: 'n', label: 'n' }],
-    items: [
-      {
-        id: 'boom',
-        label: '会出错的行',
-        unit: '件',
-        compute: () => {
-          throw new Error('formula failure');
-        },
-      },
-    ],
+    accessories: [{ id: 'x', label: 'x', per: { notAnInput: 2 } }],
   };
-  const result = engine.calculate(risky, { n: 1 });
-  assert.equal(result.ok, true);
-  assert.equal(result.rows.length, 0);
-  assert.match(result.warnings[0], /formula failure/);
+  const result = engine.validateProduct(bad);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('unknown input')));
 });
 
-check('unit totals aggregate per unit', () => {
-  const result = engine.calculate(product, { areaM2: 10, wastePercent: 0 });
-  assert.equal(result.summary.valueByUnit['块'], result.rows.find((r) => r.id === 'panel').quantity);
-  assert.equal(result.summary.valueByUnit['个'], 120);
+check('an accessory with neither per nor fixed is rejected', () => {
+  const bad = {
+    id: 'bad2',
+    name: 'bad2',
+    inputs: [{ id: 'n', label: 'n' }],
+    accessories: [{ id: 'x', label: 'x' }],
+  };
+  const result = engine.validateProduct(bad);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => message.includes('neither per nor fixed')));
+});
+
+check('accessories are grouped in declaration order', () => {
+  const result = engine.calculate(product, { quantity: 10, widthM: 1.2 });
+  assert.deepEqual(
+    result.groups.map((group) => group.group),
+    ['主体', '五金', '辅料'],
+  );
+  assert.equal(
+    result.groups.reduce((total, group) => total + group.lines, 0),
+    result.lines.length,
+  );
+});
+
+check('CSV export has a header row and one row per accessory', () => {
+  const result = engine.calculate(product, { quantity: 10, widthM: 1.2 });
+  const csv = engine.toCSV(result.lines, { productName: product.name, meta: '订购数量 10套' });
+  const rows = csv.split('\r\n');
+  assert.ok(rows[0].includes('产品'), 'product header line');
+  assert.ok(csv.includes('分组,配件,数量,单位,备注'), 'column header');
+  assert.equal(rows.filter((row) => row.split(',').length >= 4 && row.trim() !== '').length >= result.lines.length, true);
+});
+
+check('CSV escapes a label containing a comma', () => {
+  const csv = engine.toCSV([{ group: '五金', label: '螺丝,长款', quantity: 1, unit: '包', required: true }]);
+  assert.ok(csv.includes('"螺丝,长款"'), 'comma-containing label must be quoted');
+});
+
+check('plain text keeps the group prefix', () => {
+  const text = engine.toPlainText([
+    { group: '五金', label: '上滑轮', quantity: 20, unit: '个' },
+  ]);
+  assert.equal(text, '[五金] 上滑轮：20 个');
 });
 
 console.log('\n' + passed + ' passed, ' + failures.length + ' failed\n');

@@ -3,38 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>产品算料计算器</title>
+<title>产品配件计算器</title>
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
   <header class="page-head">
-    <h1 id="product-name">产品算料计算器</h1>
-    <p class="lede">输入客户给的面积，得到主材与配件用量。所有数值由 <code>data/product-master</code> 中的规格与公式决定。</p>
-    <p id="demo-banner" class="demo-banner" hidden>当前载入的是示例数据，所有数值均为虚构，不能用于真实报价。</p>
+    <h1 id="product-name">产品配件计算器</h1>
+    <p class="lede">
+      客户订的是一套产品，实际要发的是一整套配件。填上数量，这里把配件一次列全——
+      尤其是那些容易漏的螺丝、卡扣、密封条和包装。
+    </p>
+    <p id="demo-banner" class="demo-banner" hidden>当前载入的是示例数据，所有配件与系数均为虚构，不能用于真实报价。</p>
   </header>
 
   <div id="message" hidden></div>
 
   <main class="layout">
     <section class="panel">
-      <h2>输入</h2>
+      <h2>订单</h2>
       <form id="input-form" novalidate></form>
     </section>
 
     <section class="panel">
-      <h2>用量</h2>
+      <h2>配件清单</h2>
       <div id="result" aria-live="polite">
-        <p class="placeholder">填好左侧输入后点「计算用量」。</p>
+        <p class="placeholder">填好左侧订单信息后点「计算配件」。</p>
+      </div>
+      <div id="export-bar" class="export-bar" hidden>
+        <button type="button" id="btn-csv" class="ghost">导出 CSV</button>
+        <button type="button" id="btn-copy" class="ghost">复制清单</button>
+        <span class="export-hint">给报价或生产用</span>
       </div>
     </section>
   </main>
 
   <section class="panel wide">
-    <h2>公式来源</h2>
-    <table id="formula-table" class="formula-table"></table>
+    <h2>配件构成</h2>
+    <table id="source-table" class="source-table"></table>
     <p class="footnote">
-      这张表由产品定义自动生成。改规格改 <code>data/product-master.js</code>，改界面文案改 <code>data/config.js</code>，
-      计算逻辑改这里的 <code>compute</code> 函数。<strong>引擎本身不含任何产品数据。</strong>
+      这张表由产品定义自动生成。改配件、改系数改 <code>data/product-master.js</code>；
+      改界面文案改 <code>data/config.js</code>。<strong>引擎本身不含任何产品数据。</strong>
+      标「必配」的配件如果算出来是 0，结果区会红色警告——那是漏配，不是正常结果。
     </p>
   </section>
 
