@@ -1,5 +1,7 @@
 # AI Trade Multi-Agent System
 
+[![ci](https://github.com/tongxigogo-crypto/foreign-trade-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/tongxigogo-crypto/foreign-trade-assistant/actions/workflows/ci.yml)
+
 一个用 Python 写的多 Agent 外贸业务工作台。核心思路不是"让一个大模型什么都干"，
 而是把外贸流程拆成一组有明确职责的 Agent，由编排器按业务事件调度，规则和数据放在文件里而不是提示词里。
 
