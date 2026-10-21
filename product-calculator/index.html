@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>产品算料计算器</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="page-head">
+    <h1 id="product-name">产品算料计算器</h1>
+    <p class="lede">输入客户给的面积，得到主材与配件用量。所有数值由 <code>data/product-master</code> 中的规格与公式决定。</p>
+    <p id="demo-banner" class="demo-banner" hidden>当前载入的是示例数据，所有数值均为虚构，不能用于真实报价。</p>
+  </header>
+
+  <div id="message" hidden></div>
+
+  <main class="layout">
+    <section class="panel">
+      <h2>输入</h2>
+      <form id="input-form" novalidate></form>
+    </section>
+
+    <section class="panel">
+      <h2>用量</h2>
+      <div id="result" aria-live="polite">
+        <p class="placeholder">填好左侧输入后点「计算用量」。</p>
+      </div>
+    </section>
+  </main>
+
+  <section class="panel wide">
+    <h2>公式来源</h2>
+    <table id="formula-table" class="formula-table"></table>
+    <p class="footnote">
+      这张表由产品定义自动生成。改规格改 <code>data/product-master.js</code>，改界面文案改 <code>data/config.js</code>，
+      计算逻辑改这里的 <code>compute</code> 函数。<strong>引擎本身不含任何产品数据。</strong>
+    </p>
+  </section>
+
+  <script src="js/engine.js"></script>
+  <script src="data/config.js"></script>
+  <script src="data/product-master.example.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
